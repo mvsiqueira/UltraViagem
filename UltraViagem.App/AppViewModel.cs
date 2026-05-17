@@ -89,6 +89,28 @@ public sealed class AppViewModel : NotifyObject
     public string DaysCount => (_trip?.Itinerary.Count ?? 0).ToString(Culture);
     public string PendingTasksCount => AllTasks.Count(task => task.Status == "pending").ToString(Culture);
     public string AttachmentsCount => Attachments.Count.ToString(Culture);
+    public string MyMapsUrl
+    {
+        get => _trip?.MyMapsUrl ?? "";
+        set
+        {
+            if (_trip is null)
+            {
+                return;
+            }
+
+            var normalized = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            if (_trip.MyMapsUrl == normalized)
+            {
+                return;
+            }
+
+            _trip.MyMapsUrl = normalized;
+            OnPropertyChanged(nameof(MyMapsUrl));
+            OnPropertyChanged(nameof(HasMyMapsUrl));
+        }
+    }
+    public bool HasMyMapsUrl => LinkEditorViewModel.IsHttpUrl(MyMapsUrl);
     public string BudgetSubtitle => _trip is null ? "" : $"{_trip.Expenses.Count} itens cadastrados em {_trip.BaseCurrency}";
     public string EstimatedTotal => FormatMoney(_trip?.Expenses.Sum(expense => expense.SubtotalBase) ?? 0);
     public string PaidTotal => FormatMoney(_trip?.Expenses.Sum(expense => expense.PaidAmount) ?? 0);
@@ -333,6 +355,8 @@ public sealed class AppViewModel : NotifyObject
         OnPropertyChanged(nameof(DaysCount));
         OnPropertyChanged(nameof(PendingTasksCount));
         OnPropertyChanged(nameof(AttachmentsCount));
+        OnPropertyChanged(nameof(MyMapsUrl));
+        OnPropertyChanged(nameof(HasMyMapsUrl));
         OnPropertyChanged(nameof(BudgetSubtitle));
         OnPropertyChanged(nameof(EstimatedTotal));
         OnPropertyChanged(nameof(PaidTotal));
@@ -552,7 +576,7 @@ public sealed class LinkEditorViewModel : NotifyObject
         }
     }
 
-    private static bool IsHttpUrl(string value)
+    public static bool IsHttpUrl(string value)
     {
         return Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
                (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
@@ -564,10 +588,12 @@ public sealed class AttachmentEditorViewModel : NotifyObject
     private string _id = "";
     private string _file = "";
     private string _originalFile = "";
+    private bool _isEditing;
 
     public string Id { get => _id; set => SetField(ref _id, value); }
     public string File { get => _file; set => SetField(ref _file, value); }
     public string OriginalFile { get => _originalFile; set => SetField(ref _originalFile, value); }
+    public bool IsEditing { get => _isEditing; set => SetField(ref _isEditing, value); }
 
     public static AttachmentEditorViewModel FromAttachment(AttachmentItem attachment)
     {

@@ -20,7 +20,6 @@ public partial class TripDetailsWindow : Window
         EndDateBox.Text = draft.EndDate;
         PeopleBox.Text = draft.People.ToString(CultureInfo.InvariantCulture);
         CurrencyBox.Text = draft.BaseCurrency;
-        MyMapsBox.Text = draft.MyMapsUrl ?? "";
     }
 
     public TripDetailsDraft Draft => _draft;
@@ -70,7 +69,6 @@ public partial class TripDetailsWindow : Window
         _draft.EndDate = EndDateBox.Text.Trim();
         _draft.People = people;
         _draft.BaseCurrency = string.IsNullOrWhiteSpace(CurrencyBox.Text) ? "BRL" : CurrencyBox.Text.Trim().ToUpperInvariant();
-        _draft.MyMapsUrl = string.IsNullOrWhiteSpace(MyMapsBox.Text) ? null : MyMapsBox.Text.Trim();
 
         DialogResult = true;
     }

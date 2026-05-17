@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly AppViewModel _viewModel = new();
     private TripRepository? _repository;
     private readonly Dictionary<LinkEditorViewModel, (string Title, string Url)> _tipEditSnapshots = [];
+    private readonly Dictionary<AttachmentEditorViewModel, string> _attachmentEditSnapshots = [];
     private System.Windows.Point _attachmentDragStartPoint;
     private bool _isLoadingTrip;
     private bool _isSavingTasks;
@@ -217,6 +218,38 @@ public partial class MainWindow : Window
         ShowFiles();
     }
 
+    private void ShowMap_Click(object sender, RoutedEventArgs e)
+    {
+        ShowMap();
+    }
+
+    private void OpenMyMaps_Click(object sender, RoutedEventArgs e)
+    {
+        OpenUrl(_viewModel.MyMapsUrl, "Nenhum link do Google My Maps cadastrado.");
+    }
+
+    private void SaveMap_Click(object sender, RoutedEventArgs e)
+    {
+        SaveMapInternal($"Mapa salvo em {DateTime.Now:HH:mm}.");
+    }
+
+    private void MapUrlBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        SaveMapInternal("Link do mapa salvo.");
+    }
+
+    private void MapUrlBox_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter)
+        {
+            return;
+        }
+
+        SaveMapInternal("Link do mapa salvo.");
+        Keyboard.ClearFocus();
+        e.Handled = true;
+    }
+
     private void AttachFiles_Click(object sender, RoutedEventArgs e)
     {
         using var dialog = new Forms.OpenFileDialog
@@ -242,8 +275,10 @@ public partial class MainWindow : Window
 
     private void RenameAttachment_Click(object sender, RoutedEventArgs e)
     {
-        SelectAttachmentFromSender(sender);
-        RenameSelectedAttachment();
+        if (SelectAttachmentFromSender(sender) is { } attachment)
+        {
+            BeginAttachmentEdit(attachment);
+        }
     }
 
     private void RenameSelectedAttachment()
@@ -268,6 +303,96 @@ public partial class MainWindow : Window
     {
         SelectAttachmentFromSender(sender);
         OpenSelectedAttachment();
+    }
+
+    private void AttachmentFileLink_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2)
+        {
+            return;
+        }
+
+        if (SelectAttachmentFromSender(sender) is { } attachment)
+        {
+            BeginAttachmentEdit(attachment);
+        }
+        e.Handled = true;
+    }
+
+    private void AttachmentEditView_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: AttachmentEditorViewModel attachment } editView ||
+            e.NewFocus is DependencyObject newFocus && IsDescendantOf(newFocus, editView))
+        {
+            return;
+        }
+
+        CompleteAttachmentEdit(attachment);
+    }
+
+    private void AttachmentEditView_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: AttachmentEditorViewModel attachment })
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            CompleteAttachmentEdit(attachment);
+            AttachmentsList.Focus();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            CancelAttachmentEdit(attachment);
+            AttachmentsList.Focus();
+            e.Handled = true;
+        }
+    }
+
+    private void BeginAttachmentEdit(AttachmentEditorViewModel attachment)
+    {
+        _viewModel.SelectedAttachment = attachment;
+        if (!attachment.IsEditing)
+        {
+            _attachmentEditSnapshots[attachment] = attachment.File;
+        }
+
+        attachment.IsEditing = true;
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (AttachmentsList.ItemContainerGenerator.ContainerFromItem(attachment) is ListBoxItem item &&
+                FindVisualChild<System.Windows.Controls.TextBox>(item) is { } input)
+            {
+                input.Focus();
+                input.SelectAll();
+            }
+        });
+    }
+
+    private void CompleteAttachmentEdit(AttachmentEditorViewModel attachment)
+    {
+        if (!attachment.IsEditing)
+        {
+            return;
+        }
+
+        attachment.IsEditing = false;
+        _attachmentEditSnapshots.Remove(attachment);
+        SaveAttachmentsInternal($"Arquivo renomeado para {attachment.File}.");
+    }
+
+    private void CancelAttachmentEdit(AttachmentEditorViewModel attachment)
+    {
+        if (_attachmentEditSnapshots.Remove(attachment, out var originalFile))
+        {
+            attachment.File = originalFile;
+        }
+
+        attachment.IsEditing = false;
+        _viewModel.StatusMessage = "Edição cancelada.";
     }
 
     private AttachmentEditorViewModel? SelectAttachmentFromSender(object sender)
@@ -340,7 +465,10 @@ public partial class MainWindow : Window
 
         if (e.Key == Key.F2)
         {
-            RenameSelectedAttachment();
+            if (_viewModel.SelectedAttachment is { } attachment)
+            {
+                BeginAttachmentEdit(attachment);
+            }
             e.Handled = true;
         }
     }
@@ -390,12 +518,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (FindAncestor<ListBoxItem>(e.OriginalSource as DependencyObject) is null)
+        if (FindAncestor<ListBoxItem>(e.OriginalSource as DependencyObject) is not { DataContext: AttachmentEditorViewModel attachment })
         {
             return;
         }
 
-        OpenSelectedAttachment();
+        BeginAttachmentEdit(attachment);
         e.Handled = true;
     }
 
@@ -714,16 +842,20 @@ public partial class MainWindow : Window
 
     private void OpenTip(LinkEditorViewModel? tip)
     {
-        var url = tip?.Url;
+        OpenUrl(tip?.Url, "Selecione uma dica com link para abrir.");
+    }
+
+    private void OpenUrl(string? url, string emptyMessage)
+    {
         if (string.IsNullOrWhiteSpace(url))
         {
-            _viewModel.StatusMessage = "Selecione uma dica com link para abrir.";
+            _viewModel.StatusMessage = emptyMessage;
             return;
         }
 
-        if (tip?.HasValidUrl != true || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        if (!LinkEditorViewModel.IsHttpUrl(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
-            _viewModel.StatusMessage = "O link selecionado não parece ser uma URL válida.";
+            _viewModel.StatusMessage = "O link informado não parece ser uma URL válida.";
             return;
         }
 
@@ -732,6 +864,86 @@ public partial class MainWindow : Window
             FileName = uri.ToString(),
             UseShellExecute = true
         });
+    }
+
+    private void RefreshMapBrowsers()
+    {
+        var url = _viewModel.MyMapsUrl;
+        var embedUrl = BuildMyMapsEmbedUrl(url);
+        var hasMap = embedUrl is not null;
+        OverviewMapPlaceholder.Visibility = hasMap ? Visibility.Collapsed : Visibility.Visible;
+        MainMapPlaceholder.Visibility = hasMap ? Visibility.Collapsed : Visibility.Visible;
+
+        if (embedUrl is null)
+        {
+            NavigateBrowserToBlank(OverviewMapBrowser);
+            NavigateBrowserToBlank(MainMapBrowser);
+            return;
+        }
+
+        NavigateMapBrowser(OverviewMapBrowser, embedUrl);
+        NavigateMapBrowser(MainMapBrowser, embedUrl);
+    }
+
+    private static string? BuildMyMapsEmbedUrl(string url)
+    {
+        if (!LinkEditorViewModel.IsHttpUrl(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        var mid = GetQueryParameter(uri.Query, "mid");
+        if (string.IsNullOrWhiteSpace(mid))
+        {
+            var match = Regex.Match(uri.AbsolutePath, @"/maps/d/(?:u/\d+/)?(?:viewer|edit|embed)/([^/?#]+)", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                mid = Uri.UnescapeDataString(match.Groups[1].Value);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(mid))
+        {
+            return uri.ToString();
+        }
+
+        return $"https://www.google.com/maps/d/embed?mid={Uri.EscapeDataString(mid)}";
+    }
+
+    private static void NavigateMapBrowser(Microsoft.Web.WebView2.Wpf.WebView2 browser, string embedUrl)
+    {
+        if (string.Equals(browser.Tag as string, embedUrl, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        browser.Tag = embedUrl;
+        browser.Source = new Uri(embedUrl);
+    }
+
+    private static string? GetQueryParameter(string query, string name)
+    {
+        foreach (var part in query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var pieces = part.Split('=', 2);
+            if (pieces.Length == 2 && string.Equals(Uri.UnescapeDataString(pieces[0]), name, StringComparison.OrdinalIgnoreCase))
+            {
+                return Uri.UnescapeDataString(pieces[1].Replace("+", " "));
+            }
+        }
+
+        return null;
+    }
+
+    private static void NavigateBrowserToBlank(Microsoft.Web.WebView2.Wpf.WebView2 browser)
+    {
+        if (string.Equals(browser.Tag as string, "about:blank", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        browser.Tag = "about:blank";
+        browser.Source = new Uri("about:blank");
     }
 
     private static bool IsDescendantOf(DependencyObject child, DependencyObject parent)
@@ -864,6 +1076,7 @@ public partial class MainWindow : Window
         _viewModel.StatusMessage = trip is null
             ? $"Não foi possível abrir {tripId}."
             : $"Viagem {trip.Title} carregada.";
+        RefreshMapBrowsers();
     }
 
     private void ShowOverview()
@@ -871,8 +1084,10 @@ public partial class MainWindow : Window
         OverviewPanel.Visibility = Visibility.Visible;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
+        MapPanel.Visibility = Visibility.Collapsed;
         FilesPanel.Visibility = Visibility.Collapsed;
         SetActiveNav(OverviewNavButton);
+        RefreshMapBrowsers();
     }
 
     private void ShowTasks()
@@ -880,6 +1095,7 @@ public partial class MainWindow : Window
         OverviewPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Visible;
         TipsPanel.Visibility = Visibility.Collapsed;
+        MapPanel.Visibility = Visibility.Collapsed;
         FilesPanel.Visibility = Visibility.Collapsed;
         SetActiveNav(TasksNavButton);
     }
@@ -889,8 +1105,20 @@ public partial class MainWindow : Window
         OverviewPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Visible;
+        MapPanel.Visibility = Visibility.Collapsed;
         FilesPanel.Visibility = Visibility.Collapsed;
         SetActiveNav(TipsNavButton);
+    }
+
+    private void ShowMap()
+    {
+        OverviewPanel.Visibility = Visibility.Collapsed;
+        TasksPanel.Visibility = Visibility.Collapsed;
+        TipsPanel.Visibility = Visibility.Collapsed;
+        MapPanel.Visibility = Visibility.Visible;
+        FilesPanel.Visibility = Visibility.Collapsed;
+        SetActiveNav(MapNavButton);
+        RefreshMapBrowsers();
     }
 
     private void ShowFiles()
@@ -898,6 +1126,7 @@ public partial class MainWindow : Window
         OverviewPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
+        MapPanel.Visibility = Visibility.Collapsed;
         FilesPanel.Visibility = Visibility.Visible;
         SetActiveNav(FilesNavButton);
     }
@@ -905,7 +1134,7 @@ public partial class MainWindow : Window
     private void SetActiveNav(System.Windows.Controls.Button activeButton)
     {
         var accentBrush = (System.Windows.Media.Brush)FindResource("AccentBrush");
-        foreach (var button in new[] { OverviewNavButton, TasksNavButton, TipsNavButton, FilesNavButton })
+        foreach (var button in new[] { OverviewNavButton, TasksNavButton, TipsNavButton, MapNavButton, FilesNavButton })
         {
             button.Foreground = System.Windows.Media.Brushes.Black;
             button.Background = System.Windows.Media.Brushes.Transparent;
@@ -945,6 +1174,19 @@ public partial class MainWindow : Window
         _repository.SaveTrip(_viewModel.CurrentTrip);
         _viewModel.StatusMessage = message;
         _isSavingTips = false;
+    }
+
+    private void SaveMapInternal(string message)
+    {
+        if (_repository is null || _viewModel.CurrentTrip is null)
+        {
+            _viewModel.StatusMessage = "Nenhuma viagem carregada para salvar.";
+            return;
+        }
+
+        _repository.SaveTrip(_viewModel.CurrentTrip);
+        RefreshMapBrowsers();
+        _viewModel.StatusMessage = message;
     }
 
     private void SaveAttachmentsInternal(string message)

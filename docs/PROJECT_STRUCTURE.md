@@ -16,7 +16,7 @@ UltraViagem/
 
 ## Arquivos Da Raiz
 
-- `.gitignore`: ignora `bin/`, `obj/` e arquivos temporários.
+- `.gitignore`: ignora `bin/`, `obj/`, saídas locais de build/publicação e arquivos temporários.
 - `README.md`: entrada principal para retomar o projeto.
 - `UltraViagem.slnx`: solução .NET.
 - `config.json`: exemplo de configuração do repositório de viagens.
@@ -58,8 +58,8 @@ UltraViagem.App/
 
 - `App.xaml`: estilos globais, paleta, templates de botões, navegação e scrollbars.
 - `AppViewModel.cs`: estado da UI, coleções editáveis e conversão entre modelo e tela.
-- `MainWindow.xaml`: layout principal, sidebar, visão geral, tarefas e dicas.
-- `MainWindow.xaml.cs`: navegação, comandos, salvamento e integração com o repositório.
+- `MainWindow.xaml`: layout principal, sidebar, visão geral, tarefas, dicas, mapa e arquivos.
+- `MainWindow.xaml.cs`: navegação, comandos, salvamento, WebView2 do mapa e integração com o repositório.
 - `TripDetailsWindow.*`: modal de criação/edição dos dados da viagem.
 - `TripSelectionWindow.*`: modal de seleção de viagem com favoritos.
 - `Assets/Menu`: ícones PNG do menu lateral.

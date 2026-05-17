@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:UltraViagem.App"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
         Title="UltraViagem"
         Height="900"
@@ -68,7 +69,7 @@
                             <TextBlock Text="Tarefas" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource NavButton}" IsEnabled="False">
+                    <Button x:Name="MapNavButton" Style="{StaticResource NavButton}" Click="ShowMap_Click">
                         <StackPanel Orientation="Horizontal">
                             <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
                                 <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/map.png" /></Border.OpacityMask>
@@ -364,21 +365,24 @@
                                         <Border Width="24" Height="24" Margin="0,0,9,0" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
                                             <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/map.png" /></Border.OpacityMask>
                                         </Border>
-                                        <TextBlock Text="Mapa e lugares" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+                                        <TextBlock Text="Mapa" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                    <TextBlock Text="▱" HorizontalAlignment="Right" FontSize="22" Foreground="{StaticResource AccentBrush}" />
+                                    <Button Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" Click="ShowMap_Click" ToolTip="Abrir mapa" />
                                 </Grid>
-                                <Border Height="210" Background="#DDE8DF" CornerRadius="8" Margin="0,0,0,12">
+                                <Border Height="250" Background="#DDE8DF" CornerRadius="8" Margin="0,0,0,12" ClipToBounds="True">
                                     <Grid>
-                                        <Polyline Points="42,164 72,128 96,140 132,96 158,116 190,74"
-                                                  Stroke="{StaticResource AccentBrush}"
-                                                  StrokeThickness="4" />
-                                        <TextBlock Text="Chile" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,0" />
-                                        <TextBlock Text="Coyhaique" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,-20,0,0" />
-                                        <TextBlock Text="Puerto Río Tranquilo" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,24,18,0" />
+                                        <wv2:WebView2 x:Name="OverviewMapBrowser" />
+                                        <TextBlock x:Name="OverviewMapPlaceholder"
+                                                   Text="Cadastre o link público do Google My Maps na tela Mapa."
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center"
+                                                   Foreground="{StaticResource MutedTextBrush}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Margin="24" />
                                     </Grid>
                                 </Border>
-                                <Button Content="⇧  Exportar KML" Style="{StaticResource SecondaryButton}" IsEnabled="False" />
+                                <Button Content="Abrir no navegador" Style="{StaticResource SecondaryButton}" Click="OpenMyMaps_Click" />
                             </StackPanel>
                         </Border>
 
@@ -778,6 +782,73 @@
                 </Border>
             </Grid>
 
+            <Grid x:Name="MapPanel" Grid.Row="1" Visibility="Collapsed" Margin="24,22,24,18">
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,18">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                    <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="0,0,10,0" ToolTip="Voltar para visão geral" />
+                                    <TextBlock Text="Mapa" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" />
+                                </StackPanel>
+                                <TextBlock Text="Informe o link público do Google My Maps e visualize o mapa da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <Button Content="Abrir no navegador" Style="{StaticResource SecondaryButton}" Click="OpenMyMaps_Click" Margin="0,0,10,0" />
+                                <Button Content="Salvar Mapa" Style="{StaticResource PrimaryButton}" Click="SaveMap_Click" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Grid.Row="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Link público do Google My Maps" Style="{StaticResource Caption}" />
+                                    <TextBox x:Name="MapUrlBox"
+                                             Text="{Binding MyMapsUrl, UpdateSourceTrigger=PropertyChanged}"
+                                             Padding="10"
+                                             Margin="0,4,0,0"
+                                             LostKeyboardFocus="MapUrlBox_LostKeyboardFocus"
+                                             KeyDown="MapUrlBox_KeyDown" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding StatusMessage}"
+                                           Foreground="{StaticResource MutedTextBrush}"
+                                           VerticalAlignment="Bottom"
+                                           Margin="16,0,0,10" />
+                            </Grid>
+
+                            <Border Grid.Row="1" Background="#DDE8DF" CornerRadius="8" ClipToBounds="True">
+                                <Grid>
+                                    <wv2:WebView2 x:Name="MainMapBrowser" />
+                                    <TextBlock x:Name="MainMapPlaceholder"
+                                               Text="Cole aqui o link público do Google My Maps para exibir o mapa."
+                                               TextWrapping="Wrap"
+                                               TextAlignment="Center"
+                                               Foreground="{StaticResource MutedTextBrush}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Margin="24" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+
             <Grid x:Name="FilesPanel" Grid.Row="1" Visibility="Collapsed" Margin="24,22,24,18">
                 <Border Style="{StaticResource Card}"
                         AllowDrop="True"
@@ -818,7 +889,7 @@
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
-                                    <Setter Property="Margin" Value="0,0,0,8" />
+                                    <Setter Property="Margin" Value="0,0,0,5" />
                                     <Setter Property="Padding" Value="0" />
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                     <Setter Property="Template">
@@ -829,7 +900,7 @@
                                                         BorderThickness="1"
                                                         Background="{StaticResource PanelBackground}"
                                                         CornerRadius="8"
-                                                        Padding="12">
+                                                        Padding="7">
                                                     <ContentPresenter />
                                                 </Border>
                                                 <ControlTemplate.Triggers>
@@ -848,14 +919,14 @@
                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid>
+                                    <Grid MinHeight="34">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="56" />
+                                            <ColumnDefinition Width="46" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <Border Width="42" Height="46" CornerRadius="5" Background="#F7F9F8" HorizontalAlignment="Left">
-                                            <Image Width="34" Height="34" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <Border Width="34" Height="36" CornerRadius="5" Background="#F7F9F8" HorizontalAlignment="Left">
+                                            <Image Width="28" Height="28" VerticalAlignment="Center" HorizontalAlignment="Center">
                                                 <Image.Source>
                                                     <MultiBinding Converter="{StaticResource AttachmentIconConverter}">
                                                         <Binding Path="File" />
@@ -864,39 +935,53 @@
                                                 </Image.Source>
                                             </Image>
                                         </Border>
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding File}"
-                                                   FontSize="16"
-                                                   FontWeight="SemiBold"
-                                                   TextWrapping="Wrap"
-                                                   VerticalAlignment="Center"
-                                                   Margin="0,0,16,0" />
-                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Content="↗"
-                                                    Style="{StaticResource SecondaryButton}"
-                                                    Width="34"
-                                                    Height="34"
-                                                    Padding="0"
-                                                    Margin="0,0,8,0"
+                                        <Grid Grid.Column="1" Margin="0,0,14,0" VerticalAlignment="Center">
+                                            <Button x:Name="AttachmentReadView"
+                                                    Style="{StaticResource LinkButton}"
                                                     ToolTip="Abrir arquivo"
-                                                    Click="OpenAttachment_Click" />
+                                                    PreviewMouseLeftButtonDown="AttachmentFileLink_PreviewMouseLeftButtonDown"
+                                                    Click="OpenAttachment_Click">
+                                                <TextBlock Text="{Binding File}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource AccentBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </Button>
+                                            <TextBox x:Name="AttachmentEditView"
+                                                     Text="{Binding File, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontSize="13"
+                                                     FontWeight="SemiBold"
+                                                     Padding="5,2"
+                                                     BorderBrush="{StaticResource BorderBrushSoft}"
+                                                     Background="{StaticResource InputBackground}"
+                                                     Visibility="Collapsed"
+                                                     LostKeyboardFocus="AttachmentEditView_LostKeyboardFocus"
+                                                     PreviewKeyDown="AttachmentEditView_PreviewKeyDown" />
+                                        </Grid>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                             <Button Content="✎"
                                                     Style="{StaticResource SecondaryButton}"
-                                                    Width="34"
-                                                    Height="34"
+                                                    Width="28"
+                                                    Height="28"
                                                     Padding="0"
-                                                    Margin="0,0,8,0"
+                                                    Margin="0,0,6,0"
                                                     ToolTip="Renomear arquivo"
                                                     Click="RenameAttachment_Click" />
                                             <Button Content="×"
                                                     Style="{StaticResource SecondaryButton}"
-                                                    Width="34"
-                                                    Height="34"
+                                                    Width="28"
+                                                    Height="28"
                                                     Padding="0"
                                                     ToolTip="Excluir arquivo"
                                                     Click="DeleteAttachment_Click" />
                                         </StackPanel>
                                     </Grid>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                            <Setter TargetName="AttachmentReadView" Property="Visibility" Value="Collapsed" />
+                                            <Setter TargetName="AttachmentEditView" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>

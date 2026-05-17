@@ -59,12 +59,7 @@
                     <TextBox x:Name="CurrencyBox" Padding="10" Margin="0,4,0,14" />
                 </StackPanel>
 
-                <StackPanel Grid.Row="3" Grid.ColumnSpan="2">
-                    <TextBlock Text="Link do Google My Maps" Style="{StaticResource Caption}" />
-                    <TextBox x:Name="MyMapsBox" Padding="10" Margin="0,4,0,14" />
-                </StackPanel>
-
-                <TextBlock Grid.Row="4"
+                <TextBlock Grid.Row="3"
                            x:Name="ErrorText"
                            Foreground="#B42318"
                            TextWrapping="Wrap"

@@ -41,7 +41,8 @@ O formato de dados atual fica em:
 
 `Trip` contém:
 
-- dados gerais: `id`, `title`, datas, moeda, pessoas, URL do Google My Maps;
+- dados gerais: `id`, `title`, datas, moeda e pessoas;
+- `myMapsUrl`: URL pública do Google My Maps exibida pela tela de mapa;
 - `itinerary`: roteiro por dia;
 - `tasks`: tarefas;
 - `places`: lugares;
@@ -66,16 +67,21 @@ A janela principal alterna painéis:
 - `OverviewPanel`: visão geral.
 - `TasksPanel`: edição de tarefas.
 - `TipsPanel`: edição de dicas.
+- `MapPanel`: visualização do Google My Maps.
+- `FilesPanel`: arquivos anexos.
 
 Os botões ativos do menu lateral são estilizados no code-behind por `SetActiveNav`.
 
 ## Salvamento
 
-Tarefas e dicas possuem salvamento automático via eventos do ViewModel:
+Tarefas, dicas e arquivos possuem salvamento automático via eventos do ViewModel:
 
 - `TasksChanged` chama `SaveTasksInternal`.
 - `TipsChanged` chama `SaveTipsInternal`.
 - `AttachmentsChanged` chama `SaveAttachmentsInternal`.
+
+O link do mapa é salvo a partir da tela `Mapa`, diretamente em `Trip.MyMapsUrl`.
+O mapa é exibido com `Microsoft.Web.WebView2`, usando o formato público embutido do Google My Maps (`/maps/d/embed?mid=...`).
 
 Arquivos anexados são copiados para a pasta da viagem. A lista de anexos salva apenas o nome do arquivo relativo à pasta da viagem.
 Na UI WPF, `AttachmentIconConverter` consulta o Shell do Windows para exibir o ícone associado à extensão configurada no sistema operacional.
@@ -100,3 +106,4 @@ Para preparar versões futuras:
 - Tarefas têm apenas `pendente` e `concluída`, com notas.
 - Dicas são apenas `nome` e `link`, sem categorias.
 - Arquivos têm apenas nome de arquivo, sem texto, categoria ou associação por enquanto.
+- A edição do mapa acontece no Google My Maps; o app apenas guarda o link público e exibe o mapa.

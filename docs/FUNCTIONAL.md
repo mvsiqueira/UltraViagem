@@ -27,8 +27,7 @@ O botão `Dados da viagem` abre o modal de edição com:
 - data inicial;
 - data final;
 - pessoas;
-- moeda;
-- link do Google My Maps.
+- moeda.
 
 ## Visão Geral
 
@@ -37,7 +36,7 @@ A visão geral resume:
 - roteiro por dia;
 - tarefas pendentes/concluídas;
 - gastos estimados, pagos e pendentes;
-- mapa/lugares;
+- mapa do Google My Maps;
 - dicas;
 - arquivos.
 
@@ -69,14 +68,21 @@ Dicas usam a lista `links` do `trip.json`.
 Na visão geral:
 
 - aparece um card compacto com as primeiras dicas;
+- links válidos aparecem clicáveis diretamente no card;
 - o botão `>` abre a tela completa.
 
 Na tela de dicas:
 
-- tabela simples com `Nome` e `Link`;
-- botão `Nova`;
-- botão `Abrir link`;
-- botão `Excluir`;
+- lista compacta de cards com nome e texto/link;
+- botão `+ Nova Dica`;
+- links válidos aparecem clicáveis;
+- o lápis coloca o card em edição inline;
+- `F2` edita o card selecionado;
+- `Enter` aplica a edição;
+- `Esc` descarta a edição;
+- sair do foco aplica a edição;
+- duplo clique no espaço do nome ou texto/link entra em edição;
+- cada card tem ação para excluir;
 - botão `Salvar Dicas`;
 - autosave em alterações.
 
@@ -94,17 +100,20 @@ Na tela de arquivos:
 - é possível anexar arquivos por botão;
 - é possível anexar arquivos por drag-and-drop em qualquer área da seção;
 - os arquivos anexados são copiados para a pasta da viagem;
-- a lista visual mostra cada arquivo como um card com ícone do tipo de arquivo configurado no Windows e texto;
+- a lista visual mostra cada arquivo como um card compacto com ícone do tipo de arquivo configurado no Windows e nome clicável;
 - clicar no card seleciona o arquivo;
 - o topo da tela mantém apenas a ação global `+ Anexar arquivos`;
-- cada card tem ações por ícone para abrir, renomear e excluir;
+- clicar no nome do arquivo abre o arquivo;
+- cada card tem ações por ícone para renomear e excluir;
 - os ícones de ação têm tooltip;
-- o botão de renomear permite mudar o nome do arquivo;
-- a tecla `F2` renomeia o arquivo selecionado;
+- o botão de renomear permite mudar o nome do arquivo inline;
+- a tecla `F2` renomeia inline o arquivo selecionado;
+- duplo clique no card ou no nome entra em edição inline;
+- `Enter` aplica a edição;
+- `Esc` descarta a edição;
+- sair do foco aplica a edição;
 - é possível reordenar os arquivos com drag-and-drop dentro da lista;
 - ao salvar, o arquivo físico também é renomeado na pasta da viagem;
-- é possível abrir o arquivo selecionado;
-- duplo clique no card abre o arquivo;
 - é possível excluir o arquivo selecionado;
 - ao excluir, o arquivo é removido da lista e apagado fisicamente da pasta da viagem;
 - a remoção exige confirmação;
@@ -112,7 +121,22 @@ Na tela de arquivos:
 
 ## Mapa
 
-O modelo tem `MyMapsUrl` nos dados da viagem e `places` no `trip.json`. A visão geral exibe um preview visual simples, mas ainda não há integração real com Google My Maps nem exportação KML funcional.
+O app usa `MyMapsUrl` no `trip.json` para exibir um mapa público do Google My Maps.
+
+Na tela de mapa:
+
+- o usuário cola ou edita o link público do Google My Maps;
+- o link é salvo ao pressionar `Enter`, sair do campo ou clicar em `Salvar Mapa`;
+- o app transforma links de edição/visualização do My Maps em URL pública embutida (`/maps/d/embed?mid=...`);
+- o mapa é exibido dentro do app usando WebView2;
+- o botão `Abrir no navegador` abre o link original no navegador padrão.
+
+Na visão geral:
+
+- o card de mapa exibe o mesmo mapa embutido em formato compacto;
+- o botão `>` abre a tela completa de mapa.
+
+A edição do mapa, rotas, camadas e pontos é feita no próprio Google My Maps. O app não edita o conteúdo do mapa nem exporta KML.
 
 ## Orçamento
 
