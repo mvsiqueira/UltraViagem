@@ -16,10 +16,12 @@ public sealed class AppViewModel : NotifyObject
     private string? _selectedTripId;
     private TaskEditorViewModel? _selectedTask;
     private LinkEditorViewModel? _selectedTip;
+    private AttachmentEditorViewModel? _selectedAttachment;
     private string _statusMessage = "Pronto";
     private string _taskFilter = "all";
     private bool _isLoadingTasks;
     private bool _isLoadingTips;
+    private bool _isLoadingAttachments;
 
     public ObservableCollection<string> TripIds { get; } = [];
     public ObservableCollection<TripSelectionItem> TripSelectionItems { get; } = [];
@@ -27,9 +29,10 @@ public sealed class AppViewModel : NotifyObject
     public ObservableCollection<TaskEditorViewModel> AllTasks { get; } = [];
     public ObservableCollection<TaskEditorViewModel> Tasks { get; } = [];
     public ObservableCollection<LinkEditorViewModel> Tips { get; } = [];
+    public ObservableCollection<AttachmentEditorViewModel> Attachments { get; } = [];
     public ObservableCollection<BudgetCategoryViewModel> BudgetCategories { get; } = [];
     public ObservableCollection<string> Places { get; } = [];
-    public ObservableCollection<string> OverviewFiles { get; } = [];
+    public ObservableCollection<AttachmentEditorViewModel> OverviewFiles { get; } = [];
     public ObservableCollection<LinkEditorViewModel> OverviewTips { get; } = [];
 
     public string RootPath
@@ -56,6 +59,12 @@ public sealed class AppViewModel : NotifyObject
         set => SetField(ref _selectedTip, value);
     }
 
+    public AttachmentEditorViewModel? SelectedAttachment
+    {
+        get => _selectedAttachment;
+        set => SetField(ref _selectedAttachment, value);
+    }
+
     public string StatusMessage
     {
         get => _statusMessage;
@@ -79,7 +88,7 @@ public sealed class AppViewModel : NotifyObject
     public string TripSubtitle => _trip is null ? "Selecione uma pasta com viagens." : BuildTripSubtitle(_trip);
     public string DaysCount => (_trip?.Itinerary.Count ?? 0).ToString(Culture);
     public string PendingTasksCount => AllTasks.Count(task => task.Status == "pending").ToString(Culture);
-    public string AttachmentsCount => (_trip?.Attachments.Count ?? 0).ToString(Culture);
+    public string AttachmentsCount => Attachments.Count.ToString(Culture);
     public string BudgetSubtitle => _trip is null ? "" : $"{_trip.Expenses.Count} itens cadastrados em {_trip.BaseCurrency}";
     public string EstimatedTotal => FormatMoney(_trip?.Expenses.Sum(expense => expense.SubtotalBase) ?? 0);
     public string PaidTotal => FormatMoney(_trip?.Expenses.Sum(expense => expense.PaidAmount) ?? 0);
@@ -96,6 +105,7 @@ public sealed class AppViewModel : NotifyObject
     public Trip? CurrentTrip => _trip;
     public event EventHandler? TasksChanged;
     public event EventHandler? TipsChanged;
+    public event EventHandler? AttachmentsChanged;
 
     public void SetTripsRoot(string rootPath, IReadOnlyList<string> tripIds, IReadOnlyList<TripSelectionItem> tripSelectionItems, string? selectedTripId)
     {
@@ -109,6 +119,7 @@ public sealed class AppViewModel : NotifyObject
     {
         _isLoadingTasks = true;
         _isLoadingTips = true;
+        _isLoadingAttachments = true;
         foreach (var task in AllTasks)
         {
             task.PropertyChanged -= Task_PropertyChanged;
@@ -117,12 +128,17 @@ public sealed class AppViewModel : NotifyObject
         {
             tip.PropertyChanged -= Tip_PropertyChanged;
         }
+        foreach (var attachment in Attachments)
+        {
+            attachment.PropertyChanged -= Attachment_PropertyChanged;
+        }
 
         _trip = trip;
 
         Itinerary.ReplaceWith(trip?.Itinerary.Select(ItineraryDayViewModel.FromDay) ?? []);
         AllTasks.ReplaceWith(trip?.Tasks.Select(TaskEditorViewModel.FromTask) ?? []);
         Tips.ReplaceWith(trip?.Links.Select(LinkEditorViewModel.FromLink) ?? []);
+        Attachments.ReplaceWith(trip?.Attachments.Select(AttachmentEditorViewModel.FromAttachment) ?? []);
         foreach (var task in AllTasks)
         {
             task.PropertyChanged += Task_PropertyChanged;
@@ -131,17 +147,23 @@ public sealed class AppViewModel : NotifyObject
         {
             tip.PropertyChanged += Tip_PropertyChanged;
         }
+        foreach (var attachment in Attachments)
+        {
+            attachment.PropertyChanged += Attachment_PropertyChanged;
+        }
 
         ApplyTaskFilter();
         BudgetCategories.ReplaceWith(BuildBudgetCategories(trip));
         Places.ReplaceWith(trip?.Places.Take(5).Select(place => $"{place.Name} · {place.Type ?? "lugar"}") ?? []);
-        OverviewFiles.ReplaceWith(trip?.Attachments.Take(4).Select(attachment => $"Arquivo · {attachment.File}") ?? []);
+        OverviewFiles.ReplaceWith(Attachments.Take(4));
         OverviewTips.ReplaceWith(Tips.Take(4));
 
         SelectedTask = Tasks.FirstOrDefault();
         SelectedTip = Tips.FirstOrDefault();
+        SelectedAttachment = Attachments.FirstOrDefault();
         _isLoadingTasks = false;
         _isLoadingTips = false;
+        _isLoadingAttachments = false;
         RefreshSummary();
     }
 
@@ -234,6 +256,74 @@ public sealed class AppViewModel : NotifyObject
         OverviewTips.ReplaceWith(Tips.Take(4));
     }
 
+    public void AddAttachment(string fileName)
+    {
+        var attachment = new AttachmentEditorViewModel
+        {
+            Id = $"arquivo-{DateTime.Now:yyyyMMddHHmmssfff}",
+            File = fileName,
+            OriginalFile = fileName
+        };
+
+        attachment.PropertyChanged += Attachment_PropertyChanged;
+        Attachments.Add(attachment);
+        OverviewFiles.ReplaceWith(Attachments.Take(4));
+        SelectedAttachment = attachment;
+        RefreshSummary();
+        AttachmentsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void DeleteSelectedAttachment()
+    {
+        if (SelectedAttachment is null)
+        {
+            return;
+        }
+
+        var index = Attachments.IndexOf(SelectedAttachment);
+        SelectedAttachment.PropertyChanged -= Attachment_PropertyChanged;
+        Attachments.Remove(SelectedAttachment);
+        OverviewFiles.ReplaceWith(Attachments.Take(4));
+        SelectedAttachment = Attachments.ElementAtOrDefault(Math.Max(0, index - 1));
+        RefreshSummary();
+        AttachmentsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void MoveAttachment(AttachmentEditorViewModel attachment, int targetIndex)
+    {
+        var oldIndex = Attachments.IndexOf(attachment);
+        if (oldIndex < 0)
+        {
+            return;
+        }
+
+        var newIndex = Math.Clamp(targetIndex, 0, Math.Max(Attachments.Count - 1, 0));
+        if (oldIndex == newIndex)
+        {
+            return;
+        }
+
+        Attachments.Move(oldIndex, newIndex);
+        OverviewFiles.ReplaceWith(Attachments.Take(4));
+        SelectedAttachment = attachment;
+        AttachmentsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void ApplyAttachmentsToTrip()
+    {
+        if (_trip is null)
+        {
+            return;
+        }
+
+        _trip.Attachments = Attachments
+            .Where(attachment => !string.IsNullOrWhiteSpace(attachment.File))
+            .Select(attachment => attachment.ToAttachmentItem())
+            .ToList();
+        OverviewFiles.ReplaceWith(Attachments.Take(4));
+        RefreshSummary();
+    }
+
     public void RefreshSummary()
     {
         OnPropertyChanged(nameof(TripPath));
@@ -293,6 +383,18 @@ public sealed class AppViewModel : NotifyObject
 
         OverviewTips.ReplaceWith(Tips.Take(4));
         TipsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void Attachment_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isLoadingAttachments)
+        {
+            return;
+        }
+
+        OverviewFiles.ReplaceWith(Attachments.Take(4));
+        RefreshSummary();
+        AttachmentsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private static IReadOnlyList<BudgetCategoryViewModel> BuildBudgetCategories(Trip? trip)
@@ -434,6 +536,39 @@ public sealed class LinkEditorViewModel : NotifyObject
             Id = string.IsNullOrWhiteSpace(Id) ? $"dica-{Guid.NewGuid():N}" : Id.Trim(),
             Title = Title.Trim(),
             Url = Url.Trim()
+        };
+    }
+}
+
+public sealed class AttachmentEditorViewModel : NotifyObject
+{
+    private string _id = "";
+    private string _file = "";
+    private string _originalFile = "";
+
+    public string Id { get => _id; set => SetField(ref _id, value); }
+    public string File { get => _file; set => SetField(ref _file, value); }
+    public string OriginalFile { get => _originalFile; set => SetField(ref _originalFile, value); }
+
+    public static AttachmentEditorViewModel FromAttachment(AttachmentItem attachment)
+    {
+        var file = attachment.File;
+        return new AttachmentEditorViewModel
+        {
+            Id = attachment.Id,
+            File = file,
+            OriginalFile = file
+        };
+    }
+
+    public AttachmentItem ToAttachmentItem()
+    {
+        var file = Path.GetFileName(File.Trim());
+        return new AttachmentItem
+        {
+            Id = string.IsNullOrWhiteSpace(Id) ? $"arquivo-{Guid.NewGuid():N}" : Id.Trim(),
+            Title = file,
+            File = file
         };
     }
 }

@@ -41,6 +41,9 @@ A visão geral resume:
 - dicas;
 - arquivos.
 
+As telas internas de cards ativos, como `Tarefas`, `Dicas` e `Arquivos`, têm um botão `<` no cabeçalho para voltar à visão geral.
+Na visão geral, cards com tela interna usam um botão `>` no canto superior direito para navegação. Criação de novos itens fica nas telas internas, não nos cards de resumo.
+
 ## Tarefas
 
 Tarefas têm:
@@ -66,8 +69,7 @@ Dicas usam a lista `links` do `trip.json`.
 Na visão geral:
 
 - aparece um card compacto com as primeiras dicas;
-- o botão `+` cria uma dica;
-- o botão `Ver todas as dicas` abre a tela completa.
+- o botão `>` abre a tela completa.
 
 Na tela de dicas:
 
@@ -80,7 +82,33 @@ Na tela de dicas:
 
 ## Arquivos
 
-Arquivos são representados em `attachments` no `trip.json`. A visão geral já mostra uma lista compacta, mas ainda falta tela completa de gerenciamento.
+Arquivos são representados em `attachments` no `trip.json`.
+
+Na visão geral:
+
+- aparece um card compacto com os primeiros arquivos;
+- o botão `>` abre a tela completa.
+
+Na tela de arquivos:
+
+- é possível anexar arquivos por botão;
+- é possível anexar arquivos por drag-and-drop em qualquer área da seção;
+- os arquivos anexados são copiados para a pasta da viagem;
+- a lista visual mostra cada arquivo como um card com ícone do tipo de arquivo configurado no Windows e texto;
+- clicar no card seleciona o arquivo;
+- o topo da tela mantém apenas a ação global `+ Anexar arquivos`;
+- cada card tem ações por ícone para abrir, renomear e excluir;
+- os ícones de ação têm tooltip;
+- o botão de renomear permite mudar o nome do arquivo;
+- a tecla `F2` renomeia o arquivo selecionado;
+- é possível reordenar os arquivos com drag-and-drop dentro da lista;
+- ao salvar, o arquivo físico também é renomeado na pasta da viagem;
+- é possível abrir o arquivo selecionado;
+- duplo clique no card abre o arquivo;
+- é possível excluir o arquivo selecionado;
+- ao excluir, o arquivo é removido da lista e apagado fisicamente da pasta da viagem;
+- a remoção exige confirmação;
+- a tecla `Delete` exclui o arquivo selecionado, também com confirmação.
 
 ## Mapa
 

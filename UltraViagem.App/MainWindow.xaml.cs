@@ -3,6 +3,8 @@ using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using UltraViagem.Core;
 using Forms = System.Windows.Forms;
 
@@ -12,9 +14,11 @@ public partial class MainWindow : Window
 {
     private readonly AppViewModel _viewModel = new();
     private TripRepository? _repository;
+    private System.Windows.Point _attachmentDragStartPoint;
     private bool _isLoadingTrip;
     private bool _isSavingTasks;
     private bool _isSavingTips;
+    private bool _isSavingAttachments;
 
     public MainWindow()
     {
@@ -22,6 +26,7 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
         _viewModel.TasksChanged += ViewModel_TasksChanged;
         _viewModel.TipsChanged += ViewModel_TipsChanged;
+        _viewModel.AttachmentsChanged += ViewModel_AttachmentsChanged;
 
         LoadRepository(LocalSettings.Load().RepositoryPath ?? FindWorkspaceRoot());
         ShowOverview();
@@ -205,6 +210,374 @@ public partial class MainWindow : Window
         SaveTipsInternal($"Dicas salvas em {DateTime.Now:HH:mm}.");
     }
 
+    private void ShowFiles_Click(object sender, RoutedEventArgs e)
+    {
+        ShowFiles();
+    }
+
+    private void AttachFiles_Click(object sender, RoutedEventArgs e)
+    {
+        using var dialog = new Forms.OpenFileDialog
+        {
+            Title = "Selecione arquivos para anexar",
+            Multiselect = true,
+            CheckFileExists = true
+        };
+
+        if (dialog.ShowDialog() != Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        AddAttachmentFiles(dialog.FileNames);
+    }
+
+    private void DeleteAttachment_Click(object sender, RoutedEventArgs e)
+    {
+        SelectAttachmentFromSender(sender);
+        DeleteSelectedAttachmentWithConfirmation();
+    }
+
+    private void RenameAttachment_Click(object sender, RoutedEventArgs e)
+    {
+        SelectAttachmentFromSender(sender);
+        RenameSelectedAttachment();
+    }
+
+    private void RenameSelectedAttachment()
+    {
+        if (_viewModel.SelectedAttachment is not { } attachment)
+        {
+            _viewModel.StatusMessage = "Selecione um arquivo para renomear.";
+            return;
+        }
+
+        var newName = ShowRenameDialog(attachment.File);
+        if (string.IsNullOrWhiteSpace(newName) || string.Equals(newName, attachment.File, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        attachment.File = newName.Trim();
+        SaveAttachmentsInternal($"Arquivo renomeado para {attachment.File}.");
+    }
+
+    private void OpenAttachment_Click(object sender, RoutedEventArgs e)
+    {
+        SelectAttachmentFromSender(sender);
+        OpenSelectedAttachment();
+    }
+
+    private AttachmentEditorViewModel? SelectAttachmentFromSender(object sender)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not AttachmentEditorViewModel attachment)
+        {
+            return null;
+        }
+
+        _viewModel.SelectedAttachment = attachment;
+        return attachment;
+    }
+
+    private void DeleteSelectedAttachmentWithConfirmation()
+    {
+        if (_viewModel.SelectedAttachment is null)
+        {
+            _viewModel.StatusMessage = "Selecione um arquivo para excluir da lista.";
+            return;
+        }
+
+        var fileName = _viewModel.SelectedAttachment.File;
+        var result = System.Windows.MessageBox.Show(
+            $"Excluir \"{fileName}\" desta viagem?\n\nO arquivo também será apagado da pasta da viagem.",
+            "Confirmar exclusão",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        var path = Path.Combine(_viewModel.TripPath, fileName);
+        if (File.Exists(path))
+        {
+            try
+            {
+                File.Delete(path);
+            }
+            catch (IOException ex)
+            {
+                _viewModel.StatusMessage = $"Não foi possível apagar {fileName}: {ex.Message}";
+                return;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _viewModel.StatusMessage = $"Sem permissão para apagar {fileName}: {ex.Message}";
+                return;
+            }
+        }
+
+        _viewModel.DeleteSelectedAttachment();
+        SaveAttachmentsInternal("Arquivo excluído da pasta e salvo.");
+    }
+
+    private void AttachmentsGrid_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (IsEditingText(e.OriginalSource))
+        {
+            return;
+        }
+
+        if (e.Key == Key.Delete)
+        {
+            DeleteSelectedAttachmentWithConfirmation();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.F2)
+        {
+            RenameSelectedAttachment();
+            e.Handled = true;
+        }
+    }
+
+    private static bool IsEditingText(object originalSource)
+    {
+        var current = originalSource as DependencyObject;
+        while (current is not null)
+        {
+            if (current is System.Windows.Controls.TextBox)
+            {
+                return true;
+            }
+
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
+
+    private void AttachmentsList_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        _attachmentDragStartPoint = e.GetPosition(null);
+    }
+
+    private void AttachmentsList_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _viewModel.SelectedAttachment is null)
+        {
+            return;
+        }
+
+        var currentPosition = e.GetPosition(null);
+        if (Math.Abs(currentPosition.X - _attachmentDragStartPoint.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(currentPosition.Y - _attachmentDragStartPoint.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        System.Windows.DragDrop.DoDragDrop(AttachmentsList, _viewModel.SelectedAttachment, System.Windows.DragDropEffects.Move);
+    }
+
+    private void AttachmentsList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (FindAncestor<System.Windows.Controls.Button>(e.OriginalSource as DependencyObject) is not null)
+        {
+            return;
+        }
+
+        if (FindAncestor<ListBoxItem>(e.OriginalSource as DependencyObject) is null)
+        {
+            return;
+        }
+
+        OpenSelectedAttachment();
+        e.Handled = true;
+    }
+
+    private void AttachmentsList_DragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(typeof(AttachmentEditorViewModel)))
+        {
+            e.Effects = System.Windows.DragDropEffects.Move;
+            e.Handled = true;
+            return;
+        }
+
+        FilesPanel_DragOver(sender, e);
+    }
+
+    private void AttachmentsList_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(typeof(AttachmentEditorViewModel)))
+        {
+            var attachment = e.Data.GetData(typeof(AttachmentEditorViewModel)) as AttachmentEditorViewModel;
+            if (attachment is null)
+            {
+                return;
+            }
+
+            var targetIndex = GetAttachmentDropIndex(e.OriginalSource);
+            _viewModel.MoveAttachment(attachment, targetIndex);
+            SaveAttachmentsInternal("Ordem dos arquivos salva.");
+            e.Handled = true;
+            return;
+        }
+
+        FilesPanel_Drop(sender, e);
+        e.Handled = true;
+    }
+
+    private void SaveAttachments_Click(object sender, RoutedEventArgs e)
+    {
+        SaveAttachmentsInternal($"Arquivos salvos em {DateTime.Now:HH:mm}.");
+    }
+
+    private void OpenSelectedFile_Click(object sender, RoutedEventArgs e)
+    {
+        OpenSelectedAttachment();
+    }
+
+    private void OpenSelectedAttachment()
+    {
+        if (_viewModel.SelectedAttachment is null)
+        {
+            _viewModel.StatusMessage = "Selecione um arquivo para abrir.";
+            return;
+        }
+
+        var path = Path.Combine(_viewModel.TripPath, _viewModel.SelectedAttachment.File);
+        if (!File.Exists(path))
+        {
+            _viewModel.StatusMessage = "Arquivo não encontrado na pasta da viagem.";
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = path,
+            UseShellExecute = true
+        });
+    }
+
+    private void FilesPanel_DragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop)
+            ? System.Windows.DragDropEffects.Copy
+            : System.Windows.DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void FilesPanel_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
+        {
+            return;
+        }
+
+        var paths = e.Data.GetData(System.Windows.DataFormats.FileDrop) as string[];
+        AddAttachmentFiles(paths ?? []);
+        e.Handled = true;
+    }
+
+    private void OverviewCard_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        OverviewPanel.ScrollToVerticalOffset(OverviewPanel.VerticalOffset - e.Delta);
+        e.Handled = true;
+    }
+
+    private int GetAttachmentDropIndex(object originalSource)
+    {
+        var item = FindAncestor<ListBoxItem>(originalSource as DependencyObject);
+        if (item?.DataContext is AttachmentEditorViewModel target)
+        {
+            return _viewModel.Attachments.IndexOf(target);
+        }
+
+        return Math.Max(_viewModel.Attachments.Count - 1, 0);
+    }
+
+    private static T? FindAncestor<T>(DependencyObject? current) where T : DependencyObject
+    {
+        while (current is not null)
+        {
+            if (current is T typed)
+            {
+                return typed;
+            }
+
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
+    }
+
+    private string? ShowRenameDialog(string currentName)
+    {
+        var dialog = new Window
+        {
+            Title = "Renomear arquivo",
+            Owner = this,
+            Width = 460,
+            Height = 190,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            ResizeMode = ResizeMode.NoResize,
+            Background = (System.Windows.Media.Brush)FindResource("PanelBackground")
+        };
+        var input = new System.Windows.Controls.TextBox
+        {
+            Text = currentName,
+            FontSize = 16,
+            Margin = new Thickness(0, 6, 0, 16),
+            Padding = new Thickness(8, 6, 8, 6)
+        };
+        var result = currentName;
+        var saveButton = new System.Windows.Controls.Button
+        {
+            Content = "Renomear",
+            Style = (Style)FindResource("PrimaryButton"),
+            MinWidth = 96
+        };
+        var cancelButton = new System.Windows.Controls.Button
+        {
+            Content = "Cancelar",
+            Style = (Style)FindResource("SecondaryButton"),
+            MinWidth = 88,
+            Margin = new Thickness(0, 0, 10, 0)
+        };
+
+        saveButton.Click += (_, _) =>
+        {
+            result = input.Text;
+            dialog.DialogResult = true;
+        };
+        cancelButton.Click += (_, _) => dialog.DialogResult = false;
+
+        var actions = new StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Right
+        };
+        actions.Children.Add(cancelButton);
+        actions.Children.Add(saveButton);
+
+        var content = new StackPanel { Margin = new Thickness(18) };
+        content.Children.Add(new TextBlock
+        {
+            Text = "Novo nome do arquivo",
+            Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush")
+        });
+        content.Children.Add(input);
+        content.Children.Add(actions);
+        dialog.Content = content;
+        input.SelectAll();
+        input.Focus();
+
+        return dialog.ShowDialog() == true ? result : null;
+    }
+
     private void OpenSelectedTip_Click(object sender, RoutedEventArgs e)
     {
         var url = _viewModel.SelectedTip?.Url;
@@ -249,6 +622,16 @@ public partial class MainWindow : Window
         }
 
         SaveTipsInternal($"Salvo automaticamente às {DateTime.Now:HH:mm}.");
+    }
+
+    private void ViewModel_AttachmentsChanged(object? sender, EventArgs e)
+    {
+        if (_isLoadingTrip || _isSavingAttachments)
+        {
+            return;
+        }
+
+        SaveAttachmentsInternal($"Salvo automaticamente às {DateTime.Now:HH:mm}.");
     }
 
     private void LoadRepository(string rootPath)
@@ -300,6 +683,7 @@ public partial class MainWindow : Window
         OverviewPanel.Visibility = Visibility.Visible;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
+        FilesPanel.Visibility = Visibility.Collapsed;
         SetActiveNav(OverviewNavButton);
     }
 
@@ -308,6 +692,7 @@ public partial class MainWindow : Window
         OverviewPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Visible;
         TipsPanel.Visibility = Visibility.Collapsed;
+        FilesPanel.Visibility = Visibility.Collapsed;
         SetActiveNav(TasksNavButton);
     }
 
@@ -316,13 +701,23 @@ public partial class MainWindow : Window
         OverviewPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Visible;
+        FilesPanel.Visibility = Visibility.Collapsed;
         SetActiveNav(TipsNavButton);
+    }
+
+    private void ShowFiles()
+    {
+        OverviewPanel.Visibility = Visibility.Collapsed;
+        TasksPanel.Visibility = Visibility.Collapsed;
+        TipsPanel.Visibility = Visibility.Collapsed;
+        FilesPanel.Visibility = Visibility.Visible;
+        SetActiveNav(FilesNavButton);
     }
 
     private void SetActiveNav(System.Windows.Controls.Button activeButton)
     {
         var accentBrush = (System.Windows.Media.Brush)FindResource("AccentBrush");
-        foreach (var button in new[] { OverviewNavButton, TasksNavButton, TipsNavButton })
+        foreach (var button in new[] { OverviewNavButton, TasksNavButton, TipsNavButton, FilesNavButton })
         {
             button.Foreground = System.Windows.Media.Brushes.Black;
             button.Background = System.Windows.Media.Brushes.Transparent;
@@ -362,6 +757,145 @@ public partial class MainWindow : Window
         _repository.SaveTrip(_viewModel.CurrentTrip);
         _viewModel.StatusMessage = message;
         _isSavingTips = false;
+    }
+
+    private void SaveAttachmentsInternal(string message)
+    {
+        if (_repository is null || _viewModel.CurrentTrip is null)
+        {
+            _viewModel.StatusMessage = "Nenhuma viagem carregada para salvar.";
+            return;
+        }
+
+        Directory.CreateDirectory(_viewModel.TripPath);
+        _isSavingAttachments = true;
+        if (!ApplyAttachmentRenames())
+        {
+            _isSavingAttachments = false;
+            return;
+        }
+
+        _viewModel.ApplyAttachmentsToTrip();
+        _repository.SaveTrip(_viewModel.CurrentTrip);
+        _viewModel.StatusMessage = message;
+        _isSavingAttachments = false;
+    }
+
+    private bool ApplyAttachmentRenames()
+    {
+        foreach (var attachment in _viewModel.Attachments)
+        {
+            var fileName = Path.GetFileName(attachment.File.Trim());
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                _viewModel.StatusMessage = "Nome de arquivo inválido.";
+                return false;
+            }
+            if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            {
+                _viewModel.StatusMessage = $"O nome {fileName} contém caracteres inválidos.";
+                return false;
+            }
+
+            if (fileName != attachment.File)
+            {
+                attachment.File = fileName;
+            }
+
+            if (string.IsNullOrWhiteSpace(attachment.OriginalFile) ||
+                string.Equals(attachment.OriginalFile, fileName, StringComparison.OrdinalIgnoreCase))
+            {
+                attachment.OriginalFile = fileName;
+                continue;
+            }
+
+            var oldPath = Path.Combine(_viewModel.TripPath, attachment.OriginalFile);
+            var newPath = Path.Combine(_viewModel.TripPath, fileName);
+            if (!File.Exists(oldPath))
+            {
+                attachment.OriginalFile = fileName;
+                continue;
+            }
+
+            if (File.Exists(newPath))
+            {
+                _viewModel.StatusMessage = $"Já existe um arquivo chamado {fileName}.";
+                return false;
+            }
+
+            try
+            {
+                File.Move(oldPath, newPath);
+            }
+            catch (IOException ex)
+            {
+                _viewModel.StatusMessage = $"Não foi possível renomear {attachment.OriginalFile}: {ex.Message}";
+                return false;
+            }
+            attachment.OriginalFile = fileName;
+        }
+
+        return true;
+    }
+
+    private void AddAttachmentFiles(IEnumerable<string> paths)
+    {
+        if (_repository is null || _viewModel.CurrentTrip is null)
+        {
+            _viewModel.StatusMessage = "Nenhuma viagem carregada para anexar arquivos.";
+            return;
+        }
+
+        Directory.CreateDirectory(_viewModel.TripPath);
+        var added = 0;
+        _isSavingAttachments = true;
+        try
+        {
+            foreach (var sourcePath in paths.Where(File.Exists))
+            {
+                var fileName = Path.GetFileName(sourcePath);
+                var destinationName = CreateUniqueAttachmentFileName(fileName);
+                var destinationPath = Path.Combine(_viewModel.TripPath, destinationName);
+
+                if (!string.Equals(Path.GetFullPath(sourcePath), Path.GetFullPath(destinationPath), StringComparison.OrdinalIgnoreCase))
+                {
+                    File.Copy(sourcePath, destinationPath);
+                }
+
+                _viewModel.AddAttachment(destinationName);
+                added++;
+            }
+        }
+        finally
+        {
+            _isSavingAttachments = false;
+        }
+
+        if (added == 0)
+        {
+            _viewModel.StatusMessage = "Nenhum arquivo válido para anexar.";
+            return;
+        }
+
+        SaveAttachmentsInternal(added == 1 ? "Arquivo anexado e salvo." : $"{added} arquivos anexados e salvos.");
+    }
+
+    private string CreateUniqueAttachmentFileName(string fileName)
+    {
+        var safeName = Path.GetFileName(fileName);
+        var baseName = Path.GetFileNameWithoutExtension(safeName);
+        var extension = Path.GetExtension(safeName);
+        var candidate = safeName;
+        var suffix = 2;
+
+        while (File.Exists(Path.Combine(_viewModel.TripPath, candidate)) ||
+               _viewModel.Attachments.Any(attachment => string.Equals(attachment.File, candidate, StringComparison.OrdinalIgnoreCase)))
+        {
+            candidate = $"{baseName}-{suffix}{extension}";
+            suffix++;
+        }
+
+        return candidate;
     }
 
     private void RefreshTrips(string selectedTripId)

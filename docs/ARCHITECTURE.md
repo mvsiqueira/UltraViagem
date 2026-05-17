@@ -75,6 +75,10 @@ Tarefas e dicas possuem salvamento automático via eventos do ViewModel:
 
 - `TasksChanged` chama `SaveTasksInternal`.
 - `TipsChanged` chama `SaveTipsInternal`.
+- `AttachmentsChanged` chama `SaveAttachmentsInternal`.
+
+Arquivos anexados são copiados para a pasta da viagem. A lista de anexos salva apenas o nome do arquivo relativo à pasta da viagem.
+Na UI WPF, `AttachmentIconConverter` consulta o Shell do Windows para exibir o ícone associado à extensão configurada no sistema operacional.
 
 Também existem botões explícitos de salvar para cada tela.
 
@@ -95,3 +99,4 @@ Para preparar versões futuras:
 - Sem categorias de tarefas por enquanto.
 - Tarefas têm apenas `pendente` e `concluída`, com notas.
 - Dicas são apenas `nome` e `link`, sem categorias.
+- Arquivos têm apenas nome de arquivo, sem texto, categoria ou associação por enquanto.

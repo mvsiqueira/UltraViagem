@@ -5,7 +5,6 @@
 - Melhorar acabamento visual dos cards da visão geral.
 - Implementar tela completa de roteiro.
 - Implementar tela completa de gastos.
-- Implementar tela completa de arquivos/anexos.
 - Implementar tela completa de mapa/lugares.
 - Padronizar navegação para todos os painéis.
 - Adicionar validações de URL em dicas e Google My Maps.
@@ -16,8 +15,7 @@
 - Abrir links de dicas diretamente pelo clique na visão geral.
 - Associar dicas a dias do roteiro ou lugares.
 - Associar tarefas a roteiro, gasto, lugar ou arquivo.
-- Criar anexos pela UI copiando arquivos para a pasta da viagem.
-- Abrir anexos pelo app.
+- Melhorar validações de renomeação de arquivos.
 - Exportar KML para Google My Maps.
 - Melhorar seleção de ícones e estados de hover/foco/acessibilidade.
 - Criar dados de exemplo dentro de uma pasta de viagens dedicada.
