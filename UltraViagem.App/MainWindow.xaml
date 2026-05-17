@@ -39,66 +39,50 @@
 
                     <Button x:Name="OverviewNavButton" Style="{StaticResource NavButton}" Click="ShowOverview_Click">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/overview.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Visão Geral" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE80F;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Visão Geral" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource NavButton}" Click="EditTrip_Click">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/settings.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Dados da viagem" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE713;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Dados da viagem" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource NavButton}" IsEnabled="False">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/itinerary.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Roteiro" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE8FD;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Roteiro" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="TasksNavButton" Style="{StaticResource NavButton}" Click="ShowTasks_Click">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/tasks.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Tarefas" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE73A;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Tarefas" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="MapNavButton" Style="{StaticResource NavButton}" Click="ShowMap_Click">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/map.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Mapa" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE707;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Mapa" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource NavButton}" IsEnabled="False">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/budget.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Gastos" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xEAFD;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Gastos" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="TipsNavButton" Style="{StaticResource NavButton}" Click="ShowTips_Click">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/tips.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Dicas" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE8BD;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Dicas" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="FilesNavButton" Style="{StaticResource NavButton}" Click="ShowFiles_Click">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/files.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Arquivos" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE8B7;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Arquivos" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -106,18 +90,14 @@
                 <StackPanel DockPanel.Dock="Bottom">
                     <Button Style="{StaticResource NavButton}" IsEnabled="False">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/settings.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Configurações" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE713;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Configurações" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource NavButton}" IsEnabled="False">
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
-                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/help.png" /></Border.OpacityMask>
-                            </Border>
-                            <TextBlock Text="Ajuda" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                            <TextBlock Text="&#xE897;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="Ajuda" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
                     <Border Background="{StaticResource SidebarPanelBackground}" CornerRadius="8" Padding="12" Margin="0,16,0,0">
@@ -272,9 +252,7 @@
 
                                 <Grid Grid.Row="0" Margin="0,0,0,12">
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Width="24" Height="24" Margin="0,0,9,0" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
-                                            <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/tasks.png" /></Border.OpacityMask>
-                                        </Border>
+                                        <TextBlock Text="&#xE73A;" Style="{StaticResource SectionIcon}" />
                                         <TextBlock Text="Tarefas" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -315,9 +293,7 @@
                             <StackPanel>
                                 <Grid Margin="0,0,0,14">
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Width="24" Height="24" Margin="0,0,9,0" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
-                                            <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/budget.png" /></Border.OpacityMask>
-                                        </Border>
+                                        <TextBlock Text="&#xEAFD;" Style="{StaticResource SectionIcon}" />
                                         <TextBlock Text="Gastos" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
                                     </StackPanel>
                                     <TextBlock Text="◔" HorizontalAlignment="Right" FontSize="22" Foreground="{StaticResource AccentBrush}" />
@@ -362,9 +338,7 @@
                             <StackPanel>
                                 <Grid Margin="0,0,0,12">
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Width="24" Height="24" Margin="0,0,9,0" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
-                                            <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/map.png" /></Border.OpacityMask>
-                                        </Border>
+                                        <TextBlock Text="&#xE707;" Style="{StaticResource SectionIcon}" />
                                         <TextBlock Text="Mapa" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
                                     </StackPanel>
                                     <Button Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" Click="ShowMap_Click" ToolTip="Abrir mapa" />
@@ -408,9 +382,7 @@
                                         <ColumnDefinition Width="42" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Width="24" Height="24" Margin="0,0,9,0" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
-                                            <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/tips.png" /></Border.OpacityMask>
-                                        </Border>
+                                        <TextBlock Text="&#xE8BD;" Style="{StaticResource SectionIcon}" />
                                         <TextBlock Text="Dicas" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
                                     </StackPanel>
                                     <Button Grid.Column="1" Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" Click="ShowTips_Click" ToolTip="Abrir dicas" />
@@ -467,9 +439,7 @@
                                         <ColumnDefinition Width="42" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Width="24" Height="24" Margin="0,0,9,0" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
-                                            <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/files.png" /></Border.OpacityMask>
-                                        </Border>
+                                        <TextBlock Text="&#xE8B7;" Style="{StaticResource SectionIcon}" />
                                         <TextBlock Text="Arquivos" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
                                     </StackPanel>
                                     <Button Grid.Column="1" Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" Click="ShowFiles_Click" ToolTip="Abrir arquivos" />
@@ -518,10 +488,13 @@
                 <Border Style="{StaticResource Card}" Margin="0,0,18,0">
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Top">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="0,0,10,0" ToolTip="Voltar para visão geral" />
-                                <TextBlock Text="Tarefas" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" />
-                            </StackPanel>
+                            <Grid Margin="0,0,0,2">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE73A;" Style="{StaticResource PanelTitleIcon}" />
+                                    <TextBlock Text="Tarefas" Style="{StaticResource PanelTitleText}" />
+                                </StackPanel>
+                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" HorizontalAlignment="Right" ToolTip="Voltar para visão geral" />
+                            </Grid>
                             <TextBlock Text="Planeje compras, reservas e pendências da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,14" />
                             <UniformGrid Columns="3" Margin="0,0,0,14">
                                 <Button Content="Todas" Style="{StaticResource SecondaryButton}" Click="ShowAllTasks_Click" Margin="0,0,6,0" />
@@ -625,14 +598,17 @@
 
                         <Grid Grid.Row="0" Margin="0,0,0,18">
                             <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                    <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="0,0,10,0" ToolTip="Voltar para visão geral" />
-                                    <TextBlock Text="Dicas" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" />
-                                </StackPanel>
+                                <Grid Margin="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE8BD;" Style="{StaticResource PanelTitleIcon}" />
+                                        <TextBlock Text="Dicas" Style="{StaticResource PanelTitleText}" />
+                                    </StackPanel>
+                                </Grid>
                                 <TextBlock Text="Guarde links úteis de pesquisa, reservas, blogs e referências da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                                 <Button Content="+  Nova Dica" Style="{StaticResource SecondaryButton}" Click="AddTip_Click" />
+                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="10,0,0,0" ToolTip="Voltar para visão geral" />
                             </StackPanel>
                         </Grid>
 
@@ -792,15 +768,18 @@
 
                         <Grid Grid.Row="0" Margin="0,0,0,18">
                             <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                    <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="0,0,10,0" ToolTip="Voltar para visão geral" />
-                                    <TextBlock Text="Mapa" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" />
-                                </StackPanel>
+                                <Grid Margin="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE707;" Style="{StaticResource PanelTitleIcon}" />
+                                        <TextBlock Text="Mapa" Style="{StaticResource PanelTitleText}" />
+                                    </StackPanel>
+                                </Grid>
                                 <TextBlock Text="Informe o link público do Google My Maps e visualize o mapa da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                                 <Button Content="Abrir no navegador" Style="{StaticResource SecondaryButton}" Click="OpenMyMaps_Click" Margin="0,0,10,0" />
                                 <Button Content="Salvar Mapa" Style="{StaticResource PrimaryButton}" Click="SaveMap_Click" />
+                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="10,0,0,0" ToolTip="Voltar para visão geral" />
                             </StackPanel>
                         </Grid>
 
@@ -863,14 +842,17 @@
 
                         <Grid Grid.Row="0" Margin="0,0,0,18">
                             <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                    <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="0,0,10,0" ToolTip="Voltar para visão geral" />
-                                    <TextBlock Text="Arquivos" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" />
-                                </StackPanel>
+                                <Grid Margin="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE8B7;" Style="{StaticResource PanelTitleIcon}" />
+                                        <TextBlock Text="Arquivos" Style="{StaticResource PanelTitleText}" />
+                                    </StackPanel>
+                                </Grid>
                                 <TextBlock Text="Anexe arquivos da viagem. Eles serão copiados para a pasta da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
                                 <Button Content="+  Anexar arquivos" Style="{StaticResource SecondaryButton}" Click="AttachFiles_Click" />
+                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="10,0,0,0" ToolTip="Voltar para visão geral" />
                             </StackPanel>
                         </Grid>
 
