@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using UltraViagem.Core;
 using Forms = System.Windows.Forms;
 
@@ -14,6 +15,7 @@ public partial class MainWindow : Window
 {
     private readonly AppViewModel _viewModel = new();
     private TripRepository? _repository;
+    private readonly Dictionary<LinkEditorViewModel, (string Title, string Url)> _tipEditSnapshots = [];
     private System.Windows.Point _attachmentDragStartPoint;
     private bool _isLoadingTrip;
     private bool _isSavingTasks;
@@ -580,14 +582,146 @@ public partial class MainWindow : Window
 
     private void OpenSelectedTip_Click(object sender, RoutedEventArgs e)
     {
-        var url = _viewModel.SelectedTip?.Url;
+        OpenTip(_viewModel.SelectedTip);
+    }
+
+    private void OpenTipLink_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: LinkEditorViewModel tip })
+        {
+            _viewModel.SelectedTip = tip;
+            OpenTip(tip);
+        }
+    }
+
+    private void EditTipCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: LinkEditorViewModel tip })
+        {
+            BeginTipEdit(tip);
+        }
+    }
+
+    private void TipsList_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == Key.F2 && _viewModel.SelectedTip is not null)
+        {
+            BeginTipEdit(_viewModel.SelectedTip);
+            e.Handled = true;
+        }
+    }
+
+    private void TipEditView_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: LinkEditorViewModel tip } editView ||
+            e.NewFocus is DependencyObject newFocus && IsDescendantOf(newFocus, editView))
+        {
+            return;
+        }
+
+        CompleteTipEdit(tip);
+    }
+
+    private void TipEditView_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: LinkEditorViewModel tip })
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            CompleteTipEdit(tip);
+            TipsList.Focus();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            CancelTipEdit(tip);
+            TipsList.Focus();
+            e.Handled = true;
+        }
+    }
+
+    private void TipReadView_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2 ||
+            sender is not FrameworkElement { DataContext: LinkEditorViewModel tip } ||
+            e.OriginalSource is not DependencyObject source ||
+            FindVisualAncestor<System.Windows.Controls.Button>(source) is not null)
+        {
+            return;
+        }
+
+        BeginTipEdit(tip);
+        e.Handled = true;
+    }
+
+    private void BeginTipEdit(LinkEditorViewModel tip)
+    {
+        _viewModel.SelectedTip = tip;
+        if (!tip.IsEditing)
+        {
+            _tipEditSnapshots[tip] = (tip.Title, tip.Url);
+        }
+
+        tip.IsEditing = true;
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (TipsList.ItemContainerGenerator.ContainerFromItem(tip) is ListBoxItem item &&
+                FindVisualChild<System.Windows.Controls.TextBox>(item) is { } input)
+            {
+                input.Focus();
+                input.SelectAll();
+            }
+        });
+    }
+
+    private void CompleteTipEdit(LinkEditorViewModel tip)
+    {
+        if (!tip.IsEditing)
+        {
+            return;
+        }
+
+        tip.IsEditing = false;
+        _tipEditSnapshots.Remove(tip);
+        SaveTipsInternal("Dica atualizada e salva.");
+    }
+
+    private void CancelTipEdit(LinkEditorViewModel tip)
+    {
+        if (_tipEditSnapshots.Remove(tip, out var snapshot))
+        {
+            tip.Title = snapshot.Title;
+            tip.Url = snapshot.Url;
+        }
+
+        tip.IsEditing = false;
+        _viewModel.StatusMessage = "Edição cancelada.";
+    }
+
+    private void DeleteTipCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: LinkEditorViewModel tip })
+        {
+            _viewModel.SelectedTip = tip;
+            _viewModel.DeleteSelectedTip();
+            SaveTipsInternal("Dica removida e salva.");
+        }
+    }
+
+    private void OpenTip(LinkEditorViewModel? tip)
+    {
+        var url = tip?.Url;
         if (string.IsNullOrWhiteSpace(url))
         {
             _viewModel.StatusMessage = "Selecione uma dica com link para abrir.";
             return;
         }
 
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        if (tip?.HasValidUrl != true || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
             _viewModel.StatusMessage = "O link selecionado não parece ser uma URL válida.";
             return;
@@ -598,6 +732,60 @@ public partial class MainWindow : Window
             FileName = uri.ToString(),
             UseShellExecute = true
         });
+    }
+
+    private static bool IsDescendantOf(DependencyObject child, DependencyObject parent)
+    {
+        var current = child;
+        while (current is not null)
+        {
+            if (ReferenceEquals(current, parent))
+            {
+                return true;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
+    }
+
+    private static T? FindVisualChild<T>(DependencyObject parent)
+        where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T typedChild)
+            {
+                return typedChild;
+            }
+
+            var descendant = FindVisualChild<T>(child);
+            if (descendant is not null)
+            {
+                return descendant;
+            }
+        }
+
+        return null;
+    }
+
+    private static T? FindVisualAncestor<T>(DependencyObject child)
+        where T : DependencyObject
+    {
+        var current = child;
+        while (current is not null)
+        {
+            if (current is T typedCurrent)
+            {
+                return typedCurrent;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
     }
 
     private void ShowAllTasks_Click(object sender, RoutedEventArgs e) => _viewModel.TaskFilter = "all";

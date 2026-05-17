@@ -10,7 +10,7 @@
         MinHeight="760"
         Width="1360"
         MinWidth="1180"
-        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
         Background="{StaticResource PageBackground}">
     <Window.Resources>
         <local:AttachmentIconConverter x:Key="AttachmentIconConverter" />
@@ -419,9 +419,28 @@
                                                 <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1" Padding="0,8">
                                                     <StackPanel>
                                                         <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                        <TextBlock Text="{Binding Url}" Foreground="{StaticResource AccentBrush}" FontSize="12" TextWrapping="Wrap" />
+                                                        <Grid>
+                                                            <Button x:Name="OverviewTipLinkButton"
+                                                                    Style="{StaticResource LinkButton}"
+                                                                    Click="OpenTipLink_Click"
+                                                                    ToolTip="Abrir link">
+                                                                <TextBlock Text="{Binding Url}" Foreground="{StaticResource AccentBrush}" FontSize="12" TextWrapping="Wrap" />
+                                                            </Button>
+                                                            <TextBlock x:Name="OverviewTipText"
+                                                                       Text="{Binding Url}"
+                                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                                       FontSize="12"
+                                                                       TextWrapping="Wrap"
+                                                                       Visibility="Collapsed" />
+                                                        </Grid>
                                                     </StackPanel>
                                                 </Border>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding HasValidUrl}" Value="False">
+                                                        <Setter TargetName="OverviewTipLinkButton" Property="Visibility" Value="Collapsed" />
+                                                        <Setter TargetName="OverviewTipText" Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -609,34 +628,147 @@
                                 <TextBlock Text="Guarde links úteis de pesquisa, reservas, blogs e referências da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                <Button Content="Nova" Style="{StaticResource SecondaryButton}" Click="AddTip_Click" Margin="0,0,10,0" />
-                                <Button Content="Abrir link" Style="{StaticResource SecondaryButton}" Click="OpenSelectedTip_Click" Margin="0,0,10,0" />
-                                <Button Content="Excluir" Style="{StaticResource SecondaryButton}" Click="DeleteTip_Click" />
+                                <Button Content="+  Nova Dica" Style="{StaticResource SecondaryButton}" Click="AddTip_Click" />
                             </StackPanel>
                         </Grid>
 
-                        <DataGrid Grid.Row="1"
-                                  ItemsSource="{Binding Tips}"
-                                  SelectedItem="{Binding SelectedTip}"
-                                  AutoGenerateColumns="False"
-                                  CanUserAddRows="False"
-                                  CanUserDeleteRows="False"
-                                  GridLinesVisibility="Horizontal"
-                                  HeadersVisibility="Column"
-                                  RowHeaderWidth="0"
-                                  BorderBrush="{StaticResource BorderBrushSoft}"
-                                  BorderThickness="1"
-                                  Background="{StaticResource PanelBackground}"
-                                  AlternatingRowBackground="#FBFAF6"
-                                  HorizontalGridLinesBrush="{StaticResource BorderBrushSoft}"
-                                  VerticalGridLinesBrush="Transparent"
-                                  SelectionMode="Single"
-                                  SelectionUnit="FullRow">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Nome" Binding="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Width="2*" />
-                                <DataGridTextColumn Header="Link" Binding="{Binding Url, UpdateSourceTrigger=PropertyChanged}" Width="3*" />
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <ListBox x:Name="TipsList"
+                                 Grid.Row="1"
+                                 ItemsSource="{Binding Tips}"
+                                 SelectedItem="{Binding SelectedTip}"
+                                 PreviewKeyDown="TipsList_PreviewKeyDown"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Margin" Value="0,0,0,5" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="ItemChrome"
+                                                        BorderBrush="{StaticResource BorderBrushSoft}"
+                                                        BorderThickness="1"
+                                                        Background="{StaticResource PanelBackground}"
+                                                        CornerRadius="8"
+                                                        Padding="6">
+                                                    <ContentPresenter />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="ItemChrome" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="#BFE4DE" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="#BFE4DE" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid MinHeight="30">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Grid Margin="0,0,10,0">
+                                            <Grid x:Name="TipReadView"
+                                                  Background="Transparent"
+                                                  MouseLeftButtonDown="TipReadView_MouseLeftButtonDown">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="0.22*" />
+                                                    <ColumnDefinition Width="0.78*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontSize="13"
+                                                           FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,10,0" />
+                                                <Button x:Name="TipLinkButton"
+                                                        Grid.Column="1"
+                                                        Style="{StaticResource LinkButton}"
+                                                        Click="OpenTipLink_Click"
+                                                        ToolTip="Abrir link"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Url}"
+                                                               FontSize="12"
+                                                                Foreground="{StaticResource AccentBrush}"
+                                                                TextTrimming="CharacterEllipsis" />
+                                                </Button>
+                                                <TextBlock x:Name="TipPlainText"
+                                                           Grid.Column="1"
+                                                           Text="{Binding Url}"
+                                                           FontSize="12"
+                                                           Foreground="{StaticResource MutedTextBrush}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           VerticalAlignment="Center"
+                                                           Visibility="Collapsed" />
+                                            </Grid>
+
+                                            <Grid x:Name="TipEditView"
+                                                  Visibility="Collapsed"
+                                                  LostKeyboardFocus="TipEditView_LostKeyboardFocus"
+                                                  PreviewKeyDown="TipEditView_PreviewKeyDown">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="0.22*" />
+                                                    <ColumnDefinition Width="0.78*" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                                                         FontSize="12"
+                                                         FontWeight="SemiBold"
+                                                         Padding="5,2"
+                                                         Margin="0,0,6,0"
+                                                         BorderBrush="{StaticResource BorderBrushSoft}"
+                                                         Background="{StaticResource InputBackground}" />
+                                                <TextBox Grid.Column="1"
+                                                         Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}"
+                                                         FontSize="12"
+                                                         Padding="5,2"
+                                                         Foreground="{StaticResource AccentBrush}"
+                                                         BorderBrush="{StaticResource BorderBrushSoft}"
+                                                         Background="{StaticResource InputBackground}" />
+                                            </Grid>
+                                        </Grid>
+
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Content="✎"
+                                                    Style="{StaticResource SecondaryButton}"
+                                                    Width="28"
+                                                    Height="28"
+                                                    Padding="0"
+                                                    Margin="0,0,6,0"
+                                                    ToolTip="Editar nome e link"
+                                                    Click="EditTipCard_Click" />
+                                            <Button Content="×"
+                                                    Style="{StaticResource SecondaryButton}"
+                                                    Width="28"
+                                                    Height="28"
+                                                    Padding="0"
+                                                    ToolTip="Excluir dica"
+                                                    Click="DeleteTipCard_Click" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding HasValidUrl}" Value="False">
+                                            <Setter TargetName="TipPlainText" Property="Visibility" Value="Visible" />
+                                            <Setter TargetName="TipLinkButton" Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                            <Setter TargetName="TipReadView" Property="Visibility" Value="Collapsed" />
+                                            <Setter TargetName="TipEditView" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
 
                         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
                             <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,14,0" />

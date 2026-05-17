@@ -217,7 +217,8 @@ public sealed class AppViewModel : NotifyObject
         {
             Id = $"dica-{DateTime.Now:yyyyMMddHHmmss}",
             Title = "Nova dica",
-            Url = ""
+            Url = "",
+            IsEditing = true
         };
 
         tip.PropertyChanged += Tip_PropertyChanged;
@@ -514,10 +515,13 @@ public sealed class LinkEditorViewModel : NotifyObject
     private string _id = "";
     private string _title = "";
     private string _url = "";
+    private bool _isEditing;
 
     public string Id { get => _id; set => SetField(ref _id, value); }
     public string Title { get => _title; set => SetField(ref _title, value); }
     public string Url { get => _url; set => SetField(ref _url, value); }
+    public bool IsEditing { get => _isEditing; set => SetField(ref _isEditing, value); }
+    public bool HasValidUrl => IsHttpUrl(Url);
 
     public static LinkEditorViewModel FromLink(LinkItem link)
     {
@@ -537,6 +541,21 @@ public sealed class LinkEditorViewModel : NotifyObject
             Title = Title.Trim(),
             Url = Url.Trim()
         };
+    }
+
+    protected override void OnPropertyChanged(string propertyName)
+    {
+        base.OnPropertyChanged(propertyName);
+        if (propertyName is nameof(Url))
+        {
+            base.OnPropertyChanged(nameof(HasValidUrl));
+        }
+    }
+
+    private static bool IsHttpUrl(string value)
+    {
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+               (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
     }
 }
 
