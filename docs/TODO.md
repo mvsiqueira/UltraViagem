@@ -11,6 +11,7 @@
 
 ## Prioridade Média
 
+- Criar exportação para PDF.
 - Associar dicas a dias do roteiro ou lugares.
 - Associar tarefas a roteiro, gasto, lugar ou arquivo.
 - Melhorar validações de renomeação de arquivos.

@@ -32,6 +32,62 @@ public sealed class AttachmentIconConverter : IMultiValueConverter
     }
 }
 
+public sealed class AttachmentMetadataConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        var fileName = values.ElementAtOrDefault(0) as string;
+        var tripPath = values.ElementAtOrDefault(1) as string;
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return "";
+        }
+
+        var extension = Path.GetExtension(fileName).TrimStart('.');
+        var type = string.IsNullOrWhiteSpace(extension)
+            ? "ARQUIVO"
+            : extension.ToUpper(culture);
+
+        var path = string.IsNullOrWhiteSpace(tripPath)
+            ? fileName
+            : Path.Combine(tripPath, fileName);
+
+        if (!File.Exists(path))
+        {
+            return type;
+        }
+
+        var size = new FileInfo(path).Length;
+        return $"{type} • {FormatSize(size, culture)}";
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException();
+    }
+
+    private static string FormatSize(long bytes, CultureInfo culture)
+    {
+        if (bytes < 1024)
+        {
+            return $"{bytes} B";
+        }
+
+        var units = new[] { "KB", "MB", "GB", "TB" };
+        var value = bytes / 1024d;
+        var unitIndex = 0;
+
+        while (value >= 1024 && unitIndex < units.Length - 1)
+        {
+            value /= 1024d;
+            unitIndex++;
+        }
+
+        var format = value >= 10 || unitIndex == 0 ? "0" : "0.#";
+        return $"{value.ToString(format, culture)} {units[unitIndex]}";
+    }
+}
+
 internal static class SystemFileIconProvider
 {
     private const uint ShgfiIcon = 0x000000100;

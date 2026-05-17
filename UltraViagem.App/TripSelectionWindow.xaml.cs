@@ -64,17 +64,24 @@ public partial class TripSelectionWindow : Window
             TextWrapping = TextWrapping.Wrap
         };
 
+        var favoriteGlyph = new TextBlock
+        {
+            Text = item.IsFavorite ? "★" : "☆",
+            FontSize = 24,
+            FontWeight = FontWeights.Normal,
+            Foreground = item.IsFavorite ? System.Windows.Media.Brushes.Goldenrod : (WpfBrush)FindResource("MutedTextBrush"),
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
         var favoriteButton = new WpfButton
         {
-            Content = item.IsFavorite ? "★" : "☆",
+            Content = favoriteGlyph,
             Width = 32,
             Height = 32,
-            FontSize = 22,
-            FontWeight = FontWeights.SemiBold,
             Padding = new Thickness(0),
             Background = System.Windows.Media.Brushes.Transparent,
             BorderThickness = new Thickness(0),
-            Foreground = item.IsFavorite ? (WpfBrush)FindResource("AccentBrush") : (WpfBrush)FindResource("MutedTextBrush"),
             Cursor = System.Windows.Input.Cursors.Hand,
             ToolTip = item.IsFavorite ? "Remover dos favoritos" : "Marcar como favorita",
             HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center,

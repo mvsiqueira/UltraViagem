@@ -47,6 +47,8 @@ UltraViagem.App/
   App.xaml
   App.xaml.cs
   AppViewModel.cs
+  AboutWindow.xaml
+  AboutWindow.xaml.cs
   MainWindow.xaml
   MainWindow.xaml.cs
   TripDetailsWindow.xaml
@@ -60,7 +62,8 @@ UltraViagem.App/
 - `AppViewModel.cs`: estado da UI, coleções editáveis e conversão entre modelo e tela.
 - `MainWindow.xaml`: layout principal, sidebar, visão geral, tarefas, dicas, mapa e arquivos.
 - `MainWindow.xaml.cs`: navegação, comandos, salvamento, WebView2 do mapa e integração com o repositório.
-- `TripDetailsWindow.*`: modal de criação/edição dos dados da viagem.
+- `AboutWindow.*`: janela `Sobre`, com descrição, autor, versão e data do build.
+- `TripDetailsWindow.*`: modal usado no fluxo de criação de nova viagem.
 - `TripSelectionWindow.*`: modal de seleção de viagem com favoritos.
 - `Assets/Menu`: ícones PNG do menu lateral.
 - `Assets/AppIcon`: ícone do aplicativo.

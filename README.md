@@ -9,11 +9,14 @@ O objetivo é permitir que a pasta raiz fique em Google Drive, OneDrive ou outro
 - App desktop Windows em WPF.
 - Persistência local em JSON.
 - Seleção de repositório local.
-- Seleção de viagem por janela modal, com favoritos.
-- Edição de dados gerais da viagem.
+- Seleção de viagem por janela modal, com favoritos e duração da viagem.
+- Edição de dados gerais da viagem em tela interna.
 - Visão geral com roteiro, tarefas, orçamento, mapa, dicas e arquivos.
 - Tela de tarefas com status `pendente` e `concluída`.
-- Tela de dicas com tabela simples de `nome` e `link`.
+- Tela de dicas em cards compactos, com links clicáveis e edição inline.
+- Tela de arquivos em cards, com ícone, tipo, tamanho, abertura do arquivo e renomeação inline.
+- Tela de mapa com URL pública do Google My Maps exibida por WebView2.
+- Janela `Sobre` com autor, versão, data do build e descrição.
 
 ## Como Rodar
 
@@ -29,7 +32,7 @@ dotnet build .\UltraViagem.slnx
 dotnet run --project .\UltraViagem.App\UltraViagem.App.csproj
 ```
 
-O app abre maximizado por padrão.
+O app abre em janela normal, centralizada.
 
 ## Estrutura Da Pasta De Viagens
 

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -51,6 +52,12 @@ public partial class MainWindow : Window
 
         LoadRepository(dialog.SelectedPath);
         LocalSettings.Save(new LocalSettings { RepositoryPath = dialog.SelectedPath });
+    }
+
+    private void ShowAbout_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new AboutWindow { Owner = this };
+        window.ShowDialog();
     }
 
     private void OpenTripSelection_Click(object sender, RoutedEventArgs e)
@@ -146,22 +153,46 @@ public partial class MainWindow : Window
 
     private void EditTrip_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel.CurrentTrip is null)
+        {
+            return;
+        }
+
+        PopulateTripDetailsPanel();
+        ShowTripDetails();
+    }
+
+    private void SaveTripDetails_Click(object sender, RoutedEventArgs e)
+    {
         if (_repository is null || _viewModel.CurrentTrip is null)
         {
             return;
         }
 
-        var draft = TripDetailsWindow.FromTrip(_viewModel.CurrentTrip);
-        var window = new TripDetailsWindow(draft, "Editar Viagem") { Owner = this };
-        if (window.ShowDialog() != true)
+        var draft = BuildTripDetailsDraft();
+        if (!ValidateTripDetailsDraft(draft))
         {
             return;
         }
 
-        ApplyDraftToTrip(window.Draft, _viewModel.CurrentTrip);
+        ApplyDraftToTrip(draft, _viewModel.CurrentTrip);
         _repository.SaveTrip(_viewModel.CurrentTrip);
         LoadTrip(_viewModel.CurrentTrip.Id);
-        _viewModel.StatusMessage = $"Viagem {window.Draft.Title} atualizada.";
+        PopulateTripDetailsPanel();
+        ShowTripDetails();
+        _viewModel.StatusMessage = $"Viagem {draft.Title} atualizada.";
+    }
+
+    private void ToggleCurrentTripFavorite_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.CurrentTrip is null)
+        {
+            return;
+        }
+
+        var isFavorite = !_viewModel.IsCurrentTripFavorite;
+        SetFavorite(_viewModel.CurrentTrip.Id, isFavorite);
+        _viewModel.IsCurrentTripFavorite = isFavorite;
     }
 
     private void ShowOverview_Click(object sender, RoutedEventArgs e)
@@ -1072,6 +1103,7 @@ public partial class MainWindow : Window
         config.RecentTrips.Insert(0, tripId);
         _repository.SaveConfig(config);
         RefreshTripSelectionItems(config);
+        _viewModel.IsCurrentTripFavorite = trip is not null && config.FavoriteTrips.Contains(trip.Id);
 
         _viewModel.StatusMessage = trip is null
             ? $"Não foi possível abrir {tripId}."
@@ -1082,6 +1114,7 @@ public partial class MainWindow : Window
     private void ShowOverview()
     {
         OverviewPanel.Visibility = Visibility.Visible;
+        TripDetailsPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
         MapPanel.Visibility = Visibility.Collapsed;
@@ -1093,6 +1126,7 @@ public partial class MainWindow : Window
     private void ShowTasks()
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
+        TripDetailsPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Visible;
         TipsPanel.Visibility = Visibility.Collapsed;
         MapPanel.Visibility = Visibility.Collapsed;
@@ -1103,6 +1137,7 @@ public partial class MainWindow : Window
     private void ShowTips()
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
+        TripDetailsPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Visible;
         MapPanel.Visibility = Visibility.Collapsed;
@@ -1113,6 +1148,7 @@ public partial class MainWindow : Window
     private void ShowMap()
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
+        TripDetailsPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
         MapPanel.Visibility = Visibility.Visible;
@@ -1124,6 +1160,7 @@ public partial class MainWindow : Window
     private void ShowFiles()
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
+        TripDetailsPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
         MapPanel.Visibility = Visibility.Collapsed;
@@ -1131,10 +1168,21 @@ public partial class MainWindow : Window
         SetActiveNav(FilesNavButton);
     }
 
+    private void ShowTripDetails()
+    {
+        OverviewPanel.Visibility = Visibility.Collapsed;
+        TripDetailsPanel.Visibility = Visibility.Visible;
+        TasksPanel.Visibility = Visibility.Collapsed;
+        TipsPanel.Visibility = Visibility.Collapsed;
+        MapPanel.Visibility = Visibility.Collapsed;
+        FilesPanel.Visibility = Visibility.Collapsed;
+        SetActiveNav(TripDetailsNavButton);
+    }
+
     private void SetActiveNav(System.Windows.Controls.Button activeButton)
     {
         var accentBrush = (System.Windows.Media.Brush)FindResource("AccentBrush");
-        foreach (var button in new[] { OverviewNavButton, TasksNavButton, TipsNavButton, MapNavButton, FilesNavButton })
+        foreach (var button in new[] { OverviewNavButton, TripDetailsNavButton, TasksNavButton, TipsNavButton, MapNavButton, FilesNavButton })
         {
             button.Foreground = System.Windows.Media.Brushes.Black;
             button.Background = System.Windows.Media.Brushes.Transparent;
@@ -1379,6 +1427,10 @@ public partial class MainWindow : Window
 
         _repository.SaveConfig(config);
         RefreshTripSelectionItems(config);
+        if (string.Equals(_viewModel.CurrentTrip?.Id, tripId, StringComparison.OrdinalIgnoreCase))
+        {
+            _viewModel.IsCurrentTripFavorite = isFavorite;
+        }
     }
 
     private void RefreshTripSelectionItems(AppConfig config)
@@ -1457,6 +1509,72 @@ public partial class MainWindow : Window
         }
 
         return id;
+    }
+
+    private void PopulateTripDetailsPanel()
+    {
+        if (_viewModel.CurrentTrip is null)
+        {
+            return;
+        }
+
+        var draft = TripDetailsWindow.FromTrip(_viewModel.CurrentTrip);
+        TripDetailsTitleBox.Text = draft.Title;
+        TripDetailsStartDateBox.Text = draft.StartDate;
+        TripDetailsEndDateBox.Text = draft.EndDate;
+        TripDetailsPeopleBox.Text = draft.People.ToString(CultureInfo.InvariantCulture);
+        TripDetailsCurrencyBox.Text = draft.BaseCurrency;
+        TripDetailsErrorText.Visibility = Visibility.Collapsed;
+    }
+
+    private TripDetailsDraft BuildTripDetailsDraft()
+    {
+        return new TripDetailsDraft
+        {
+            Id = _viewModel.CurrentTrip?.Id ?? "",
+            Title = TripDetailsTitleBox.Text.Trim(),
+            StartDate = TripDetailsStartDateBox.Text.Trim(),
+            EndDate = TripDetailsEndDateBox.Text.Trim(),
+            People = int.TryParse(TripDetailsPeopleBox.Text, CultureInfo.InvariantCulture, out var people) ? people : 0,
+            BaseCurrency = string.IsNullOrWhiteSpace(TripDetailsCurrencyBox.Text) ? "BRL" : TripDetailsCurrencyBox.Text.Trim().ToUpperInvariant(),
+            MyMapsUrl = _viewModel.CurrentTrip?.MyMapsUrl
+        };
+    }
+
+    private bool ValidateTripDetailsDraft(TripDetailsDraft draft)
+    {
+        if (string.IsNullOrWhiteSpace(draft.Title))
+        {
+            ShowTripDetailsError("Informe o nome da viagem.");
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(draft.StartDate) && !DateOnly.TryParse(draft.StartDate, CultureInfo.InvariantCulture, out _))
+        {
+            ShowTripDetailsError("A data inicial precisa estar no formato aaaa-mm-dd.");
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(draft.EndDate) && !DateOnly.TryParse(draft.EndDate, CultureInfo.InvariantCulture, out _))
+        {
+            ShowTripDetailsError("A data final precisa estar no formato aaaa-mm-dd.");
+            return false;
+        }
+
+        if (draft.People < 1)
+        {
+            ShowTripDetailsError("Informe uma quantidade válida de pessoas.");
+            return false;
+        }
+
+        TripDetailsErrorText.Visibility = Visibility.Collapsed;
+        return true;
+    }
+
+    private void ShowTripDetailsError(string message)
+    {
+        TripDetailsErrorText.Text = message;
+        TripDetailsErrorText.Visibility = Visibility.Visible;
     }
 
     private static void ApplyDraftToTrip(TripDetailsDraft draft, Trip trip)

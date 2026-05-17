@@ -19,6 +19,7 @@ public sealed class AppViewModel : NotifyObject
     private AttachmentEditorViewModel? _selectedAttachment;
     private string _statusMessage = "Pronto";
     private string _taskFilter = "all";
+    private bool _isCurrentTripFavorite;
     private bool _isLoadingTasks;
     private bool _isLoadingTips;
     private bool _isLoadingAttachments;
@@ -86,6 +87,19 @@ public sealed class AppViewModel : NotifyObject
     public string TripPath => _trip is null ? RootPath : Path.Combine(RootPath, _trip.Id);
     public string TripTitle => _trip?.Title ?? "Nenhuma viagem";
     public string TripSubtitle => _trip is null ? "Selecione uma pasta com viagens." : BuildTripSubtitle(_trip);
+    public bool IsCurrentTripFavorite
+    {
+        get => _isCurrentTripFavorite;
+        set
+        {
+            if (SetField(ref _isCurrentTripFavorite, value))
+            {
+                OnPropertyChanged(nameof(CurrentTripFavoriteGlyph));
+            }
+        }
+    }
+
+    public string CurrentTripFavoriteGlyph => IsCurrentTripFavorite ? "★" : "☆";
     public string DaysCount => (_trip?.Itinerary.Count ?? 0).ToString(Culture);
     public string PendingTasksCount => AllTasks.Count(task => task.Status == "pending").ToString(Culture);
     public string AttachmentsCount => Attachments.Count.ToString(Culture);
@@ -156,6 +170,7 @@ public sealed class AppViewModel : NotifyObject
         }
 
         _trip = trip;
+        IsCurrentTripFavorite = false;
 
         Itinerary.ReplaceWith(trip?.Itinerary.Select(ItineraryDayViewModel.FromDay) ?? []);
         AllTasks.ReplaceWith(trip?.Tasks.Select(TaskEditorViewModel.FromTask) ?? []);
@@ -450,11 +465,14 @@ public sealed class AppViewModel : NotifyObject
 
     private static string BuildTripSubtitle(Trip trip)
     {
-        var dates = trip.StartDate is not null && trip.EndDate is not null
-            ? $"{trip.StartDate:dd MMM yyyy} - {trip.EndDate:dd MMM yyyy}"
-            : "Datas a definir";
+        if (trip.StartDate is null || trip.EndDate is null)
+        {
+            return "Datas a definir";
+        }
 
-        return dates;
+        var days = Math.Max(1, trip.EndDate.Value.DayNumber - trip.StartDate.Value.DayNumber + 1);
+        var dayLabel = days == 1 ? "1 dia" : $"{days} dias";
+        return $"{trip.StartDate:dd MMM yyyy} - {trip.EndDate:dd MMM yyyy} ({dayLabel})";
     }
 
     private static string FormatMoney(decimal value)

@@ -65,6 +65,7 @@ O formato de dados atual fica em:
 A janela principal alterna painéis:
 
 - `OverviewPanel`: visão geral.
+- `TripDetailsPanel`: edição dos dados gerais da viagem.
 - `TasksPanel`: edição de tarefas.
 - `TipsPanel`: edição de dicas.
 - `MapPanel`: visualização do Google My Maps.
@@ -107,3 +108,5 @@ Para preparar versões futuras:
 - Dicas são apenas `nome` e `link`, sem categorias.
 - Arquivos têm apenas nome de arquivo, sem texto, categoria ou associação por enquanto.
 - A edição do mapa acontece no Google My Maps; o app apenas guarda o link público e exibe o mapa.
+- Favoritos ficam em `config.json`, na lista `favoriteTrips`; a estrela da visão geral e a janela de seleção usam o mesmo estado.
+- A janela `Sobre` lê a data do build a partir do arquivo do assembly em execução.

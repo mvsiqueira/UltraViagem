@@ -12,22 +12,35 @@ Na sidebar, o caminho do repositório aparece como link clicável para abrir a p
 
 ## Seleção De Viagem
 
-O botão superior com a viagem atual abre a janela de seleção. A janela:
+O botão superior com a viagem atual abre a janela de seleção. Ele exibe ícone de mala, nome da viagem, período com duração em dias e um indicador de abertura.
+A janela:
 
 - mostra viagens favoritas no topo;
 - agrupa demais viagens por ano;
-- permite marcar/desmarcar favoritas;
+- permite marcar/desmarcar favoritas com estrela amarela quando marcada;
 - permite iniciar criação de nova viagem.
 
 ## Dados Da Viagem
 
-O botão `Dados da viagem` abre o modal de edição com:
+O botão `Dados da viagem` abre uma tela interna com:
 
 - nome;
 - data inicial;
 - data final;
 - pessoas;
 - moeda.
+
+A tela segue o mesmo padrão dos demais painéis internos, com ícone, título, botão `<` para voltar e botão `Salvar Dados` no rodapé do formulário.
+
+## Sobre
+
+O item `! Sobre` no menu lateral abre uma janela modal com:
+
+- nome do aplicativo;
+- versão;
+- data do build lida do assembly compilado;
+- autor: `Marcus Siqueira via ChatGPT Codex`;
+- descrição curta do app.
 
 ## Visão Geral
 
@@ -40,6 +53,7 @@ A visão geral resume:
 - dicas;
 - arquivos.
 
+O cabeçalho da visão geral exibe o título da viagem, uma estrela de favorito clicável e o período com duração inclusiva em dias.
 As telas internas de cards ativos, como `Tarefas`, `Dicas` e `Arquivos`, têm um botão `<` no cabeçalho para voltar à visão geral.
 Na visão geral, cards com tela interna usam um botão `>` no canto superior direito para navegação. Criação de novos itens fica nas telas internas, não nos cards de resumo.
 
@@ -93,6 +107,8 @@ Arquivos são representados em `attachments` no `trip.json`.
 Na visão geral:
 
 - aparece um card compacto com os primeiros arquivos;
+- cada arquivo exibe ícone, nome, tipo e tamanho;
+- o nome do arquivo é clicável para abrir o arquivo;
 - o botão `>` abre a tela completa.
 
 Na tela de arquivos:
@@ -100,7 +116,7 @@ Na tela de arquivos:
 - é possível anexar arquivos por botão;
 - é possível anexar arquivos por drag-and-drop em qualquer área da seção;
 - os arquivos anexados são copiados para a pasta da viagem;
-- a lista visual mostra cada arquivo como um card compacto com ícone do tipo de arquivo configurado no Windows e nome clicável;
+- a lista visual mostra cada arquivo como um card compacto com ícone do tipo de arquivo configurado no Windows, nome clicável, tipo e tamanho;
 - clicar no card seleciona o arquivo;
 - o topo da tela mantém apenas a ação global `+ Anexar arquivos`;
 - clicar no nome do arquivo abre o arquivo;
@@ -126,7 +142,7 @@ O app usa `MyMapsUrl` no `trip.json` para exibir um mapa público do Google My M
 Na tela de mapa:
 
 - o usuário cola ou edita o link público do Google My Maps;
-- o link é salvo ao pressionar `Enter`, sair do campo ou clicar em `Salvar Mapa`;
+- o link é salvo ao pressionar `Enter`, sair do campo ou clicar em `Salvar URL`;
 - o app transforma links de edição/visualização do My Maps em URL pública embutida (`/maps/d/embed?mid=...`);
 - o mapa é exibido dentro do app usando WebView2;
 - o botão `Abrir no navegador` abre o link original no navegador padrão.
