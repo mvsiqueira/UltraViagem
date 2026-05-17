@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="UltraViagem.App/UltraViagem.App.csproj" />
+  <Project Path="UltraViagem.Core/UltraViagem.Core.csproj" />
+</Solution>

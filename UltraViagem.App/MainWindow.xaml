@@ -1,0 +1,601 @@
+<Window x:Class="UltraViagem.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="UltraViagem"
+        Height="900"
+        MinHeight="760"
+        Width="1360"
+        MinWidth="1180"
+        WindowState="Maximized"
+        Background="{StaticResource PageBackground}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="{StaticResource SidebarBackground}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="14,18" LastChildFill="False">
+                <StackPanel DockPanel.Dock="Top">
+                    <Grid Margin="0,0,0,28">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="42" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="32" Height="32" CornerRadius="16" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
+                            <TextBlock Text="✈" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" />
+                        </Border>
+                        <TextBlock Grid.Column="1" Text="UltraViagem" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" Foreground="#0E4C49" />
+                    </Grid>
+
+                    <Button x:Name="OverviewNavButton" Style="{StaticResource NavButton}" Click="ShowOverview_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/overview.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Visão Geral" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButton}" Click="EditTrip_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/settings.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Dados da viagem" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButton}" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/itinerary.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Roteiro" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="TasksNavButton" Style="{StaticResource NavButton}" Click="ShowTasks_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/tasks.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Tarefas" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButton}" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/map.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Mapa" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButton}" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/budget.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Gastos" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="TipsNavButton" Style="{StaticResource NavButton}" Click="ShowTips_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/tips.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Dicas" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButton}" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/files.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Arquivos" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom">
+                    <Button Style="{StaticResource NavButton}" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/settings.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Configurações" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource NavButton}" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="28" Height="28" Margin="0,0,12,0" Background="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}">
+                                <Border.OpacityMask><ImageBrush ImageSource="Assets/Menu/help.png" /></Border.OpacityMask>
+                            </Border>
+                            <TextBlock Text="Ajuda" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Border Background="{StaticResource SidebarPanelBackground}" CornerRadius="8" Padding="12" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Repositório" Style="{StaticResource Caption}" />
+                            <Button Style="{StaticResource LinkButton}" Click="OpenRepositoryFolder_Click" Margin="0,5,0,12" ToolTip="Abrir pasta do repositório">
+                                <TextBlock Text="{Binding RootPath}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource AccentBrush}" TextDecorations="Underline" />
+                            </Button>
+                            <Button Content="Selecionar Pasta" Style="{StaticResource SecondaryButton}" Click="SelectRepository_Click" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="84" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="44" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1">
+                <Grid Margin="24,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Width="318" Height="52" Style="{StaticResource SecondaryButton}" Background="#FFFEFB" Foreground="{StaticResource TextBrush}" Padding="0" Click="OpenTripSelection_Click" HorizontalAlignment="Left" HorizontalContentAlignment="Stretch" VerticalAlignment="Center">
+                        <Grid Margin="10,0" HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="44" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="24" />
+                            </Grid.ColumnDefinitions>
+                            <Border Width="34" Height="34" CornerRadius="17" Background="{StaticResource AccentSoftBrush}" VerticalAlignment="Center">
+                                <TextBlock Text="✈" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" />
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding TripTitle}" FontWeight="SemiBold" FontSize="14" TextAlignment="Left" />
+                                <TextBlock Text="{Binding TripSubtitle}" Style="{StaticResource Caption}" />
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="⌄" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                        </Grid>
+                    </Button>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+                        <Button Style="{StaticResource PrimaryButton}" Content="+  Nova Viagem" Click="NewTrip_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <ScrollViewer x:Name="OverviewPanel" Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <Grid Margin="24,22,24,18">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{Binding TripTitle}" FontSize="28" FontWeight="Bold" />
+                            <TextBlock Text="{Binding TripSubtitle}" Foreground="{StaticResource MutedTextBrush}" FontSize="14" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource SecondaryButton}" Content="‹" FontSize="24" Width="42" Margin="0,0,8,0" IsEnabled="False" />
+                            <Button Style="{StaticResource SecondaryButton}" Content="›" FontSize="24" Width="42" IsEnabled="False" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="1" Margin="0,0,0,26">
+                        <StackPanel>
+                            <TextBlock FontSize="16" Margin="2,0,0,12">
+                                <Run Text="Roteiro" FontWeight="SemiBold" />
+                                <Run Text=" — Visão geral do dia a dia" Foreground="{StaticResource MutedTextBrush}" />
+                            </TextBlock>
+                            <ItemsControl ItemsSource="{Binding Itinerary}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,24,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="28" />
+                                                <ColumnDefinition Width="270" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
+                                                <TextBlock Text="•" Foreground="White" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-6,0,0" />
+                                            </Border>
+                                            <Border Grid.Column="1" Style="{StaticResource Card}" Width="270" MinHeight="218" Padding="14">
+                                                <StackPanel>
+                                                    <Grid>
+                                                        <TextBlock Text="{Binding Title}" FontSize="17" FontWeight="SemiBold" />
+                                                        <TextBlock Text="{Binding DateLabel}" Style="{StaticResource Caption}" HorizontalAlignment="Right" />
+                                                    </Grid>
+                                                    <Grid Margin="0,12,0,10">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="74" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Width="64" Height="64" CornerRadius="7" Background="{StaticResource AccentSoftBrush}">
+                                                            <TextBlock Text="▧" Foreground="{StaticResource AccentBrush}" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding OvernightLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                            <TextBlock Text="Chile" Style="{StaticResource Caption}" Margin="0,4,0,0" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0" Margin="0,2,0,10" />
+                                                    <ItemsControl ItemsSource="{Binding Blocks}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,0,0,7" Foreground="#3E4946" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <TextBlock Text="Ver detalhes  ›" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Margin="0,8,0,0" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.12*" />
+                            <ColumnDefinition Width="1.12*" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="1.12*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,12,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Grid Grid.Row="0" Margin="0,0,0,12">
+                                    <TextBlock Text="Tarefas" Style="{StaticResource SectionTitle}" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Content="+" Style="{StaticResource SecondaryButton}" Width="38" Padding="0" Click="AddTask_Click" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <ItemsControl Grid.Row="1" ItemsSource="{Binding Tasks}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,7">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="28" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <CheckBox IsChecked="{Binding IsDone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Text="{Binding Title}" TextWrapping="Wrap" VerticalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                                    <Setter Property="Foreground" Value="#8B928F" />
+                                                                    <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <Button Grid.Row="2" Content="Ver todas as tarefas  ›" Style="{StaticResource SecondaryButton}" Click="ShowTasks_Click" Margin="0,16,0,0" />
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource Card}" Margin="0,0,12,0">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,14">
+                                    <TextBlock Text="Gastos" Style="{StaticResource SectionTitle}" />
+                                    <TextBlock Text="◔" HorizontalAlignment="Right" FontSize="22" Foreground="{StaticResource AccentBrush}" />
+                                </Grid>
+                                <UniformGrid Columns="3" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <TextBlock Text="Total estimado" Style="{StaticResource Caption}" />
+                                        <TextBlock Text="{Binding EstimatedTotal}" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" FontSize="14" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Pago" Style="{StaticResource Caption}" />
+                                        <TextBlock Text="{Binding PaidTotal}" Foreground="#15803D" FontWeight="Bold" FontSize="14" />
+                                    </StackPanel>
+                                    <StackPanel>
+                                        <TextBlock Text="Pendente" Style="{StaticResource Caption}" />
+                                        <TextBlock Text="{Binding PendingTotal}" Foreground="#B42318" FontWeight="Bold" FontSize="14" />
+                                    </StackPanel>
+                                </UniformGrid>
+                                <TextBlock Text="Por categoria" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,8" />
+                                <ItemsControl ItemsSource="{Binding BudgetCategories}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,7">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="94" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="84" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                                <Border Grid.Column="1" Background="#E8E2D7" CornerRadius="4" Height="12" VerticalAlignment="Center">
+                                                    <Border Background="{StaticResource AccentBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="{Binding BarWidth}" />
+                                                </Border>
+                                                <TextBlock Grid.Column="2" Text="{Binding TotalLabel}" TextAlignment="Right" VerticalAlignment="Center" FontSize="12" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource Card}" Margin="0,0,12,0">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,12">
+                                    <TextBlock Text="Mapa e lugares" Style="{StaticResource SectionTitle}" />
+                                    <TextBlock Text="▱" HorizontalAlignment="Right" FontSize="22" Foreground="{StaticResource AccentBrush}" />
+                                </Grid>
+                                <Border Height="210" Background="#DDE8DF" CornerRadius="8" Margin="0,0,0,12">
+                                    <Grid>
+                                        <Polyline Points="42,164 72,128 96,140 132,96 158,116 190,74"
+                                                  Stroke="{StaticResource AccentBrush}"
+                                                  StrokeThickness="4" />
+                                        <TextBlock Text="Chile" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,0" />
+                                        <TextBlock Text="Coyhaique" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,-20,0,0" />
+                                        <TextBlock Text="Puerto Río Tranquilo" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,24,18,0" />
+                                    </Grid>
+                                </Border>
+                                <Button Content="⇧  Exportar KML" Style="{StaticResource SecondaryButton}" IsEnabled="False" />
+                            </StackPanel>
+                        </Border>
+
+                        <Grid Grid.Column="3">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="1*" />
+                                <RowDefinition Height="1*" />
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Style="{StaticResource Card}" Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Dicas" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+                                        <Button Grid.Column="1" Content="+" Style="{StaticResource SecondaryButton}" Width="38" Height="34" Padding="0" HorizontalAlignment="Right" Click="AddTip_Click" />
+                                    </Grid>
+
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,8,0">
+                                        <ItemsControl ItemsSource="{Binding OverviewTips}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1" Padding="0,8">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                                            <TextBlock Text="{Binding Url}" Foreground="{StaticResource AccentBrush}" FontSize="12" TextWrapping="Wrap" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+
+                                    <Button Grid.Row="2" Content="Ver todas as dicas  ›" Style="{StaticResource SecondaryButton}" Click="ShowTips_Click" Margin="0,12,0,0" />
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Row="1" Style="{StaticResource Card}">
+                                <DockPanel>
+                                    <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
+                                        <TextBlock Text="Arquivos" Style="{StaticResource SectionTitle}" />
+                                        <TextBlock Text="□  +" HorizontalAlignment="Right" FontSize="18" Foreground="{StaticResource AccentBrush}" />
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding OverviewFiles}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1" Padding="0,10">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="44" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Width="32" Height="38" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1" CornerRadius="3">
+                                                            <TextBlock Text="PDF" Foreground="{StaticResource AccentBrush}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        </Border>
+                                                        <TextBlock Grid.Column="1" Text="{Binding}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </ScrollViewer>
+
+            <Grid x:Name="TasksPanel" Grid.Row="1" Visibility="Collapsed" Margin="24,22,24,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="380" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource Card}" Margin="0,0,18,0">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top">
+                            <TextBlock Text="Tarefas" FontSize="24" FontWeight="Bold" />
+                            <TextBlock Text="Planeje compras, reservas e pendências da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,14" />
+                            <UniformGrid Columns="3" Margin="0,0,0,14">
+                                <Button Content="Todas" Style="{StaticResource SecondaryButton}" Click="ShowAllTasks_Click" Margin="0,0,6,0" />
+                                <Button Content="Pendentes" Style="{StaticResource SecondaryButton}" Click="ShowPendingTasks_Click" Margin="0,0,6,0" />
+                                <Button Content="Concluídas" Style="{StaticResource SecondaryButton}" Click="ShowDoneTasks_Click" />
+                            </UniformGrid>
+                        </StackPanel>
+                        <ListBox ItemsSource="{Binding Tasks}"
+                                 SelectedItem="{Binding SelectedTask}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="24" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox IsChecked="{Binding IsDone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                                <Setter Property="Foreground" Value="#8B928F" />
+                                                                <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding Notes}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,18">
+                            <TextBlock Text="Editar Tarefa" FontSize="24" FontWeight="Bold" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Nova" Style="{StaticResource SecondaryButton}" Click="AddTask_Click" Margin="0,0,10,0" />
+                                <Button Content="Excluir" Style="{StaticResource SecondaryButton}" Click="DeleteTask_Click" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Grid.Row="1" DataContext="{Binding SelectedTask}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.ColumnSpan="2">
+                                <TextBlock Text="Título" Foreground="{StaticResource MutedTextBrush}" />
+                                <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" FontSize="18" Padding="10" Margin="0,4,0,14" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Margin="0,0,14,0">
+                                <TextBlock Text="Status" Foreground="{StaticResource MutedTextBrush}" />
+                                <ComboBox SelectedValue="{Binding Status, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Tag" Margin="0,4,0,14" Padding="8">
+                                    <ComboBoxItem Content="Pendente" Tag="pending" />
+                                    <ComboBoxItem Content="Concluída" Tag="done" />
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2">
+                                <TextBlock Text="Notas" Foreground="{StaticResource MutedTextBrush}" />
+                                <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="180" Padding="10" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,14,0" />
+                            <Button Content="Salvar Tarefas" Style="{StaticResource PrimaryButton}" Click="SaveTasks_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid x:Name="TipsPanel" Grid.Row="1" Visibility="Collapsed" Margin="24,22,24,18">
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,18">
+                            <StackPanel>
+                                <TextBlock Text="Dicas" FontSize="24" FontWeight="Bold" />
+                                <TextBlock Text="Guarde links úteis de pesquisa, reservas, blogs e referências da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <Button Content="Nova" Style="{StaticResource SecondaryButton}" Click="AddTip_Click" Margin="0,0,10,0" />
+                                <Button Content="Abrir link" Style="{StaticResource SecondaryButton}" Click="OpenSelectedTip_Click" Margin="0,0,10,0" />
+                                <Button Content="Excluir" Style="{StaticResource SecondaryButton}" Click="DeleteTip_Click" />
+                            </StackPanel>
+                        </Grid>
+
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding Tips}"
+                                  SelectedItem="{Binding SelectedTip}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  RowHeaderWidth="0"
+                                  BorderBrush="{StaticResource BorderBrushSoft}"
+                                  BorderThickness="1"
+                                  Background="{StaticResource PanelBackground}"
+                                  AlternatingRowBackground="#FBFAF6"
+                                  HorizontalGridLinesBrush="{StaticResource BorderBrushSoft}"
+                                  VerticalGridLinesBrush="Transparent"
+                                  SelectionMode="Single"
+                                  SelectionUnit="FullRow">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nome" Binding="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Width="2*" />
+                                <DataGridTextColumn Header="Link" Binding="{Binding Url, UpdateSourceTrigger=PropertyChanged}" Width="3*" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource MutedTextBrush}" VerticalAlignment="Center" Margin="0,0,14,0" />
+                            <Button Content="Salvar Dicas" Style="{StaticResource PrimaryButton}" Click="SaveTips_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="2" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0">
+                <Grid Margin="24,0">
+                    <TextBlock Text="☁  Salvo automaticamente" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" />
+                    <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{StaticResource MutedTextBrush}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
