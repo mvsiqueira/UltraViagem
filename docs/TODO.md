@@ -4,7 +4,6 @@
 
 - Melhorar acabamento visual dos cards da visão geral.
 - Implementar tela completa de roteiro.
-- Implementar tela completa de gastos.
 - Padronizar navegação para todos os painéis.
 - Adicionar validações de URL em dicas e Google My Maps.
 - Definir estratégia de migração de schema para `trip.json`.
@@ -15,6 +14,7 @@
 - Associar dicas a dias do roteiro ou lugares.
 - Associar tarefas a roteiro, gasto, lugar ou arquivo.
 - Melhorar validações de renomeação de arquivos.
+- Melhorar validações e listas de categorias/moedas na tela de gastos.
 - Melhorar seleção de ícones e estados de hover/foco/acessibilidade.
 - Criar dados de exemplo dentro de uma pasta de viagens dedicada.
 

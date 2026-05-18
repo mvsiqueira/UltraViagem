@@ -70,9 +70,9 @@
                             <TextBlock Text="Mapa" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource NavButton}" IsEnabled="False">
+                    <Button x:Name="BudgetNavButton" Style="{StaticResource NavButton}" Click="ShowBudget_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xEAFD;" Style="{StaticResource NavIcon}" />
+                            <TextBlock Text="R$" Style="{StaticResource NavIcon}" FontFamily="Segoe UI" FontSize="15" FontWeight="Bold" />
                             <TextBlock Text="Gastos" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
@@ -356,10 +356,10 @@
                             <StackPanel>
                                 <Grid Margin="0,0,0,14">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xEAFD;" Style="{StaticResource SectionIcon}" />
+                                <TextBlock Text="R$" Style="{StaticResource SectionIcon}" FontFamily="Segoe UI" FontSize="15" FontWeight="Bold" />
                                         <TextBlock Text="Gastos" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
                                     </StackPanel>
-                                    <TextBlock Text="◔" HorizontalAlignment="Right" FontSize="22" Foreground="{StaticResource AccentBrush}" />
+                                    <Button Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" Click="ShowBudget_Click" ToolTip="Abrir gastos" />
                                 </Grid>
                                 <UniformGrid Columns="3" Margin="0,0,0,16">
                                     <StackPanel>
@@ -576,12 +576,13 @@
                             </StackPanel>
                         </Grid>
 
-                        <Grid Grid.Row="1" MaxWidth="760" HorizontalAlignment="Left">
+                        <Grid Grid.Row="1" MaxWidth="960" HorizontalAlignment="Stretch">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="170" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -594,18 +595,18 @@
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Margin="0,0,14,0">
-                                <TextBlock Text="Data inicial (aaaa-mm-dd)" Style="{StaticResource Caption}" />
-                                <TextBox x:Name="TripDetailsStartDateBox" Padding="10" Margin="0,4,0,14" />
+                                <TextBlock Text="Data inicial" Style="{StaticResource Caption}" />
+                                <DatePicker x:Name="TripDetailsStartDatePicker" Margin="0,4,0,14" Height="34" />
                             </StackPanel>
 
                             <StackPanel Grid.Row="1" Grid.Column="1">
-                                <TextBlock Text="Pessoas" Style="{StaticResource Caption}" />
-                                <TextBox x:Name="TripDetailsPeopleBox" Padding="10" Margin="0,4,0,14" />
+                                <TextBlock Text="Data final" Style="{StaticResource Caption}" />
+                                <DatePicker x:Name="TripDetailsEndDatePicker" Margin="0,4,0,14" Height="34" />
                             </StackPanel>
 
                             <StackPanel Grid.Row="2" Margin="0,0,14,0">
-                                <TextBlock Text="Data final (aaaa-mm-dd)" Style="{StaticResource Caption}" />
-                                <TextBox x:Name="TripDetailsEndDateBox" Padding="10" Margin="0,4,0,14" />
+                                <TextBlock Text="Pessoas" Style="{StaticResource Caption}" />
+                                <TextBox x:Name="TripDetailsPeopleBox" Padding="10" Margin="0,4,0,14" />
                             </StackPanel>
 
                             <StackPanel Grid.Row="2" Grid.Column="1">
@@ -613,7 +614,24 @@
                                 <TextBox x:Name="TripDetailsCurrencyBox" Padding="10" Margin="0,4,0,14" />
                             </StackPanel>
 
-                            <TextBlock Grid.Row="3"
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="0,0,0,14">
+                                <TextBlock Text="Pasta da viagem" Style="{StaticResource Caption}" />
+                                <DockPanel Margin="0,4,0,0">
+                                    <Button DockPanel.Dock="Right"
+                                            Content="Renomear Pasta"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Click="RenameTripFolder_Click"
+                                            Margin="10,0,0,0" />
+                                    <TextBox x:Name="TripDetailsPathBox"
+                                             IsReadOnly="True"
+                                             MinWidth="620"
+                                             Padding="10"
+                                             TextWrapping="NoWrap"
+                                             ToolTip="{Binding TripPath}" />
+                                </DockPanel>
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="4"
                                        Grid.ColumnSpan="2"
                                        x:Name="TripDetailsErrorText"
                                        Foreground="#B42318"
@@ -624,6 +642,129 @@
                         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
                             <Button Content="Salvar Dados" Style="{StaticResource PrimaryButton}" Click="SaveTripDetails_Click" />
                         </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid x:Name="BudgetPanel" Grid.Row="1" Visibility="Collapsed" Margin="24,22,24,18">
+                <Border Style="{StaticResource Card}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Margin="0,0,0,12">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="R$" Style="{StaticResource PanelTitleIcon}" FontFamily="Segoe UI" FontSize="16" FontWeight="Bold" />
+                                <StackPanel>
+                                    <TextBlock Text="Gastos" Style="{StaticResource PanelTitleText}" />
+                                    <TextBlock Text="{Binding BudgetSubtitle}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" ToolTip="Voltar para visão geral" Margin="0,0,10,0" />
+                                <Button Content="Novo" Style="{StaticResource SecondaryButton}" Click="AddExpense_Click" Margin="0,0,10,0" />
+                                <Button Content="Excluir" Style="{StaticResource SecondaryButton}" Click="DeleteExpense_Click" />
+                            </StackPanel>
+                        </Grid>
+
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding Expenses}"
+                                  SelectedItem="{Binding SelectedExpense}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  HeadersVisibility="Column"
+                                  RowHeaderWidth="0"
+                                  GridLinesVisibility="Horizontal"
+                                  HorizontalScrollBarVisibility="Auto">
+                            <DataGrid.Columns>
+                                <DataGridCheckBoxColumn Header="Ativo" Binding="{Binding IsActive, UpdateSourceTrigger=PropertyChanged}" Width="58" />
+                                <DataGridTextColumn Header="Categoria" Binding="{Binding Type, UpdateSourceTrigger=PropertyChanged}" Width="115" />
+                                <DataGridTextColumn Header="Descrição" Binding="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Width="190" />
+                                <DataGridTextColumn Header="Empresa" Binding="{Binding Company, UpdateSourceTrigger=PropertyChanged}" Width="130" />
+                                <DataGridTextColumn Header="Link" Binding="{Binding Link, UpdateSourceTrigger=PropertyChanged}" Width="160" />
+                                <DataGridTextColumn Header="Obs" Binding="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Width="180" />
+                                <DataGridTextColumn Header="Preço unit." Binding="{Binding Price, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="92" />
+                                <DataGridTextColumn Header="Taxas unit." Binding="{Binding Taxes, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="92" />
+                                <DataGridTextColumn Header="Pessoas" Binding="{Binding People, UpdateSourceTrigger=PropertyChanged}" Width="72" />
+                                <DataGridTextColumn Header="Quant." Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="68" />
+                                <DataGridTextColumn Header="Subtotal" Binding="{Binding Subtotal, StringFormat=N2}" IsReadOnly="True" Width="92" />
+                                <DataGridTextColumn Header="Moeda" Binding="{Binding Currency, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                                <DataGridTextColumn Header="Cotação item" Binding="{Binding ExchangeRateToBase, UpdateSourceTrigger=PropertyChanged, StringFormat=N6}" Width="105" />
+                                <DataGridTextColumn Header="Convertido BRL" Binding="{Binding SubtotalBase, StringFormat=C}" IsReadOnly="True" Width="120" />
+                                <DataGridTextColumn Header="Pago BRL" Binding="{Binding PaidAmount, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="100" />
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status, UpdateSourceTrigger=PropertyChanged}" Width="120" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Grid Grid.Row="2" Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.1*" />
+                                <ColumnDefinition Width="1.2*" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+
+                            <UniformGrid Columns="3" Margin="0,0,14,0">
+                                <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="7" Padding="12" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Total ativo" Style="{StaticResource Caption}" />
+                                        <TextBlock Text="{Binding EstimatedTotal}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#F1F8EF" CornerRadius="7" Padding="12" Margin="0,0,8,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Pago" Style="{StaticResource Caption}" />
+                                        <TextBlock Text="{Binding PaidTotal}" FontSize="16" FontWeight="SemiBold" Foreground="#15803D" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#FFF4ED" CornerRadius="7" Padding="12">
+                                    <StackPanel>
+                                        <TextBlock Text="Falta pagar" Style="{StaticResource Caption}" />
+                                        <TextBlock Text="{Binding PendingTotal}" FontSize="16" FontWeight="SemiBold" Foreground="#B42318" />
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+
+                            <ItemsControl Grid.Column="1" ItemsSource="{Binding BudgetCategories}" Margin="0,0,14,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="94" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="86" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                                            <Border Grid.Column="1" Background="#E8E2D7" CornerRadius="4" Height="10" VerticalAlignment="Center">
+                                                <Border Background="{StaticResource AccentBrush}" CornerRadius="4" HorizontalAlignment="Left" Width="{Binding BarWidth}" />
+                                            </Border>
+                                            <TextBlock Grid.Column="2" Text="{Binding TotalLabel}" TextAlignment="Right" FontSize="12" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <StackPanel Grid.Column="2">
+                                <DataGrid ItemsSource="{Binding CurrencyRates}"
+                                          AutoGenerateColumns="False"
+                                          CanUserAddRows="False"
+                                          HeadersVisibility="Column"
+                                          RowHeaderWidth="0"
+                                          Height="112"
+                                          Margin="0,0,0,8">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Moeda" Binding="{Binding Currency, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                                        <DataGridTextColumn Header="Cotação geral" Binding="{Binding RateToBase, UpdateSourceTrigger=PropertyChanged, StringFormat=N6}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="Atualizar Cotações" Style="{StaticResource SecondaryButton}" Click="UpdateExchangeRates_Click" Margin="0,0,8,0" />
+                                    <Button Content="Salvar Gastos" Style="{StaticResource PrimaryButton}" Click="SaveExpenses_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
                     </Grid>
                 </Border>
             </Grid>

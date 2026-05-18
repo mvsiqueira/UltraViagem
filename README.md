@@ -41,7 +41,7 @@ Exemplo da pasta de dados escolhida no app:
 ```text
 UltraViagens/
   config.json
-  2025-carretera-austral/
+  2026-03-carretera-austral/
     trip.json
     nova-york.kml
     reserva-hotel-1.pdf
@@ -54,6 +54,7 @@ UltraViagens/
 - [Estrutura do projeto](docs/PROJECT_STRUCTURE.md)
 - [Arquitetura](docs/ARCHITECTURE.md)
 - [Funcionalidades](docs/FUNCTIONAL.md)
+- [Fluxo de trabalho](docs/WORKFLOW.md)
 - [Todo / Roadmap](docs/TODO.md)
 - [Checklist de commit](docs/COMMIT_CHECKLIST.md)
 

@@ -10,13 +10,19 @@ Antes de todo commit:
 dotnet build .\UltraViagem.slnx
 ```
 
-4. Confira o status:
+4. Gere o publish atualizado:
+
+```powershell
+dotnet publish .\UltraViagem.App\UltraViagem.App.csproj -c Release -o .\publish
+```
+
+5. Confira o status:
 
 ```powershell
 git status --short
 ```
 
-5. Evite commitar:
+6. Evite commitar:
 
 - `bin/`
 - `obj/`
@@ -24,6 +30,9 @@ git status --short
 - arquivos de usuário;
 - dados pessoais reais de viagens.
 
-6. Faça commit com mensagem objetiva em português.
+7. Faça commit com mensagem objetiva em português.
+8. Faça push para `origin` após o commit.
 
 Regra do projeto: documentação deve acompanhar a mudança no mesmo commit sempre que a mudança afetar o entendimento futuro do projeto.
+
+Veja tambem o fluxo completo em `docs/WORKFLOW.md`.

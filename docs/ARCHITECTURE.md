@@ -47,7 +47,8 @@ O formato de dados atual fica em:
 - `tasks`: tarefas;
 - `places`: lugares;
 - `links`: dicas;
-- `expenses`: gastos;
+- `expenses`: gastos, com flag de ativação, categoria, moeda, taxa de conversão e valor pago;
+- `currencyRates`: cotações por moeda para conversão para a moeda base da viagem;
 - `attachments`: arquivos anexos.
 
 `LinkItem` é usado para o quadro de dicas:

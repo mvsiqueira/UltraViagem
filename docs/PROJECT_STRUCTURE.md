@@ -16,7 +16,7 @@ UltraViagem/
 
 ## Arquivos Da Raiz
 
-- `.gitignore`: ignora `bin/`, `obj/`, saídas locais de build/publicação e arquivos temporários.
+- `.gitignore`: ignora `bin/`, `obj/`, saídas locais auxiliares e arquivos temporários. A pasta `publish/` é versionada como build publicado do app.
 - `README.md`: entrada principal para retomar o projeto.
 - `UltraViagem.slnx`: solução .NET.
 - `config.json`: exemplo de configuração do repositório de viagens.
@@ -73,11 +73,11 @@ UltraViagem.App/
 Cada viagem deve ficar em uma subpasta, contendo `trip.json` e seus anexos:
 
 ```text
-2025-carretera-austral/
+2026-03-carretera-austral/
   trip.json
   passagem-aerea.pdf
   reserva-hotel-1.pdf
   roteiro.kml
 ```
 
-O app deve evitar espalhar dados da viagem em múltiplos JSONs. A regra atual é: uma viagem, uma pasta, um `trip.json`.
+O app deve evitar espalhar dados da viagem em múltiplos JSONs. A regra atual é: uma viagem, uma pasta no formato `yyyy-mm-nome-da-viagem`, um `trip.json`.

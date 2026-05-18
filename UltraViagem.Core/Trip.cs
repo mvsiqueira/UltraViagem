@@ -15,6 +15,7 @@ public sealed class Trip
     public List<PlaceItem> Places { get; set; } = [];
     public List<LinkItem> Links { get; set; } = [];
     public List<ExpenseItem> Expenses { get; set; } = [];
+    public List<CurrencyRateItem> CurrencyRates { get; set; } = [];
     public List<AttachmentItem> Attachments { get; set; } = [];
 }
 
@@ -69,6 +70,7 @@ public sealed class LinkItem
 public sealed class ExpenseItem
 {
     public string Id { get; set; } = "";
+    public bool IsActive { get; set; } = true;
     public string Title { get; set; } = "";
     public string? Type { get; set; }
     public string? Company { get; set; }
@@ -84,7 +86,14 @@ public sealed class ExpenseItem
     public string? Status { get; set; }
 
     public decimal Subtotal => (Price + Taxes) * People * Quantity;
-    public decimal SubtotalBase => Subtotal * ExchangeRateToBase;
+    public decimal SubtotalBase => IsActive ? Subtotal * ExchangeRateToBase : 0m;
+}
+
+public sealed class CurrencyRateItem
+{
+    public string Currency { get; set; } = "BRL";
+    public decimal RateToBase { get; set; } = 1m;
+    public DateTime? UpdatedAt { get; set; }
 }
 
 public sealed class AttachmentItem

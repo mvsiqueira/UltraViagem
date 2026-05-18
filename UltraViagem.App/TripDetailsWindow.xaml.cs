@@ -16,8 +16,8 @@ public partial class TripDetailsWindow : Window
         TitleText.Text = title;
 
         TripTitleBox.Text = draft.Title;
-        StartDateBox.Text = draft.StartDate;
-        EndDateBox.Text = draft.EndDate;
+        StartDatePicker.SelectedDate = ParseDraftDate(draft.StartDate);
+        EndDatePicker.SelectedDate = ParseDraftDate(draft.EndDate);
         PeopleBox.Text = draft.People.ToString(CultureInfo.InvariantCulture);
         CurrencyBox.Text = draft.BaseCurrency;
     }
@@ -46,15 +46,13 @@ public partial class TripDetailsWindow : Window
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(StartDateBox.Text) && !DateOnly.TryParse(StartDateBox.Text, CultureInfo.InvariantCulture, out _))
+        if (!TryReadDatePicker(StartDatePicker, "data inicial", out var startDate))
         {
-            ShowError("A data inicial precisa estar no formato aaaa-mm-dd.");
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(EndDateBox.Text) && !DateOnly.TryParse(EndDateBox.Text, CultureInfo.InvariantCulture, out _))
+        if (!TryReadDatePicker(EndDatePicker, "data final", out var endDate))
         {
-            ShowError("A data final precisa estar no formato aaaa-mm-dd.");
             return;
         }
 
@@ -65,8 +63,8 @@ public partial class TripDetailsWindow : Window
         }
 
         _draft.Title = TripTitleBox.Text.Trim();
-        _draft.StartDate = StartDateBox.Text.Trim();
-        _draft.EndDate = EndDateBox.Text.Trim();
+        _draft.StartDate = FormatDraftDate(startDate);
+        _draft.EndDate = FormatDraftDate(endDate);
         _draft.People = people;
         _draft.BaseCurrency = string.IsNullOrWhiteSpace(CurrencyBox.Text) ? "BRL" : CurrencyBox.Text.Trim().ToUpperInvariant();
 
@@ -82,6 +80,32 @@ public partial class TripDetailsWindow : Window
     {
         ErrorText.Text = message;
         ErrorText.Visibility = Visibility.Visible;
+    }
+
+    private bool TryReadDatePicker(System.Windows.Controls.DatePicker picker, string label, out DateTime? date)
+    {
+        date = picker.SelectedDate;
+        if (!string.IsNullOrWhiteSpace(picker.Text) && date is null)
+        {
+            ShowError($"Selecione uma {label} válida.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static DateTime? ParseDraftDate(string value)
+    {
+        return DateOnly.TryParse(value, CultureInfo.InvariantCulture, out var date)
+            ? date.ToDateTime(TimeOnly.MinValue)
+            : null;
+    }
+
+    private static string FormatDraftDate(DateTime? value)
+    {
+        return value is null
+            ? ""
+            : DateOnly.FromDateTime(value.Value).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 }
 

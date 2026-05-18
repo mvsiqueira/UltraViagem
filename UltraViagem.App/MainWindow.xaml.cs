@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -15,6 +16,7 @@ namespace UltraViagem.App;
 public partial class MainWindow : Window
 {
     private readonly AppViewModel _viewModel = new();
+    private readonly HttpClient _httpClient = new();
     private TripRepository? _repository;
     private readonly Dictionary<LinkEditorViewModel, (string Title, string Url)> _tipEditSnapshots = [];
     private readonly Dictionary<AttachmentEditorViewModel, string> _attachmentEditSnapshots = [];
@@ -23,6 +25,7 @@ public partial class MainWindow : Window
     private bool _isSavingTasks;
     private bool _isSavingTips;
     private bool _isSavingAttachments;
+    private bool _isSavingExpenses;
 
     public MainWindow()
     {
@@ -31,6 +34,7 @@ public partial class MainWindow : Window
         _viewModel.TasksChanged += ViewModel_TasksChanged;
         _viewModel.TipsChanged += ViewModel_TipsChanged;
         _viewModel.AttachmentsChanged += ViewModel_AttachmentsChanged;
+        _viewModel.ExpensesChanged += ViewModel_ExpensesChanged;
 
         LoadRepository(LocalSettings.Load().RepositoryPath ?? FindWorkspaceRoot());
         ShowOverview();
@@ -142,7 +146,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var id = CreateUniqueTripId(window.Draft.Title);
+        var id = CreateUniqueTripId(window.Draft.Title, window.Draft.StartDate);
         var trip = new Trip { Id = id };
         ApplyDraftToTrip(window.Draft, trip);
         _repository.SaveTrip(trip);
@@ -183,6 +187,55 @@ public partial class MainWindow : Window
         _viewModel.StatusMessage = $"Viagem {draft.Title} atualizada.";
     }
 
+    private void RenameTripFolder_Click(object sender, RoutedEventArgs e)
+    {
+        if (_repository is null || _viewModel.CurrentTrip is null)
+        {
+            return;
+        }
+
+        var oldId = _viewModel.CurrentTrip.Id;
+        var newId = ShowRenameDialog(oldId, "Renomear pasta da viagem", "Novo nome da pasta");
+        if (string.IsNullOrWhiteSpace(newId) || string.Equals(newId, oldId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        newId = newId.Trim();
+        if (!ValidateTripFolderName(newId))
+        {
+            return;
+        }
+
+        var oldPath = Path.Combine(_repository.RootPath, oldId);
+        var newPath = Path.Combine(_repository.RootPath, newId);
+        if (Directory.Exists(newPath))
+        {
+            ShowTripDetailsError("Já existe uma pasta de viagem com esse nome.");
+            return;
+        }
+
+        try
+        {
+            Directory.Move(oldPath, newPath);
+            _viewModel.CurrentTrip.Id = newId;
+            _repository.SaveTrip(_viewModel.CurrentTrip);
+            ReplaceTripIdInConfig(oldId, newId);
+            RefreshTrips(newId);
+            PopulateTripDetailsPanel();
+            ShowTripDetails();
+            _viewModel.StatusMessage = $"Pasta da viagem renomeada para {newId}.";
+        }
+        catch (IOException ex)
+        {
+            ShowTripDetailsError($"Não foi possível renomear a pasta: {ex.Message}");
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            ShowTripDetailsError($"Sem permissão para renomear a pasta: {ex.Message}");
+        }
+    }
+
     private void ToggleCurrentTripFavorite_Click(object sender, RoutedEventArgs e)
     {
         if (_viewModel.CurrentTrip is null)
@@ -203,6 +256,92 @@ public partial class MainWindow : Window
     private void ShowTasks_Click(object sender, RoutedEventArgs e)
     {
         ShowTasks();
+    }
+
+    private void ShowBudget_Click(object sender, RoutedEventArgs e)
+    {
+        ShowBudget();
+    }
+
+    private void AddExpense_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.AddExpense();
+        SaveExpensesInternal("Novo gasto salvo automaticamente.");
+    }
+
+    private void DeleteExpense_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.DeleteSelectedExpense();
+        SaveExpensesInternal("Gasto removido e salvo.");
+    }
+
+    private void SaveExpenses_Click(object sender, RoutedEventArgs e)
+    {
+        SaveExpensesInternal($"Gastos salvos em {DateTime.Now:HH:mm}.");
+    }
+
+    private async void UpdateExchangeRates_Click(object sender, RoutedEventArgs e)
+    {
+        await UpdateExchangeRatesAsync();
+    }
+
+    private async Task UpdateExchangeRatesAsync()
+    {
+        if (_viewModel.CurrentTrip is null)
+        {
+            return;
+        }
+
+        var baseCurrency = string.IsNullOrWhiteSpace(_viewModel.CurrentTrip.BaseCurrency)
+            ? "BRL"
+            : _viewModel.CurrentTrip.BaseCurrency.Trim().ToUpperInvariant();
+        if (!string.Equals(baseCurrency, "BRL", StringComparison.OrdinalIgnoreCase))
+        {
+            _viewModel.StatusMessage = "Atualização automática disponível por enquanto para base BRL.";
+            return;
+        }
+
+        var currencies = _viewModel.Expenses
+            .Select(expense => expense.Currency.Trim().ToUpperInvariant())
+            .Concat(_viewModel.CurrencyRates.Select(rate => rate.Currency.Trim().ToUpperInvariant()))
+            .Where(currency => !string.IsNullOrWhiteSpace(currency) && currency != baseCurrency)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (currencies.Count == 0)
+        {
+            _viewModel.StatusMessage = "Nenhuma moeda estrangeira cadastrada para atualizar.";
+            return;
+        }
+
+        try
+        {
+            var pairs = string.Join(",", currencies.Select(currency => $"{currency}-{baseCurrency}"));
+            using var response = await _httpClient.GetAsync($"https://economia.awesomeapi.com.br/json/last/{pairs}");
+            response.EnsureSuccessStatusCode();
+            using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var updated = 0;
+            foreach (var currency in currencies)
+            {
+                var key = $"{currency}{baseCurrency}";
+                if (!json.RootElement.TryGetProperty(key, out var item) ||
+                    !item.TryGetProperty("bid", out var bidProperty) ||
+                    !decimal.TryParse(bidProperty.GetString(), NumberStyles.Number, CultureInfo.InvariantCulture, out var rate))
+                {
+                    continue;
+                }
+
+                _viewModel.AddCurrencyRate(currency, rate, DateTime.Now);
+                updated++;
+            }
+
+            SaveExpensesInternal(updated == 0
+                ? "Nenhuma cotação foi atualizada."
+                : $"{updated} cotação(ões) atualizada(s). Itens com valor pago mantiveram a cotação do item.");
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException)
+        {
+            _viewModel.StatusMessage = $"Não foi possível atualizar cotações: {ex.Message}";
+        }
     }
 
     private void AddTask_Click(object sender, RoutedEventArgs e)
@@ -675,11 +814,11 @@ public partial class MainWindow : Window
         return null;
     }
 
-    private string? ShowRenameDialog(string currentName)
+    private string? ShowRenameDialog(string currentName, string title = "Renomear arquivo", string label = "Novo nome do arquivo")
     {
         var dialog = new Window
         {
-            Title = "Renomear arquivo",
+            Title = title,
             Owner = this,
             Width = 460,
             Height = 190,
@@ -727,7 +866,7 @@ public partial class MainWindow : Window
         var content = new StackPanel { Margin = new Thickness(18) };
         content.Children.Add(new TextBlock
         {
-            Text = "Novo nome do arquivo",
+            Text = label,
             Foreground = (System.Windows.Media.Brush)FindResource("MutedTextBrush")
         });
         content.Children.Add(input);
@@ -1065,6 +1204,16 @@ public partial class MainWindow : Window
         SaveAttachmentsInternal($"Salvo automaticamente às {DateTime.Now:HH:mm}.");
     }
 
+    private void ViewModel_ExpensesChanged(object? sender, EventArgs e)
+    {
+        if (_isLoadingTrip || _isSavingExpenses)
+        {
+            return;
+        }
+
+        SaveExpensesInternal($"Salvo automaticamente às {DateTime.Now:HH:mm}.");
+    }
+
     private void LoadRepository(string rootPath)
     {
         _repository = new TripRepository(rootPath);
@@ -1115,6 +1264,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Visible;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
         MapPanel.Visibility = Visibility.Collapsed;
@@ -1127,6 +1277,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Visible;
         TipsPanel.Visibility = Visibility.Collapsed;
         MapPanel.Visibility = Visibility.Collapsed;
@@ -1134,10 +1285,23 @@ public partial class MainWindow : Window
         SetActiveNav(TasksNavButton);
     }
 
+    private void ShowBudget()
+    {
+        OverviewPanel.Visibility = Visibility.Collapsed;
+        TripDetailsPanel.Visibility = Visibility.Collapsed;
+        BudgetPanel.Visibility = Visibility.Visible;
+        TasksPanel.Visibility = Visibility.Collapsed;
+        TipsPanel.Visibility = Visibility.Collapsed;
+        MapPanel.Visibility = Visibility.Collapsed;
+        FilesPanel.Visibility = Visibility.Collapsed;
+        SetActiveNav(BudgetNavButton);
+    }
+
     private void ShowTips()
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Visible;
         MapPanel.Visibility = Visibility.Collapsed;
@@ -1149,6 +1313,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
         MapPanel.Visibility = Visibility.Visible;
@@ -1161,6 +1326,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
         MapPanel.Visibility = Visibility.Collapsed;
@@ -1172,6 +1338,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Visible;
+        BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
         MapPanel.Visibility = Visibility.Collapsed;
@@ -1182,7 +1349,7 @@ public partial class MainWindow : Window
     private void SetActiveNav(System.Windows.Controls.Button activeButton)
     {
         var accentBrush = (System.Windows.Media.Brush)FindResource("AccentBrush");
-        foreach (var button in new[] { OverviewNavButton, TripDetailsNavButton, TasksNavButton, TipsNavButton, MapNavButton, FilesNavButton })
+        foreach (var button in new[] { OverviewNavButton, TripDetailsNavButton, BudgetNavButton, TasksNavButton, TipsNavButton, MapNavButton, FilesNavButton })
         {
             button.Foreground = System.Windows.Media.Brushes.Black;
             button.Background = System.Windows.Media.Brushes.Transparent;
@@ -1207,6 +1374,21 @@ public partial class MainWindow : Window
         _repository.SaveTrip(_viewModel.CurrentTrip);
         _viewModel.StatusMessage = message;
         _isSavingTasks = false;
+    }
+
+    private void SaveExpensesInternal(string message)
+    {
+        if (_repository is null || _viewModel.CurrentTrip is null)
+        {
+            _viewModel.StatusMessage = "Nenhuma viagem carregada para salvar.";
+            return;
+        }
+
+        _isSavingExpenses = true;
+        _viewModel.ApplyExpensesToTrip();
+        _repository.SaveTrip(_viewModel.CurrentTrip);
+        _viewModel.StatusMessage = message;
+        _isSavingExpenses = false;
     }
 
     private void SaveTipsInternal(string message)
@@ -1433,6 +1615,30 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ReplaceTripIdInConfig(string oldId, string newId)
+    {
+        if (_repository is null)
+        {
+            return;
+        }
+
+        var config = _repository.LoadOrCreateConfig();
+        ReplaceAll(config.RecentTrips, oldId, newId);
+        ReplaceAll(config.FavoriteTrips, oldId, newId);
+        _repository.SaveConfig(config);
+    }
+
+    private static void ReplaceAll(List<string> values, string oldValue, string newValue)
+    {
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (string.Equals(values[i], oldValue, StringComparison.OrdinalIgnoreCase))
+            {
+                values[i] = newValue;
+            }
+        }
+    }
+
     private void RefreshTripSelectionItems(AppConfig config)
     {
         if (_repository is null)
@@ -1492,23 +1698,28 @@ public partial class MainWindow : Window
         return "Datas a definir";
     }
 
-    private string CreateUniqueTripId(string title)
+    private string CreateUniqueTripId(string title, string startDate)
     {
-        if (_repository is null)
-        {
-            return Slugify(title);
-        }
-
-        var baseId = Slugify(title);
+        var baseId = BuildTripIdBase(title, startDate);
         var id = baseId;
         var suffix = 2;
-        while (Directory.Exists(Path.Combine(_repository.RootPath, id)))
+        while (_repository is not null && Directory.Exists(Path.Combine(_repository.RootPath, id)))
         {
             id = $"{baseId}-{suffix}";
             suffix++;
         }
 
         return id;
+    }
+
+    private static string BuildTripIdBase(string title, string startDate)
+    {
+        var slug = Slugify(title);
+        var date = DateOnly.TryParse(startDate, CultureInfo.InvariantCulture, out var parsedDate)
+            ? parsedDate
+            : DateOnly.FromDateTime(DateTime.Today);
+
+        return $"{date:yyyy-MM}-{slug}";
     }
 
     private void PopulateTripDetailsPanel()
@@ -1520,10 +1731,11 @@ public partial class MainWindow : Window
 
         var draft = TripDetailsWindow.FromTrip(_viewModel.CurrentTrip);
         TripDetailsTitleBox.Text = draft.Title;
-        TripDetailsStartDateBox.Text = draft.StartDate;
-        TripDetailsEndDateBox.Text = draft.EndDate;
+        TripDetailsStartDatePicker.SelectedDate = ParseDraftDate(draft.StartDate);
+        TripDetailsEndDatePicker.SelectedDate = ParseDraftDate(draft.EndDate);
         TripDetailsPeopleBox.Text = draft.People.ToString(CultureInfo.InvariantCulture);
         TripDetailsCurrencyBox.Text = draft.BaseCurrency;
+        TripDetailsPathBox.Text = _viewModel.TripPath;
         TripDetailsErrorText.Visibility = Visibility.Collapsed;
     }
 
@@ -1533,8 +1745,8 @@ public partial class MainWindow : Window
         {
             Id = _viewModel.CurrentTrip?.Id ?? "",
             Title = TripDetailsTitleBox.Text.Trim(),
-            StartDate = TripDetailsStartDateBox.Text.Trim(),
-            EndDate = TripDetailsEndDateBox.Text.Trim(),
+            StartDate = FormatDraftDate(TripDetailsStartDatePicker.SelectedDate),
+            EndDate = FormatDraftDate(TripDetailsEndDatePicker.SelectedDate),
             People = int.TryParse(TripDetailsPeopleBox.Text, CultureInfo.InvariantCulture, out var people) ? people : 0,
             BaseCurrency = string.IsNullOrWhiteSpace(TripDetailsCurrencyBox.Text) ? "BRL" : TripDetailsCurrencyBox.Text.Trim().ToUpperInvariant(),
             MyMapsUrl = _viewModel.CurrentTrip?.MyMapsUrl
@@ -1549,15 +1761,13 @@ public partial class MainWindow : Window
             return false;
         }
 
-        if (!string.IsNullOrWhiteSpace(draft.StartDate) && !DateOnly.TryParse(draft.StartDate, CultureInfo.InvariantCulture, out _))
+        if (!ValidateDatePicker(TripDetailsStartDatePicker, "data inicial"))
         {
-            ShowTripDetailsError("A data inicial precisa estar no formato aaaa-mm-dd.");
             return false;
         }
 
-        if (!string.IsNullOrWhiteSpace(draft.EndDate) && !DateOnly.TryParse(draft.EndDate, CultureInfo.InvariantCulture, out _))
+        if (!ValidateDatePicker(TripDetailsEndDatePicker, "data final"))
         {
-            ShowTripDetailsError("A data final precisa estar no formato aaaa-mm-dd.");
             return false;
         }
 
@@ -1577,14 +1787,52 @@ public partial class MainWindow : Window
         TripDetailsErrorText.Visibility = Visibility.Visible;
     }
 
+    private bool ValidateTripFolderName(string folderName)
+    {
+        if (folderName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+            folderName is "." or ".." ||
+            !string.Equals(folderName, Path.GetFileName(folderName), StringComparison.Ordinal))
+        {
+            ShowTripDetailsError("Informe apenas o nome da pasta, sem barras ou caracteres inválidos.");
+            return false;
+        }
+
+        return true;
+    }
+
     private static void ApplyDraftToTrip(TripDetailsDraft draft, Trip trip)
     {
         trip.Title = draft.Title;
-        trip.StartDate = DateOnly.TryParse(draft.StartDate, out var startDate) ? startDate : null;
-        trip.EndDate = DateOnly.TryParse(draft.EndDate, out var endDate) ? endDate : null;
+        trip.StartDate = DateOnly.TryParse(draft.StartDate, CultureInfo.InvariantCulture, out var startDate) ? startDate : null;
+        trip.EndDate = DateOnly.TryParse(draft.EndDate, CultureInfo.InvariantCulture, out var endDate) ? endDate : null;
         trip.People = draft.People;
         trip.BaseCurrency = draft.BaseCurrency;
         trip.MyMapsUrl = draft.MyMapsUrl;
+    }
+
+    private bool ValidateDatePicker(DatePicker picker, string label)
+    {
+        if (!string.IsNullOrWhiteSpace(picker.Text) && picker.SelectedDate is null)
+        {
+            ShowTripDetailsError($"Selecione uma {label} válida.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static DateTime? ParseDraftDate(string value)
+    {
+        return DateOnly.TryParse(value, CultureInfo.InvariantCulture, out var date)
+            ? date.ToDateTime(TimeOnly.MinValue)
+            : null;
+    }
+
+    private static string FormatDraftDate(DateTime? value)
+    {
+        return value is null
+            ? ""
+            : DateOnly.FromDateTime(value.Value).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
     }
 
     private static string Slugify(string value)

@@ -17,12 +17,14 @@ public sealed class AppViewModel : NotifyObject
     private TaskEditorViewModel? _selectedTask;
     private LinkEditorViewModel? _selectedTip;
     private AttachmentEditorViewModel? _selectedAttachment;
+    private ExpenseEditorViewModel? _selectedExpense;
     private string _statusMessage = "Pronto";
     private string _taskFilter = "all";
     private bool _isCurrentTripFavorite;
     private bool _isLoadingTasks;
     private bool _isLoadingTips;
     private bool _isLoadingAttachments;
+    private bool _isLoadingExpenses;
 
     public ObservableCollection<string> TripIds { get; } = [];
     public ObservableCollection<TripSelectionItem> TripSelectionItems { get; } = [];
@@ -31,6 +33,8 @@ public sealed class AppViewModel : NotifyObject
     public ObservableCollection<TaskEditorViewModel> Tasks { get; } = [];
     public ObservableCollection<LinkEditorViewModel> Tips { get; } = [];
     public ObservableCollection<AttachmentEditorViewModel> Attachments { get; } = [];
+    public ObservableCollection<ExpenseEditorViewModel> Expenses { get; } = [];
+    public ObservableCollection<CurrencyRateViewModel> CurrencyRates { get; } = [];
     public ObservableCollection<BudgetCategoryViewModel> BudgetCategories { get; } = [];
     public ObservableCollection<string> Places { get; } = [];
     public ObservableCollection<AttachmentEditorViewModel> OverviewFiles { get; } = [];
@@ -64,6 +68,12 @@ public sealed class AppViewModel : NotifyObject
     {
         get => _selectedAttachment;
         set => SetField(ref _selectedAttachment, value);
+    }
+
+    public ExpenseEditorViewModel? SelectedExpense
+    {
+        get => _selectedExpense;
+        set => SetField(ref _selectedExpense, value);
     }
 
     public string StatusMessage
@@ -125,23 +135,25 @@ public sealed class AppViewModel : NotifyObject
         }
     }
     public bool HasMyMapsUrl => LinkEditorViewModel.IsHttpUrl(MyMapsUrl);
-    public string BudgetSubtitle => _trip is null ? "" : $"{_trip.Expenses.Count} itens cadastrados em {_trip.BaseCurrency}";
-    public string EstimatedTotal => FormatMoney(_trip?.Expenses.Sum(expense => expense.SubtotalBase) ?? 0);
-    public string PaidTotal => FormatMoney(_trip?.Expenses.Sum(expense => expense.PaidAmount) ?? 0);
+    public string BudgetSubtitle => _trip is null ? "" : $"{Expenses.Count} itens cadastrados em {_trip.BaseCurrency}";
+    public string EstimatedTotal => FormatMoney(Expenses.Sum(expense => expense.SubtotalBase));
+    public string PaidTotal => FormatMoney(Expenses.Where(expense => expense.IsActive).Sum(expense => expense.PaidAmount));
     public string PendingTotal
     {
         get
         {
-            var estimated = _trip?.Expenses.Sum(expense => expense.SubtotalBase) ?? 0;
-            var paid = _trip?.Expenses.Sum(expense => expense.PaidAmount) ?? 0;
+            var estimated = Expenses.Sum(expense => expense.SubtotalBase);
+            var paid = Expenses.Where(expense => expense.IsActive).Sum(expense => expense.PaidAmount);
             return FormatMoney(Math.Max(estimated - paid, 0));
         }
     }
+    public string ActiveExpensesCount => Expenses.Count(expense => expense.IsActive).ToString(Culture);
 
     public Trip? CurrentTrip => _trip;
     public event EventHandler? TasksChanged;
     public event EventHandler? TipsChanged;
     public event EventHandler? AttachmentsChanged;
+    public event EventHandler? ExpensesChanged;
 
     public void SetTripsRoot(string rootPath, IReadOnlyList<string> tripIds, IReadOnlyList<TripSelectionItem> tripSelectionItems, string? selectedTripId)
     {
@@ -156,6 +168,7 @@ public sealed class AppViewModel : NotifyObject
         _isLoadingTasks = true;
         _isLoadingTips = true;
         _isLoadingAttachments = true;
+        _isLoadingExpenses = true;
         foreach (var task in AllTasks)
         {
             task.PropertyChanged -= Task_PropertyChanged;
@@ -168,6 +181,14 @@ public sealed class AppViewModel : NotifyObject
         {
             attachment.PropertyChanged -= Attachment_PropertyChanged;
         }
+        foreach (var expense in Expenses)
+        {
+            expense.PropertyChanged -= Expense_PropertyChanged;
+        }
+        foreach (var rate in CurrencyRates)
+        {
+            rate.PropertyChanged -= CurrencyRate_PropertyChanged;
+        }
 
         _trip = trip;
         IsCurrentTripFavorite = false;
@@ -176,6 +197,8 @@ public sealed class AppViewModel : NotifyObject
         AllTasks.ReplaceWith(trip?.Tasks.Select(TaskEditorViewModel.FromTask) ?? []);
         Tips.ReplaceWith(trip?.Links.Select(LinkEditorViewModel.FromLink) ?? []);
         Attachments.ReplaceWith(trip?.Attachments.Select(AttachmentEditorViewModel.FromAttachment) ?? []);
+        Expenses.ReplaceWith(trip?.Expenses.Select(ExpenseEditorViewModel.FromExpense) ?? []);
+        CurrencyRates.ReplaceWith(BuildCurrencyRates(trip));
         foreach (var task in AllTasks)
         {
             task.PropertyChanged += Task_PropertyChanged;
@@ -188,9 +211,17 @@ public sealed class AppViewModel : NotifyObject
         {
             attachment.PropertyChanged += Attachment_PropertyChanged;
         }
+        foreach (var expense in Expenses)
+        {
+            expense.PropertyChanged += Expense_PropertyChanged;
+        }
+        foreach (var rate in CurrencyRates)
+        {
+            rate.PropertyChanged += CurrencyRate_PropertyChanged;
+        }
 
         ApplyTaskFilter();
-        BudgetCategories.ReplaceWith(BuildBudgetCategories(trip));
+        BudgetCategories.ReplaceWith(BuildBudgetCategories(Expenses));
         Places.ReplaceWith(trip?.Places.Take(5).Select(place => $"{place.Name} · {place.Type ?? "lugar"}") ?? []);
         OverviewFiles.ReplaceWith(Attachments.Take(4));
         OverviewTips.ReplaceWith(Tips.Take(4));
@@ -198,9 +229,11 @@ public sealed class AppViewModel : NotifyObject
         SelectedTask = Tasks.FirstOrDefault();
         SelectedTip = Tips.FirstOrDefault();
         SelectedAttachment = Attachments.FirstOrDefault();
+        SelectedExpense = Expenses.FirstOrDefault();
         _isLoadingTasks = false;
         _isLoadingTips = false;
         _isLoadingAttachments = false;
+        _isLoadingExpenses = false;
         RefreshSummary();
     }
 
@@ -362,6 +395,110 @@ public sealed class AppViewModel : NotifyObject
         RefreshSummary();
     }
 
+    public void AddExpense()
+    {
+        var defaultCurrency = _trip?.BaseCurrency ?? "BRL";
+        var expense = new ExpenseEditorViewModel
+        {
+            Id = $"gasto-{DateTime.Now:yyyyMMddHHmmssfff}",
+            IsActive = true,
+            Title = "Novo gasto",
+            Type = "Outros",
+            People = 1,
+            Quantity = 1,
+            Currency = defaultCurrency,
+            ExchangeRateToBase = GetRateForCurrency(defaultCurrency)
+        };
+
+        expense.PropertyChanged += Expense_PropertyChanged;
+        Expenses.Add(expense);
+        SelectedExpense = expense;
+        RefreshBudget();
+        ExpensesChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void DeleteSelectedExpense()
+    {
+        if (SelectedExpense is null)
+        {
+            return;
+        }
+
+        var index = Expenses.IndexOf(SelectedExpense);
+        SelectedExpense.PropertyChanged -= Expense_PropertyChanged;
+        Expenses.Remove(SelectedExpense);
+        SelectedExpense = Expenses.ElementAtOrDefault(Math.Max(0, index - 1));
+        RefreshBudget();
+        ExpensesChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void AddCurrencyRate(string currency, decimal rateToBase, DateTime? updatedAt = null)
+    {
+        currency = NormalizeCurrency(currency);
+        if (string.IsNullOrWhiteSpace(currency))
+        {
+            return;
+        }
+
+        var rate = CurrencyRates.FirstOrDefault(item => string.Equals(item.Currency, currency, StringComparison.OrdinalIgnoreCase));
+        if (rate is null)
+        {
+            rate = new CurrencyRateViewModel
+            {
+                Currency = currency,
+                RateToBase = rateToBase,
+                UpdatedAt = updatedAt
+            };
+            rate.PropertyChanged += CurrencyRate_PropertyChanged;
+            CurrencyRates.Add(rate);
+        }
+        else
+        {
+            rate.RateToBase = rateToBase;
+            rate.UpdatedAt = updatedAt;
+        }
+
+        ApplyRateToExpenses(currency, rateToBase);
+    }
+
+    public void ApplyExpensesToTrip()
+    {
+        if (_trip is null)
+        {
+            return;
+        }
+
+        _trip.Expenses = Expenses
+            .Where(expense => !string.IsNullOrWhiteSpace(expense.Title))
+            .Select(expense => expense.ToExpenseItem())
+            .ToList();
+        _trip.CurrencyRates = CurrencyRates
+            .Where(rate => !string.IsNullOrWhiteSpace(rate.Currency))
+            .Select(rate => rate.ToCurrencyRateItem())
+            .ToList();
+        RefreshBudget();
+    }
+
+    private void ApplyRateToExpenses(string currency, decimal rateToBase)
+    {
+        _isLoadingExpenses = true;
+        foreach (var expense in Expenses.Where(expense =>
+                     expense.PaidAmount <= 0 &&
+                     string.Equals(expense.Currency, currency, StringComparison.OrdinalIgnoreCase)))
+        {
+            expense.ExchangeRateToBase = rateToBase;
+        }
+        _isLoadingExpenses = false;
+        RefreshBudget();
+        ExpensesChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private decimal GetRateForCurrency(string currency)
+    {
+        var normalized = NormalizeCurrency(currency);
+        return CurrencyRates.FirstOrDefault(rate => string.Equals(rate.Currency, normalized, StringComparison.OrdinalIgnoreCase))?.RateToBase ?? 1m;
+    }
+
     public void RefreshSummary()
     {
         OnPropertyChanged(nameof(TripPath));
@@ -376,6 +513,7 @@ public sealed class AppViewModel : NotifyObject
         OnPropertyChanged(nameof(EstimatedTotal));
         OnPropertyChanged(nameof(PaidTotal));
         OnPropertyChanged(nameof(PendingTotal));
+        OnPropertyChanged(nameof(ActiveExpensesCount));
     }
 
     public void RefreshTripDetails()
@@ -437,18 +575,85 @@ public sealed class AppViewModel : NotifyObject
         AttachmentsChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private static IReadOnlyList<BudgetCategoryViewModel> BuildBudgetCategories(Trip? trip)
+    private void Expense_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isLoadingExpenses)
+        {
+            return;
+        }
+
+        if (sender is ExpenseEditorViewModel expense &&
+            expense.PaidAmount <= 0 &&
+            e.PropertyName is nameof(ExpenseEditorViewModel.Currency))
+        {
+            expense.ExchangeRateToBase = GetRateForCurrency(expense.Currency);
+        }
+
+        RefreshBudget();
+        ExpensesChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void CurrencyRate_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isLoadingExpenses)
+        {
+            return;
+        }
+
+        if (sender is CurrencyRateViewModel rate && e.PropertyName is nameof(CurrencyRateViewModel.RateToBase) or nameof(CurrencyRateViewModel.Currency))
+        {
+            ApplyRateToExpenses(rate.Currency, rate.RateToBase);
+        }
+
+        ExpensesChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RefreshBudget()
+    {
+        BudgetCategories.ReplaceWith(BuildBudgetCategories(Expenses));
+        RefreshSummary();
+    }
+
+    private static IReadOnlyList<CurrencyRateViewModel> BuildCurrencyRates(Trip? trip)
     {
         if (trip is null)
         {
             return [];
         }
 
-        var totals = trip.Expenses
-            .GroupBy(expense => string.IsNullOrWhiteSpace(expense.Type) ? "Outros" : expense.Type)
+        var rates = trip.CurrencyRates
+            .Select(CurrencyRateViewModel.FromCurrencyRate)
+            .ToDictionary(rate => NormalizeCurrency(rate.Currency), StringComparer.OrdinalIgnoreCase);
+        rates[NormalizeCurrency(trip.BaseCurrency)] = new CurrencyRateViewModel
+        {
+            Currency = NormalizeCurrency(trip.BaseCurrency),
+            RateToBase = 1m
+        };
+
+        foreach (var expense in trip.Expenses)
+        {
+            var currency = NormalizeCurrency(expense.Currency);
+            if (!rates.ContainsKey(currency))
+            {
+                rates[currency] = new CurrencyRateViewModel
+                {
+                    Currency = currency,
+                    RateToBase = expense.ExchangeRateToBase <= 0 ? 1m : expense.ExchangeRateToBase
+                };
+            }
+        }
+
+        return rates.Values.OrderBy(rate => rate.Currency).ToList();
+    }
+
+    private static IReadOnlyList<BudgetCategoryViewModel> BuildBudgetCategories(IEnumerable<ExpenseEditorViewModel> expenses)
+    {
+        var totals = expenses
+            .Where(expense => expense.IsActive)
+            .GroupBy(expense => string.IsNullOrWhiteSpace(expense.Type) ? "Outros" : expense.Type.Trim())
             .Select(group => new
             {
-                Name = group.Key ?? "Outros",
+                Name = group.Key,
                 Total = group.Sum(expense => expense.SubtotalBase)
             })
             .ToList();
@@ -461,6 +666,11 @@ public sealed class AppViewModel : NotifyObject
                 max == 0 ? 0 : Math.Max(8, (double)(total.Total / max) * 220)))
             .OrderByDescending(category => category.BarWidth)
             .ToList();
+    }
+
+    private static string NormalizeCurrency(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "BRL" : value.Trim().ToUpperInvariant();
     }
 
     private static string BuildTripSubtitle(Trip trip)
@@ -648,6 +858,152 @@ public sealed record ItineraryDayViewModel(
         var blocks = day.Blocks.Select(block => $"{block.Period}: {block.Text}").ToList();
         var overnight = string.IsNullOrWhiteSpace(day.Overnight) ? "" : $"Pernoite: {day.Overnight}";
         return new ItineraryDayViewModel(date, day.Title, blocks, overnight);
+    }
+}
+
+public sealed class ExpenseEditorViewModel : NotifyObject
+{
+    private string _id = "";
+    private bool _isActive = true;
+    private string _title = "";
+    private string _type = "";
+    private string _company = "";
+    private string _link = "";
+    private string _notes = "";
+    private decimal _price;
+    private decimal _taxes;
+    private int _people = 1;
+    private int _quantity = 1;
+    private string _currency = "BRL";
+    private decimal _exchangeRateToBase = 1m;
+    private decimal _paidAmount;
+    private string _status = "";
+
+    public string Id { get => _id; set => SetField(ref _id, value); }
+    public bool IsActive { get => _isActive; set => SetField(ref _isActive, value); }
+    public string Title { get => _title; set => SetField(ref _title, value); }
+    public string Type { get => _type; set => SetField(ref _type, value); }
+    public string Company { get => _company; set => SetField(ref _company, value); }
+    public string Link { get => _link; set => SetField(ref _link, value); }
+    public string Notes { get => _notes; set => SetField(ref _notes, value); }
+    public decimal Price { get => _price; set => SetField(ref _price, value); }
+    public decimal Taxes { get => _taxes; set => SetField(ref _taxes, value); }
+    public int People { get => _people; set => SetField(ref _people, Math.Max(1, value)); }
+    public int Quantity { get => _quantity; set => SetField(ref _quantity, Math.Max(1, value)); }
+    public string Currency { get => _currency; set => SetField(ref _currency, NormalizeCurrency(value)); }
+    public decimal ExchangeRateToBase { get => _exchangeRateToBase; set => SetField(ref _exchangeRateToBase, value <= 0 ? 1m : value); }
+    public decimal PaidAmount { get => _paidAmount; set => SetField(ref _paidAmount, Math.Max(0, value)); }
+    public string Status { get => _status; set => SetField(ref _status, value); }
+    public decimal Subtotal => (Price + Taxes) * People * Quantity;
+    public decimal SubtotalBase => IsActive ? Subtotal * ExchangeRateToBase : 0m;
+    public decimal PendingAmount => IsActive ? Math.Max(SubtotalBase - PaidAmount, 0) : 0m;
+    public string ActiveGlyph => IsActive ? "►" : "";
+
+    public static ExpenseEditorViewModel FromExpense(ExpenseItem expense)
+    {
+        return new ExpenseEditorViewModel
+        {
+            Id = expense.Id,
+            IsActive = expense.IsActive,
+            Title = expense.Title,
+            Type = expense.Type ?? "",
+            Company = expense.Company ?? "",
+            Link = expense.Link ?? "",
+            Notes = expense.Notes ?? "",
+            Price = expense.Price,
+            Taxes = expense.Taxes,
+            People = Math.Max(1, expense.People),
+            Quantity = Math.Max(1, expense.Quantity),
+            Currency = NormalizeCurrency(expense.Currency),
+            ExchangeRateToBase = expense.ExchangeRateToBase <= 0 ? 1m : expense.ExchangeRateToBase,
+            PaidAmount = expense.PaidAmount,
+            Status = expense.Status ?? ""
+        };
+    }
+
+    public ExpenseItem ToExpenseItem()
+    {
+        return new ExpenseItem
+        {
+            Id = string.IsNullOrWhiteSpace(Id) ? $"gasto-{Guid.NewGuid():N}" : Id.Trim(),
+            IsActive = IsActive,
+            Title = Title.Trim(),
+            Type = string.IsNullOrWhiteSpace(Type) ? null : Type.Trim(),
+            Company = string.IsNullOrWhiteSpace(Company) ? null : Company.Trim(),
+            Link = string.IsNullOrWhiteSpace(Link) ? null : Link.Trim(),
+            Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes.Trim(),
+            Price = Price,
+            Taxes = Taxes,
+            People = Math.Max(1, People),
+            Quantity = Math.Max(1, Quantity),
+            Currency = NormalizeCurrency(Currency),
+            ExchangeRateToBase = ExchangeRateToBase <= 0 ? 1m : ExchangeRateToBase,
+            PaidAmount = PaidAmount,
+            Status = string.IsNullOrWhiteSpace(Status) ? null : Status.Trim()
+        };
+    }
+
+    protected override void OnPropertyChanged(string propertyName)
+    {
+        base.OnPropertyChanged(propertyName);
+        if (propertyName is nameof(IsActive) or nameof(Price) or nameof(Taxes) or nameof(People) or nameof(Quantity) or nameof(ExchangeRateToBase) or nameof(PaidAmount))
+        {
+            base.OnPropertyChanged(nameof(Subtotal));
+            base.OnPropertyChanged(nameof(SubtotalBase));
+            base.OnPropertyChanged(nameof(PendingAmount));
+            base.OnPropertyChanged(nameof(ActiveGlyph));
+        }
+    }
+
+    private static string NormalizeCurrency(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "BRL" : value.Trim().ToUpperInvariant();
+    }
+}
+
+public sealed class CurrencyRateViewModel : NotifyObject
+{
+    private string _currency = "BRL";
+    private decimal _rateToBase = 1m;
+    private DateTime? _updatedAt;
+
+    public string Currency { get => _currency; set => SetField(ref _currency, NormalizeCurrency(value)); }
+    public decimal RateToBase { get => _rateToBase; set => SetField(ref _rateToBase, value <= 0 ? 1m : value); }
+    public DateTime? UpdatedAt { get => _updatedAt; set => SetField(ref _updatedAt, value); }
+    public string UpdatedAtLabel => UpdatedAt?.ToString("dd/MM/yyyy HH:mm", CultureInfo.GetCultureInfo("pt-BR")) ?? "manual";
+
+    public static CurrencyRateViewModel FromCurrencyRate(CurrencyRateItem rate)
+    {
+        return new CurrencyRateViewModel
+        {
+            Currency = NormalizeCurrency(rate.Currency),
+            RateToBase = rate.RateToBase <= 0 ? 1m : rate.RateToBase,
+            UpdatedAt = rate.UpdatedAt
+        };
+    }
+
+    public CurrencyRateItem ToCurrencyRateItem()
+    {
+        return new CurrencyRateItem
+        {
+            Currency = NormalizeCurrency(Currency),
+            RateToBase = RateToBase <= 0 ? 1m : RateToBase,
+            UpdatedAt = UpdatedAt
+        };
+    }
+
+    protected override void OnPropertyChanged(string propertyName)
+    {
+        base.OnPropertyChanged(propertyName);
+        if (propertyName is nameof(UpdatedAt))
+        {
+            base.OnPropertyChanged(nameof(UpdatedAtLabel));
+        }
+    }
+
+    private static string NormalizeCurrency(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "BRL" : value.Trim().ToUpperInvariant();
     }
 }
 

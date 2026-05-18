@@ -40,8 +40,8 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Margin="0,0,12,0">
-                    <TextBlock Text="Data inicial (aaaa-mm-dd)" Style="{StaticResource Caption}" />
-                    <TextBox x:Name="StartDateBox" Padding="10" Margin="0,4,0,14" />
+                    <TextBlock Text="Data inicial" Style="{StaticResource Caption}" />
+                    <DatePicker x:Name="StartDatePicker" Margin="0,4,0,14" Height="34" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Grid.Column="1">
@@ -50,8 +50,8 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Margin="0,0,12,0">
-                    <TextBlock Text="Data final (aaaa-mm-dd)" Style="{StaticResource Caption}" />
-                    <TextBox x:Name="EndDateBox" Padding="10" Margin="0,4,0,14" />
+                    <TextBlock Text="Data final" Style="{StaticResource Caption}" />
+                    <DatePicker x:Name="EndDatePicker" Margin="0,4,0,14" Height="34" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Grid.Column="1">

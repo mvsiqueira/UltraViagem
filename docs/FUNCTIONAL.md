@@ -20,6 +20,8 @@ A janela:
 - permite marcar/desmarcar favoritas com estrela amarela quando marcada;
 - permite iniciar criação de nova viagem.
 
+Ao criar uma viagem, a pasta é nomeada com o ano e mês da data inicial, seguidos pelo nome normalizado da viagem, no formato `yyyy-mm-nome-da-viagem`.
+
 ## Dados Da Viagem
 
 O botão `Dados da viagem` abre uma tela interna com:
@@ -28,7 +30,10 @@ O botão `Dados da viagem` abre uma tela interna com:
 - data inicial;
 - data final;
 - pessoas;
-- moeda.
+- moeda;
+- caminho completo da pasta da viagem.
+
+As datas são editadas por controle de calendário e exibidas no formato do sistema. A tela permite renomear apenas a pasta da viagem dentro do repositório atual, sem alterar a pasta raiz escolhida.
 
 A tela segue o mesmo padrão dos demais painéis internos, com ícone, título, botão `<` para voltar e botão `Salvar Dados` no rodapé do formulário.
 
@@ -156,11 +161,21 @@ A edição do mapa, rotas, camadas e pontos é feita no próprio Google My Maps.
 
 ## Orçamento
 
-Gastos ficam em `expenses`. A visão geral calcula:
+Gastos ficam em `expenses`. A visão geral calcula apenas itens ativos:
 
 - total estimado;
 - total pago;
 - total pendente;
 - totais por categoria.
 
-Ainda falta tela de edição completa dos gastos.
+A tela de gastos permite:
+
+- criar e excluir itens;
+- ativar/desativar itens para simular opções sem apagar alternativas;
+- categorizar gastos por tipo, como transporte, hospedagem, passeios e outros;
+- editar descrição, empresa, link, observações, preço unitário, taxas unitárias, pessoas, quantidade, moeda, cotação do item, valor pago e status;
+- acompanhar o subtotal convertido para BRL;
+- editar manualmente cotações por moeda;
+- atualizar automaticamente cotações públicas para BRL usando a AwesomeAPI quando houver internet.
+
+Quando um item já tem valor pago, a cotação do item não é sobrescrita pela atualização automática das cotações gerais, para preservar a taxa efetivamente usada no pagamento.
