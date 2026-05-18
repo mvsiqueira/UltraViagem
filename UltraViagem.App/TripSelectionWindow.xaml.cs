@@ -96,7 +96,7 @@ public partial class TripSelectionWindow : Window
         };
 
         var grid = new Grid();
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(42) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(48) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
@@ -106,14 +106,15 @@ public partial class TripSelectionWindow : Window
             Height = 34,
             CornerRadius = new CornerRadius(17),
             Background = (WpfBrush)FindResource("AccentSoftBrush"),
-            VerticalAlignment = VerticalAlignment.Top,
+            VerticalAlignment = VerticalAlignment.Center,
             Child = new TextBlock
             {
-                Text = "✈",
+                Text = "\uE821",
+                FontFamily = new System.Windows.Media.FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets"),
                 Foreground = (WpfBrush)FindResource("AccentBrush"),
                 HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                FontSize = 16
+                FontSize = 22
             }
         };
 
@@ -137,9 +138,8 @@ public partial class TripSelectionWindow : Window
         var card = new Border
         {
             Width = 276,
-            MinHeight = 78,
             Margin = new Thickness(0, 0, 10, 10),
-            Padding = new Thickness(12),
+            Padding = new Thickness(12, 10, 12, 10),
             CornerRadius = new CornerRadius(8),
             Background = (WpfBrush)FindResource("PanelBackground"),
             BorderBrush = (WpfBrush)FindResource("BorderBrushSoft"),

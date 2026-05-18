@@ -29,12 +29,14 @@
                 <StackPanel DockPanel.Dock="Top">
                     <Grid Margin="0,0,0,28">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="42" />
+                            <ColumnDefinition Width="48" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Border Width="32" Height="32" CornerRadius="16" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
-                            <TextBlock Text="✈" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" />
-                        </Border>
+                        <Image Source="Assets/AppIcon/app-icon.png"
+                               Width="32"
+                               Height="32"
+                               VerticalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
                         <TextBlock Grid.Column="1" Text="UltraViagem" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" Foreground="#0E4C49" />
                     </Grid>
 
