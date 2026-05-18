@@ -1,7 +1,6 @@
 bin/
 obj/
 build-check/
-publish/
 publish-new/
 *.user
 *.suo
