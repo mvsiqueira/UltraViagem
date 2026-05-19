@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Collections;
+using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
@@ -514,7 +516,64 @@ public partial class MainWindow : Window
         await UpdateExchangeRatesAsync();
     }
 
-    private async Task UpdateExchangeRatesAsync()
+    private async void UpdateSingleExchangeRate_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: CurrencyRateViewModel rate })
+        {
+            await UpdateExchangeRatesAsync([rate.Currency]);
+        }
+    }
+
+    private void AddCurrencyRate_Click(object sender, RoutedEventArgs e)
+    {
+        var currency = NewCurrencyCodeBox.Text.Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(currency))
+        {
+            _viewModel.StatusMessage = "Informe o código da moeda.";
+            return;
+        }
+
+        if (currency.Length != 3)
+        {
+            _viewModel.StatusMessage = "Use o código ISO com 3 letras, como USD, CLP ou EUR.";
+            return;
+        }
+
+        if (_viewModel.CurrencyRates.Any(rate => string.Equals(rate.Currency, currency, StringComparison.OrdinalIgnoreCase)))
+        {
+            _viewModel.StatusMessage = $"Moeda {currency} já cadastrada.";
+            return;
+        }
+
+        var baseCurrency = _viewModel.BaseCurrencyCode;
+        _viewModel.AddCurrencyRate(
+            currency,
+            string.Equals(currency, baseCurrency, StringComparison.OrdinalIgnoreCase) ? 1m : 1m,
+            symbol: currency,
+            name: currency);
+        NewCurrencyCodeBox.Text = "";
+        SaveExpensesInternal($"Moeda {currency} cadastrada.");
+    }
+
+    private void DeleteCurrencyRate_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: CurrencyRateViewModel rate })
+        {
+            return;
+        }
+
+        if (_viewModel.RemoveCurrencyRate(rate, out var message))
+        {
+            SaveExpensesInternal(message);
+        }
+        else
+        {
+            _viewModel.StatusMessage = message;
+            System.Windows.MessageBox.Show(this, message, "Moeda em uso", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+    }
+
+    private async Task UpdateExchangeRatesAsync(IReadOnlyList<string>? currenciesToUpdate = null)
     {
         if (_viewModel.CurrentTrip is null)
         {
@@ -530,12 +589,18 @@ public partial class MainWindow : Window
             return;
         }
 
-        var currencies = _viewModel.Expenses
-            .Select(expense => expense.Currency.Trim().ToUpperInvariant())
-            .Concat(_viewModel.CurrencyRates.Select(rate => rate.Currency.Trim().ToUpperInvariant()))
-            .Where(currency => !string.IsNullOrWhiteSpace(currency) && currency != baseCurrency)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var currencies = currenciesToUpdate is not null
+            ? currenciesToUpdate
+                .Select(currency => currency.Trim().ToUpperInvariant())
+                .Where(currency => !string.IsNullOrWhiteSpace(currency) && currency != baseCurrency)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList()
+            : _viewModel.Expenses
+                .Select(expense => expense.Currency.Trim().ToUpperInvariant())
+                .Concat(_viewModel.CurrencyRates.Select(rate => rate.Currency.Trim().ToUpperInvariant()))
+                .Where(currency => !string.IsNullOrWhiteSpace(currency) && currency != baseCurrency)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
         if (currencies.Count == 0)
         {
             _viewModel.StatusMessage = "Nenhuma moeda estrangeira cadastrada para atualizar.";
@@ -2099,6 +2164,113 @@ public partial class MainWindow : Window
         }
 
         return Directory.GetCurrentDirectory();
+    }
+}
+
+public sealed class BudgetPieChart : FrameworkElement
+{
+    public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register(
+        nameof(ItemsSource),
+        typeof(IEnumerable),
+        typeof(BudgetPieChart),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnItemsSourceChanged));
+
+    private INotifyCollectionChanged? _observableItemsSource;
+
+    public IEnumerable? ItemsSource
+    {
+        get => (IEnumerable?)GetValue(ItemsSourceProperty);
+        set => SetValue(ItemsSourceProperty, value);
+    }
+
+    private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var chart = (BudgetPieChart)d;
+        if (chart._observableItemsSource is not null)
+        {
+            chart._observableItemsSource.CollectionChanged -= chart.ItemsSource_CollectionChanged;
+        }
+
+        chart._observableItemsSource = e.NewValue as INotifyCollectionChanged;
+        if (chart._observableItemsSource is not null)
+        {
+            chart._observableItemsSource.CollectionChanged += chart.ItemsSource_CollectionChanged;
+        }
+
+        chart.InvalidateVisual();
+    }
+
+    private void ItemsSource_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        InvalidateVisual();
+    }
+
+    protected override void OnRender(DrawingContext drawingContext)
+    {
+        base.OnRender(drawingContext);
+
+        var categories = ItemsSource?.OfType<BudgetCategoryViewModel>().Where(category => category.Total > 0).ToList() ?? [];
+        var size = Math.Min(ActualWidth, ActualHeight);
+        if (size <= 0)
+        {
+            return;
+        }
+
+        var center = new System.Windows.Point(ActualWidth / 2, ActualHeight / 2);
+        var radius = (size / 2) - 3;
+        var total = categories.Sum(category => category.Total);
+        if (total <= 0)
+        {
+            drawingContext.DrawEllipse(new SolidColorBrush(System.Windows.Media.Color.FromRgb(232, 226, 215)), null, center, radius, radius);
+            return;
+        }
+
+        var startAngle = -90d;
+        foreach (var category in categories)
+        {
+            var sweepAngle = Math.Max(0.2, (double)(category.Total / total) * 360d);
+            DrawSlice(drawingContext, center, radius, startAngle, sweepAngle, ParseBrush(category.Color));
+            startAngle += sweepAngle;
+        }
+
+        drawingContext.DrawEllipse(System.Windows.Media.Brushes.White, null, center, radius * 0.48, radius * 0.48);
+    }
+
+    private static void DrawSlice(DrawingContext drawingContext, System.Windows.Point center, double radius, double startAngle, double sweepAngle, System.Windows.Media.Brush brush)
+    {
+        var start = PointOnCircle(center, radius, startAngle);
+        var end = PointOnCircle(center, radius, startAngle + sweepAngle);
+        var figure = new PathFigure { StartPoint = center, IsClosed = true, IsFilled = true };
+        figure.Segments.Add(new LineSegment(start, true));
+        figure.Segments.Add(new ArcSegment(
+            end,
+            new System.Windows.Size(radius, radius),
+            0,
+            sweepAngle > 180,
+            SweepDirection.Clockwise,
+            true));
+
+        var geometry = new PathGeometry();
+        geometry.Figures.Add(figure);
+        drawingContext.DrawGeometry(brush, new System.Windows.Media.Pen(System.Windows.Media.Brushes.White, 1.5), geometry);
+    }
+
+    private static System.Windows.Point PointOnCircle(System.Windows.Point center, double radius, double angle)
+    {
+        var radians = angle * Math.PI / 180d;
+        return new System.Windows.Point(center.X + (Math.Cos(radians) * radius), center.Y + (Math.Sin(radians) * radius));
+    }
+
+    private static System.Windows.Media.Brush ParseBrush(string color)
+    {
+        try
+        {
+            return (System.Windows.Media.Brush)new BrushConverter().ConvertFromString(color)!;
+        }
+        catch (FormatException)
+        {
+            return new SolidColorBrush(System.Windows.Media.Color.FromRgb(15, 118, 110));
+        }
     }
 }
 

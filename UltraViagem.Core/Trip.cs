@@ -91,6 +91,9 @@ public sealed class ExpenseItem
 public sealed class CurrencyRateItem
 {
     public string Currency { get; set; } = "BRL";
+    public string Symbol { get; set; } = "";
+    public string Name { get; set; } = "";
+    public int DecimalDigits { get; set; } = 2;
     public decimal RateToBase { get; set; } = 1m;
     public DateTime? UpdatedAt { get; set; }
 }

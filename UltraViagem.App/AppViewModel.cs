@@ -10,6 +10,18 @@ namespace UltraViagem.App;
 public sealed class AppViewModel : NotifyObject
 {
     private static readonly CultureInfo Culture = new("pt-BR");
+    private static readonly string[] BudgetCategoryColors =
+    [
+        "#0F766E",
+        "#2563EB",
+        "#F59E0B",
+        "#DC2626",
+        "#7C3AED",
+        "#16A34A",
+        "#DB2777",
+        "#0891B2",
+        "#EA580C"
+    ];
 
     private Trip? _trip;
     private string _rootPath = "";
@@ -158,6 +170,8 @@ public sealed class AppViewModel : NotifyObject
     }
     public bool HasMyMapsUrl => LinkEditorViewModel.IsHttpUrl(MyMapsUrl);
     public string BudgetSubtitle => _trip is null ? "" : $"{Expenses.Count} itens cadastrados em {_trip.BaseCurrency}";
+    public string BaseCurrencyCode => NormalizeCurrency(_trip?.BaseCurrency ?? "BRL");
+    public string BaseCurrencySymbol => CurrencyRates.FirstOrDefault(rate => string.Equals(rate.Currency, BaseCurrencyCode, StringComparison.OrdinalIgnoreCase))?.Symbol ?? BaseCurrencyCode;
     public string EstimatedTotal => FormatMoney(Expenses.Sum(expense => expense.SubtotalBase));
     public string PaidTotal => FormatMoney(Expenses.Where(expense => expense.IsActive).Sum(expense => expense.PaidAmount));
     public string PendingTotal
@@ -222,6 +236,8 @@ public sealed class AppViewModel : NotifyObject
         Attachments.ReplaceWith(trip?.Attachments.Select(AttachmentEditorViewModel.FromAttachment) ?? []);
         Expenses.ReplaceWith(trip?.Expenses.Select(ExpenseEditorViewModel.FromExpense) ?? []);
         CurrencyRates.ReplaceWith(BuildCurrencyRates(trip));
+        OnPropertyChanged(nameof(BaseCurrencyCode));
+        OnPropertyChanged(nameof(BaseCurrencySymbol));
         foreach (var task in AllTasks)
         {
             task.PropertyChanged += Task_PropertyChanged;
@@ -242,6 +258,7 @@ public sealed class AppViewModel : NotifyObject
         {
             rate.PropertyChanged += CurrencyRate_PropertyChanged;
         }
+        ExpenseEditorViewModel.ConfigureCurrencyRates(CurrencyRates);
 
         ApplyTaskFilter();
         BudgetCategories.ReplaceWith(BuildBudgetCategories(Expenses));
@@ -456,7 +473,7 @@ public sealed class AppViewModel : NotifyObject
         ExpensesChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public void AddCurrencyRate(string currency, decimal rateToBase, DateTime? updatedAt = null)
+    public void AddCurrencyRate(string currency, decimal rateToBase, DateTime? updatedAt = null, string? symbol = null, string? name = null, int decimalDigits = 2)
     {
         currency = NormalizeCurrency(currency);
         if (string.IsNullOrWhiteSpace(currency))
@@ -470,6 +487,9 @@ public sealed class AppViewModel : NotifyObject
             rate = new CurrencyRateViewModel
             {
                 Currency = currency,
+                Symbol = string.IsNullOrWhiteSpace(symbol) ? currency : symbol.Trim(),
+                Name = string.IsNullOrWhiteSpace(name) ? currency : name.Trim(),
+                DecimalDigits = decimalDigits,
                 RateToBase = rateToBase,
                 UpdatedAt = updatedAt
             };
@@ -480,9 +500,34 @@ public sealed class AppViewModel : NotifyObject
         {
             rate.RateToBase = rateToBase;
             rate.UpdatedAt = updatedAt;
+            if (!string.IsNullOrWhiteSpace(symbol))
+            {
+                rate.Symbol = symbol.Trim();
+            }
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                rate.Name = name.Trim();
+            }
         }
 
         ApplyRateToExpenses(currency, rateToBase);
+    }
+
+    public bool RemoveCurrencyRate(CurrencyRateViewModel rate, out string message)
+    {
+        var currency = NormalizeCurrency(rate.Currency);
+        if (Expenses.Any(expense => string.Equals(NormalizeCurrency(expense.Currency), currency, StringComparison.OrdinalIgnoreCase)))
+        {
+            message = $"A moeda {currency} está em uso nos gastos e não pode ser excluída.";
+            return false;
+        }
+
+        rate.PropertyChanged -= CurrencyRate_PropertyChanged;
+        CurrencyRates.Remove(rate);
+        ApplyExpensesToTrip();
+        ExpensesChanged?.Invoke(this, EventArgs.Empty);
+        message = $"Moeda {currency} excluída.";
+        return true;
     }
 
     public void ApplyExpensesToTrip()
@@ -653,6 +698,14 @@ public sealed class AppViewModel : NotifyObject
         {
             ApplyRateToExpenses(rate.Currency, rate.RateToBase);
         }
+        if (e.PropertyName is nameof(CurrencyRateViewModel.Currency) or nameof(CurrencyRateViewModel.Symbol))
+        {
+            OnPropertyChanged(nameof(BaseCurrencySymbol));
+        }
+        if (e.PropertyName is nameof(CurrencyRateViewModel.DecimalDigits))
+        {
+            RefreshBudget(rebuildGroups: false);
+        }
 
         ExpensesChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -690,10 +743,15 @@ public sealed class AppViewModel : NotifyObject
         var rates = trip.CurrencyRates
             .Select(CurrencyRateViewModel.FromCurrencyRate)
             .ToDictionary(rate => NormalizeCurrency(rate.Currency), StringComparer.OrdinalIgnoreCase);
-        rates[NormalizeCurrency(trip.BaseCurrency)] = new CurrencyRateViewModel
+        var baseCurrency = NormalizeCurrency(trip.BaseCurrency);
+        rates[baseCurrency] = new CurrencyRateViewModel
         {
-            Currency = NormalizeCurrency(trip.BaseCurrency),
-            RateToBase = 1m
+            Currency = baseCurrency,
+            Symbol = GetDefaultCurrencyMetadata(trip.BaseCurrency, rates).Symbol,
+            Name = GetDefaultCurrencyMetadata(trip.BaseCurrency, rates).Name,
+            DecimalDigits = GetDefaultCurrencyMetadata(trip.BaseCurrency, rates).DecimalDigits,
+            RateToBase = 1m,
+            IsBaseCurrency = true
         };
 
         foreach (var expense in trip.Expenses)
@@ -704,12 +762,38 @@ public sealed class AppViewModel : NotifyObject
                 rates[currency] = new CurrencyRateViewModel
                 {
                     Currency = currency,
-                    RateToBase = expense.ExchangeRateToBase <= 0 ? 1m : expense.ExchangeRateToBase
+                    Symbol = currency,
+                    Name = currency,
+                    DecimalDigits = 2,
+                    RateToBase = expense.ExchangeRateToBase <= 0 ? 1m : expense.ExchangeRateToBase,
+                    IsBaseCurrency = string.Equals(currency, baseCurrency, StringComparison.OrdinalIgnoreCase)
                 };
             }
         }
 
-        return rates.Values.OrderBy(rate => rate.Currency).ToList();
+        foreach (var rate in rates.Values)
+        {
+            rate.IsBaseCurrency = string.Equals(rate.Currency, baseCurrency, StringComparison.OrdinalIgnoreCase);
+        }
+        return rates.Values
+            .OrderBy(rate => string.Equals(rate.Currency, baseCurrency, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(rate => rate.Currency)
+            .ToList();
+    }
+
+    private static CurrencyRateViewModel GetDefaultCurrencyMetadata(string currency, IReadOnlyDictionary<string, CurrencyRateViewModel> rates)
+    {
+        var normalized = NormalizeCurrency(currency);
+        return rates.TryGetValue(normalized, out var rate)
+            ? rate
+            : new CurrencyRateViewModel
+            {
+                Currency = normalized,
+                Symbol = normalized,
+                Name = normalized,
+                DecimalDigits = 2,
+                RateToBase = 1m
+            };
     }
 
     private static IReadOnlyList<BudgetCategoryViewModel> BuildBudgetCategories(IEnumerable<ExpenseEditorViewModel> expenses)
@@ -724,11 +808,16 @@ public sealed class AppViewModel : NotifyObject
             })
             .ToList();
         var max = totals.Select(total => total.Total).DefaultIfEmpty(0).Max();
+        var sum = totals.Sum(total => total.Total);
 
         return totals
-            .Select(total => new BudgetCategoryViewModel(
+            .Select((total, index) => new BudgetCategoryViewModel(
                 total.Name,
                 FormatMoney(total.Total),
+                total.Total,
+                sum == 0 ? 0 : (double)(total.Total / sum),
+                sum == 0 ? "0%" : (total.Total / sum).ToString("P0", Culture),
+                BudgetCategoryColors[index % BudgetCategoryColors.Length],
                 max == 0 ? 0 : Math.Max(8, (double)(total.Total / max) * 220)))
             .OrderByDescending(category => category.BarWidth)
             .ToList();
@@ -943,6 +1032,7 @@ public sealed record ItineraryDayViewModel(
 public sealed class ExpenseEditorViewModel : NotifyObject
 {
     private static readonly CultureInfo Culture = new("pt-BR");
+    private static IReadOnlyList<CurrencyRateViewModel> CurrencyRates { get; set; } = [];
 
     private string _id = "";
     private bool _isActive = true;
@@ -982,11 +1072,16 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     public decimal PendingAmount => IsActive ? Math.Max(decimal.Round(SubtotalBase - PaidAmount, 2, MidpointRounding.AwayFromZero), 0) : 0m;
     public string ActiveGlyph => IsActive ? "►" : "";
     public string ActiveStatusLabel => IsActive ? "Ativo" : "Inativo";
+    public static void ConfigureCurrencyRates(IReadOnlyList<CurrencyRateViewModel> currencyRates)
+    {
+        CurrencyRates = currencyRates;
+    }
+
     public string SummaryLine
     {
         get
         {
-            var amount = $"total {Currency} {Subtotal:N2}";
+            var amount = $"total {Currency} {FormatCurrencyAmount(Currency, Subtotal)}";
             var currencyDetail = IsBaseCurrency
                 ? amount
                 : $"{amount} · 💱 1 {Currency} = R$ {FormatCompactDecimal(ExchangeRateToBase)}";
@@ -997,8 +1092,8 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     {
         get
         {
-            var taxes = Taxes > 0 ? $" + {Currency} {Taxes:N2}" : "";
-            return $"preço {Currency} {Price:N2}{taxes} · 👤{People} · ＃{Quantity}";
+            var taxes = Taxes > 0 ? $" + {Currency} {FormatCurrencyAmount(Currency, Taxes)}" : "";
+            return $"preço {Currency} {FormatCurrencyAmount(Currency, Price)}{taxes} · 👤{People} · ＃{Quantity}";
         }
     }
     public string DetailLine
@@ -1115,6 +1210,13 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     {
         return value.ToString("0.######", Culture);
     }
+
+    private static string FormatCurrencyAmount(string currency, decimal value)
+    {
+        var rate = CurrencyRates.FirstOrDefault(rate => string.Equals(rate.Currency, NormalizeCurrency(currency), StringComparison.OrdinalIgnoreCase));
+        var digits = rate?.DecimalDigits ?? 2;
+        return value.ToString($"N{digits}", Culture);
+    }
 }
 
 public sealed class ExpenseCategoryGroupViewModel : NotifyObject
@@ -1136,19 +1238,49 @@ public sealed class ExpenseCategoryGroupViewModel : NotifyObject
 public sealed class CurrencyRateViewModel : NotifyObject
 {
     private string _currency = "BRL";
+    private string _symbol = "BRL";
+    private string _name = "BRL";
+    private int _decimalDigits = 2;
     private decimal _rateToBase = 1m;
     private DateTime? _updatedAt;
 
     public string Currency { get => _currency; set => SetField(ref _currency, NormalizeCurrency(value)); }
+    public string Symbol { get => _symbol; set => SetField(ref _symbol, string.IsNullOrWhiteSpace(value) ? Currency : value.Trim()); }
+    public string Name { get => _name; set => SetField(ref _name, string.IsNullOrWhiteSpace(value) ? Currency : value.Trim()); }
+    public int DecimalDigits { get => _decimalDigits; set => SetField(ref _decimalDigits, Math.Clamp(value, 0, 6)); }
     public decimal RateToBase { get => _rateToBase; set => SetField(ref _rateToBase, value <= 0 ? 1m : value); }
     public DateTime? UpdatedAt { get => _updatedAt; set => SetField(ref _updatedAt, value); }
+    public bool IsBaseCurrency { get; set; }
+    public string RateLabel => RateToBase.ToString($"N{DecimalDigits}", CultureInfo.GetCultureInfo("pt-BR"));
+    public string RateText
+    {
+        get => RateLabel;
+        set
+        {
+            if (decimal.TryParse(value, NumberStyles.Number, CultureInfo.GetCultureInfo("pt-BR"), out var parsed) ||
+                decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out parsed))
+            {
+                RateToBase = parsed;
+            }
+        }
+    }
     public string UpdatedAtLabel => UpdatedAt?.ToString("dd/MM/yyyy HH:mm", CultureInfo.GetCultureInfo("pt-BR")) ?? "manual";
 
     public static CurrencyRateViewModel FromCurrencyRate(CurrencyRateItem rate)
     {
+        var currency = NormalizeCurrency(rate.Currency);
+        var symbol = string.IsNullOrWhiteSpace(rate.Symbol) || (!string.Equals(currency, "BRL", StringComparison.OrdinalIgnoreCase) && string.Equals(rate.Symbol, "BRL", StringComparison.OrdinalIgnoreCase))
+            ? currency
+            : rate.Symbol.Trim();
+        var name = string.IsNullOrWhiteSpace(rate.Name) || (!string.Equals(currency, "BRL", StringComparison.OrdinalIgnoreCase) && string.Equals(rate.Name, "BRL", StringComparison.OrdinalIgnoreCase))
+            ? currency
+            : rate.Name.Trim();
         return new CurrencyRateViewModel
         {
-            Currency = NormalizeCurrency(rate.Currency),
+            Currency = currency,
+            Symbol = symbol,
+            Name = name,
+            DecimalDigits = rate.DecimalDigits is < 0 or > 6 ? 2 : rate.DecimalDigits,
             RateToBase = rate.RateToBase <= 0 ? 1m : rate.RateToBase,
             UpdatedAt = rate.UpdatedAt
         };
@@ -1159,6 +1291,9 @@ public sealed class CurrencyRateViewModel : NotifyObject
         return new CurrencyRateItem
         {
             Currency = NormalizeCurrency(Currency),
+            Symbol = string.IsNullOrWhiteSpace(Symbol) ? NormalizeCurrency(Currency) : Symbol.Trim(),
+            Name = string.IsNullOrWhiteSpace(Name) ? NormalizeCurrency(Currency) : Name.Trim(),
+            DecimalDigits = Math.Clamp(DecimalDigits, 0, 6),
             RateToBase = RateToBase <= 0 ? 1m : RateToBase,
             UpdatedAt = UpdatedAt
         };
@@ -1167,9 +1302,26 @@ public sealed class CurrencyRateViewModel : NotifyObject
     protected override void OnPropertyChanged(string propertyName)
     {
         base.OnPropertyChanged(propertyName);
+        if (propertyName is nameof(Currency))
+        {
+            if (string.IsNullOrWhiteSpace(Symbol))
+            {
+                Symbol = Currency;
+            }
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                Name = Currency;
+            }
+        }
+
         if (propertyName is nameof(UpdatedAt))
         {
             base.OnPropertyChanged(nameof(UpdatedAtLabel));
+        }
+        if (propertyName is nameof(RateToBase) or nameof(DecimalDigits))
+        {
+            base.OnPropertyChanged(nameof(RateLabel));
+            base.OnPropertyChanged(nameof(RateText));
         }
     }
 
@@ -1179,7 +1331,14 @@ public sealed class CurrencyRateViewModel : NotifyObject
     }
 }
 
-public sealed record BudgetCategoryViewModel(string Name, string TotalLabel, double BarWidth);
+public sealed record BudgetCategoryViewModel(
+    string Name,
+    string TotalLabel,
+    decimal Total,
+    double Share,
+    string ShareLabel,
+    string Color,
+    double BarWidth);
 
 public sealed class TripSelectionItem
 {

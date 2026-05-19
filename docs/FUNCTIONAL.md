@@ -172,12 +172,18 @@ A tela de gastos permite:
 
 - criar e excluir itens;
 - ativar/desativar itens para simular opções sem apagar alternativas;
+- navegar por abas de itens, resumo e cotações;
 - visualizar gastos como cards compactos agrupados por categoria, como transporte, hospedagem, passeios e outros;
 - selecionar um card alterando o fundo do próprio card;
 - ativar/desativar um gasto por um controle visual de status no card;
 - editar ou criar gastos expandindo o próprio card, sem abrir janela modal;
 - editar descrição, empresa, link, observações, preço unitário, taxas unitárias, pessoas, quantidade, moeda, cotação do item e valor pago;
 - acompanhar o subtotal convertido para BRL;
+- consultar totais e distribuição por categoria na aba de resumo;
+- cadastrar as moedas usadas na viagem por código ISO e símbolo informado pelo usuário;
+- editar nome e símbolo de cada moeda, com nome padrão igual ao código;
+- excluir cotações que não sejam a moeda de referência e que não estejam em uso por gastos;
+- visualizar cotações por moeda com código, nome, símbolo, taxa para a moeda de referência da viagem e data de atualização;
 - editar manualmente cotações por moeda;
 - atualizar automaticamente cotações públicas para BRL usando a AwesomeAPI quando houver internet.
 
