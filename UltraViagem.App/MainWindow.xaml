@@ -16,6 +16,87 @@
     <Window.Resources>
         <local:AttachmentIconConverter x:Key="AttachmentIconConverter" />
         <local:AttachmentMetadataConverter x:Key="AttachmentMetadataConverter" />
+        <Style x:Key="CardActionButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="MinHeight" Value="26" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                TextElement.Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}">
+                            <Border.Resources>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                </Style>
+                            </Border.Resources>
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="#FFFFFF" />
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="#EEF8F5" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="CardAcceptButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="MinHeight" Value="26" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                TextElement.Foreground="{Binding Foreground, RelativeSource={RelativeSource TemplatedParent}}">
+                            <Border.Resources>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                    <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                </Style>
+                            </Border.Resources>
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource AccentHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.85" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -713,8 +794,8 @@
                                                                     <Setter Property="Background" Value="{StaticResource InputBackground}" />
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding IsSelectedForEdit}" Value="True">
-                                                                            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
-                                                                            <Setter Property="BorderBrush" Value="#91CBC2" />
+                                                                            <Setter Property="Background" Value="#F5FCFA" />
+                                                                            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding IsActive}" Value="False">
                                                                             <Setter Property="Opacity" Value="0.72" />
@@ -723,11 +804,24 @@
                                                                 </Style>
                                                             </Border.Style>
                                                             <Grid>
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition Height="Auto" />
+                                                                    <RowDefinition Height="Auto" />
+                                                                </Grid.RowDefinitions>
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="2*" MinWidth="260" />
                                                                     <ColumnDefinition Width="2.2*" MinWidth="280" />
                                                                     <ColumnDefinition Width="1.25*" MinWidth="230" />
                                                                 </Grid.ColumnDefinitions>
+                                                                <Border x:Name="ExpenseSelectionRail"
+                                                                        Grid.RowSpan="2"
+                                                                        Grid.ColumnSpan="3"
+                                                                        Width="4"
+                                                                        Margin="-8,-8,0,-8"
+                                                                        HorizontalAlignment="Left"
+                                                                        Background="{StaticResource AccentBrush}"
+                                                                        CornerRadius="7,0,0,7"
+                                                                        Visibility="Collapsed" />
 
                                                                 <Grid Margin="0,0,18,0" VerticalAlignment="Center">
                                                                     <Grid.ColumnDefinitions>
@@ -770,7 +864,29 @@
                                                                         </ToggleButton.Template>
                                                                     </ToggleButton>
                                                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                                        <TextBlock x:Name="ExpenseTitleText" Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                                        <Button x:Name="ExpenseTitleLink"
+                                                                                Visibility="Collapsed"
+                                                                                Padding="0"
+                                                                                HorizontalContentAlignment="Left"
+                                                                                ToolTip="Abrir link do gasto"
+                                                                                Click="OpenExpenseLink_Click">
+                                                                            <Button.Style>
+                                                                                <Style TargetType="Button" BasedOn="{StaticResource LinkButton}">
+                                                                                    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                                                                    <Style.Triggers>
+                                                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                                                                        </Trigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </Button.Style>
+                                                                            <TextBlock Text="{Binding Title}"
+                                                                                       FontSize="14"
+                                                                                       FontWeight="SemiBold"
+                                                                                       TextTrimming="CharacterEllipsis"
+                                                                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                                                        </Button>
                                                                         <TextBlock Text="{Binding DetailLine}" Foreground="#5F6B67" FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
                                                                     </StackPanel>
                                                                 </Grid>
@@ -816,26 +932,142 @@
                                                                         </TextBlock>
                                                                     </Grid>
 
-                                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                                        <Button Content="✎"
-                                                                                Style="{StaticResource SecondaryButton}"
-                                                                                Width="28"
-                                                                                Height="28"
-                                                                                Padding="0"
-                                                                                Margin="0,0,6,0"
-                                                                                ToolTip="Editar gasto"
-                                                                                Click="EditExpense_Click" />
-                                                                        <Button Content="×"
-                                                                                Style="{StaticResource SecondaryButton}"
-                                                                                Width="28"
-                                                                                Height="28"
-                                                                                Padding="0"
-                                                                                ToolTip="Excluir gasto"
-                                                                                Click="DeleteExpense_Click" />
-                                                                    </StackPanel>
+                                                                    <Grid Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                                        <StackPanel x:Name="ExpenseReadActions" Orientation="Horizontal">
+                                                                            <Button Style="{StaticResource CardActionButton}"
+                                                                                    Margin="0,0,6,0"
+                                                                                    ToolTip="Editar gasto"
+                                                                                    Click="EditExpense_Click">
+                                                                                <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Opacity="0.72" />
+                                                                            </Button>
+                                                                            <Button Style="{StaticResource CardActionButton}"
+                                                                                    ToolTip="Excluir gasto"
+                                                                                    Click="DeleteExpense_Click">
+                                                                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Opacity="0.72" />
+                                                                            </Button>
+                                                                        </StackPanel>
+                                                                        <StackPanel x:Name="ExpenseEditActions" Orientation="Horizontal" Visibility="Collapsed">
+                                                                            <Button Style="{StaticResource CardAcceptButton}"
+                                                                                    Margin="0,0,6,0"
+                                                                                    ToolTip="Aceitar alterações"
+                                                                                    Click="CompleteExpenseEdit_Click">
+                                                                                <TextBlock Text="✓" Foreground="White" FontSize="14" FontWeight="SemiBold" />
+                                                                            </Button>
+                                                                            <Button Style="{StaticResource CardActionButton}"
+                                                                                    ToolTip="Rejeitar alterações"
+                                                                                    Click="RejectExpenseEdit_Click">
+                                                                                <TextBlock Text="×" FontSize="20" FontWeight="SemiBold" Margin="0,-2,0,0" />
+                                                                            </Button>
+                                                                        </StackPanel>
+                                                                    </Grid>
                                                                 </Grid>
+
+                                                                <Border Grid.Row="1"
+                                                                        Grid.ColumnSpan="3"
+                                                                        Background="#FFFFFF"
+                                                                        BorderBrush="#B9DED8"
+                                                                        BorderThickness="1"
+                                                                        CornerRadius="7"
+                                                                        Padding="10"
+                                                                        Margin="0,10,0,0"
+                                                                        PreviewKeyDown="ExpenseEditView_PreviewKeyDown">
+                                                                    <Border.Style>
+                                                                        <Style TargetType="Border">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Border.Style>
+                                                                    <Grid>
+                                                                        <Grid.RowDefinitions>
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                        </Grid.RowDefinitions>
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="1.45*" />
+                                                                            <ColumnDefinition Width="1*" />
+                                                                            <ColumnDefinition Width="1*" />
+                                                                            <ColumnDefinition Width="0.72*" />
+                                                                            <ColumnDefinition Width="0.72*" />
+                                                                        </Grid.ColumnDefinitions>
+
+                                                                        <StackPanel Grid.ColumnSpan="2" Margin="0,0,10,10">
+                                                                            <TextBlock Text="Descrição" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="2" Margin="0,0,10,10">
+                                                                            <TextBlock Text="Categoria" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding Type, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="3" Grid.ColumnSpan="2" Margin="0,0,0,10">
+                                                                            <TextBlock Text="Empresa" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding Company, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+
+                                                                        <StackPanel Grid.Row="1" Margin="0,0,10,10">
+                                                                            <TextBlock Text="Preço" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding Price, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,10,10">
+                                                                            <TextBlock Text="Taxas" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding Taxes, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,10,10">
+                                                                            <TextBlock Text="Pessoas" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding People, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Row="1" Grid.Column="3" Margin="0,0,10,10">
+                                                                            <TextBlock Text="Qtd." Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Row="1" Grid.Column="4" Margin="0,0,0,10">
+                                                                            <TextBlock Text="Moeda" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding Currency, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+
+                                                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,0">
+                                                                            <TextBlock Text="Cotação" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding ExchangeRateToBase, UpdateSourceTrigger=PropertyChanged, StringFormat=N6}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,10,0">
+                                                                            <TextBlock Text="Pago em BRL" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding PaidAmount, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Margin="0,0,0,0">
+                                                                            <TextBlock Text="Link" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding Link, UpdateSourceTrigger=PropertyChanged}" Padding="6" Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Row="3" Grid.ColumnSpan="5" Margin="0,10,0,0">
+                                                                            <TextBlock Text="Observações" Style="{StaticResource Caption}" />
+                                                                            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                                                                     Padding="6"
+                                                                                     MinHeight="52"
+                                                                                     TextWrapping="Wrap"
+                                                                                     AcceptsReturn="True"
+                                                                                     Margin="0,4,0,0" />
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </Border>
                                                             </Grid>
                                                         </Border>
+                                                        <DataTemplate.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSelectedForEdit}" Value="True">
+                                                                <Setter TargetName="ExpenseSelectionRail" Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                <Setter TargetName="ExpenseReadActions" Property="Visibility" Value="Collapsed" />
+                                                                <Setter TargetName="ExpenseEditActions" Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding HasLink}" Value="True">
+                                                                <Setter TargetName="ExpenseTitleText" Property="Visibility" Value="Collapsed" />
+                                                                <Setter TargetName="ExpenseTitleLink" Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </DataTemplate.Triggers>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
@@ -1063,21 +1295,31 @@
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="ListBoxItem">
-                                                <Border x:Name="ItemChrome"
-                                                        BorderBrush="{StaticResource BorderBrushSoft}"
-                                                        BorderThickness="1"
-                                                        Background="{StaticResource PanelBackground}"
-                                                        CornerRadius="8"
-                                                        Padding="6">
-                                                    <ContentPresenter />
-                                                </Border>
+                                                <Grid>
+                                                    <Border x:Name="ItemChrome"
+                                                            BorderBrush="{StaticResource BorderBrushSoft}"
+                                                            BorderThickness="1"
+                                                            Background="{StaticResource PanelBackground}"
+                                                            CornerRadius="8"
+                                                            Padding="6">
+                                                        <ContentPresenter />
+                                                    </Border>
+                                                    <Border x:Name="SelectionRail"
+                                                            Width="4"
+                                                            Margin="0"
+                                                            HorizontalAlignment="Left"
+                                                            Background="{StaticResource AccentBrush}"
+                                                            CornerRadius="8,0,0,8"
+                                                            Visibility="Collapsed" />
+                                                </Grid>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsSelected" Value="True">
-                                                        <Setter TargetName="ItemChrome" Property="Background" Value="{StaticResource AccentSoftBrush}" />
-                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="#BFE4DE" />
+                                                        <Setter TargetName="ItemChrome" Property="Background" Value="#F5FCFA" />
+                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                        <Setter TargetName="SelectionRail" Property="Visibility" Value="Visible" />
                                                     </Trigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="#BFE4DE" />
+                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -1154,21 +1396,17 @@
                                         </Grid>
 
                                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Content="✎"
-                                                    Style="{StaticResource SecondaryButton}"
-                                                    Width="28"
-                                                    Height="28"
-                                                    Padding="0"
+                                            <Button Style="{StaticResource CardActionButton}"
                                                     Margin="0,0,6,0"
                                                     ToolTip="Editar nome e link"
-                                                    Click="EditTipCard_Click" />
-                                            <Button Content="×"
-                                                    Style="{StaticResource SecondaryButton}"
-                                                    Width="28"
-                                                    Height="28"
-                                                    Padding="0"
+                                                    Click="EditTipCard_Click">
+                                                <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Opacity="0.72" />
+                                            </Button>
+                                            <Button Style="{StaticResource CardActionButton}"
                                                     ToolTip="Excluir dica"
-                                                    Click="DeleteTipCard_Click" />
+                                                    Click="DeleteTipCard_Click">
+                                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Opacity="0.72" />
+                                            </Button>
                                         </StackPanel>
                                     </Grid>
                                     <DataTemplate.Triggers>
@@ -1308,21 +1546,31 @@
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="ListBoxItem">
-                                                <Border x:Name="ItemChrome"
-                                                        BorderBrush="{StaticResource BorderBrushSoft}"
-                                                        BorderThickness="1"
-                                                        Background="{StaticResource PanelBackground}"
-                                                        CornerRadius="8"
-                                                        Padding="9,8">
-                                                    <ContentPresenter />
-                                                </Border>
+                                                <Grid>
+                                                    <Border x:Name="ItemChrome"
+                                                            BorderBrush="{StaticResource BorderBrushSoft}"
+                                                            BorderThickness="1"
+                                                            Background="{StaticResource PanelBackground}"
+                                                            CornerRadius="8"
+                                                            Padding="9,8">
+                                                        <ContentPresenter />
+                                                    </Border>
+                                                    <Border x:Name="SelectionRail"
+                                                            Width="4"
+                                                            Margin="0"
+                                                            HorizontalAlignment="Left"
+                                                            Background="{StaticResource AccentBrush}"
+                                                            CornerRadius="8,0,0,8"
+                                                            Visibility="Collapsed" />
+                                                </Grid>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsSelected" Value="True">
-                                                        <Setter TargetName="ItemChrome" Property="Background" Value="{StaticResource AccentSoftBrush}" />
-                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="#BFE4DE" />
+                                                        <Setter TargetName="ItemChrome" Property="Background" Value="#F5FCFA" />
+                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                        <Setter TargetName="SelectionRail" Property="Visibility" Value="Visible" />
                                                     </Trigger>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="#BFE4DE" />
+                                                        <Setter TargetName="ItemChrome" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -1385,21 +1633,17 @@
                                                      PreviewKeyDown="AttachmentEditView_PreviewKeyDown" />
                                         </Grid>
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Button Content="✎"
-                                                    Style="{StaticResource SecondaryButton}"
-                                                    Width="28"
-                                                    Height="28"
-                                                    Padding="0"
+                                            <Button Style="{StaticResource CardActionButton}"
                                                     Margin="0,0,6,0"
                                                     ToolTip="Renomear arquivo"
-                                                    Click="RenameAttachment_Click" />
-                                            <Button Content="×"
-                                                    Style="{StaticResource SecondaryButton}"
-                                                    Width="28"
-                                                    Height="28"
-                                                    Padding="0"
+                                                    Click="RenameAttachment_Click">
+                                                <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Opacity="0.72" />
+                                            </Button>
+                                            <Button Style="{StaticResource CardActionButton}"
                                                     ToolTip="Excluir arquivo"
-                                                    Click="DeleteAttachment_Click" />
+                                                    Click="DeleteAttachment_Click">
+                                                <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Opacity="0.72" />
+                                            </Button>
                                         </StackPanel>
                                     </Grid>
                                     <DataTemplate.Triggers>

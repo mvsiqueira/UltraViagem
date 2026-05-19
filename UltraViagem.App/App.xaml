@@ -427,21 +427,31 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Chrome"
-                                Background="Transparent"
-                                BorderBrush="Transparent"
-                                BorderThickness="1"
-                                CornerRadius="7"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter />
-                        </Border>
+                        <Grid>
+                            <Border x:Name="Chrome"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    BorderThickness="1"
+                                    CornerRadius="7"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter />
+                            </Border>
+                            <Border x:Name="SelectionRail"
+                                    Width="4"
+                                    Margin="0"
+                                    HorizontalAlignment="Left"
+                                    Background="{StaticResource AccentBrush}"
+                                    CornerRadius="7,0,0,7"
+                                    Visibility="Collapsed" />
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Chrome" Property="Background" Value="#F4F1EA" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Chrome" Property="Background" Value="{StaticResource AccentSoftBrush}" />
-                                <Setter TargetName="Chrome" Property="BorderBrush" Value="#B9DED8" />
+                                <Setter TargetName="Chrome" Property="Background" Value="#F5FCFA" />
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="SelectionRail" Property="Visibility" Value="Visible" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

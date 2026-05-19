@@ -500,7 +500,7 @@ public sealed class AppViewModel : NotifyObject
             .Where(rate => !string.IsNullOrWhiteSpace(rate.Currency))
             .Select(rate => rate.ToCurrencyRateItem())
             .ToList();
-        RefreshBudget();
+        RefreshSummary();
     }
 
     private void ApplyRateToExpenses(string currency, decimal rateToBase)
@@ -607,7 +607,7 @@ public sealed class AppViewModel : NotifyObject
             return;
         }
 
-        if (e.PropertyName is nameof(ExpenseEditorViewModel.IsSelectedForEdit))
+        if (e.PropertyName is nameof(ExpenseEditorViewModel.IsSelectedForEdit) or nameof(ExpenseEditorViewModel.IsEditing))
         {
             return;
         }
@@ -619,7 +619,12 @@ public sealed class AppViewModel : NotifyObject
             expense.ExchangeRateToBase = GetRateForCurrency(expense.Currency);
         }
 
-        if (e.PropertyName is nameof(ExpenseEditorViewModel.Type))
+        if (sender is ExpenseEditorViewModel { IsEditing: true } &&
+            e.PropertyName is nameof(ExpenseEditorViewModel.Type))
+        {
+            RefreshBudget(rebuildGroups: false);
+        }
+        else if (e.PropertyName is nameof(ExpenseEditorViewModel.Type))
         {
             RefreshBudget();
         }
@@ -652,7 +657,7 @@ public sealed class AppViewModel : NotifyObject
         ExpensesChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void RefreshBudget(bool rebuildGroups = true)
+    public void RefreshBudget(bool rebuildGroups = true)
     {
         BudgetCategories.ReplaceWith(BuildBudgetCategories(Expenses));
         if (rebuildGroups)
@@ -954,6 +959,7 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     private decimal _exchangeRateToBase = 1m;
     private decimal _paidAmount;
     private bool _isSelectedForEdit;
+    private bool _isEditing;
 
     public string Id { get => _id; set => SetField(ref _id, value); }
     public bool IsActive { get => _isActive; set => SetField(ref _isActive, value); }
@@ -970,6 +976,7 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     public decimal ExchangeRateToBase { get => _exchangeRateToBase; set => SetField(ref _exchangeRateToBase, value <= 0 ? 1m : value); }
     public decimal PaidAmount { get => _paidAmount; set => SetField(ref _paidAmount, Math.Max(0, value)); }
     public bool IsSelectedForEdit { get => _isSelectedForEdit; set => SetField(ref _isSelectedForEdit, value); }
+    public bool IsEditing { get => _isEditing; set => SetField(ref _isEditing, value); }
     public decimal Subtotal => (Price + Taxes) * People * Quantity;
     public decimal SubtotalBase => IsActive ? Subtotal * ExchangeRateToBase : 0m;
     public decimal PendingAmount => IsActive ? Math.Max(decimal.Round(SubtotalBase - PaidAmount, 2, MidpointRounding.AwayFromZero), 0) : 0m;

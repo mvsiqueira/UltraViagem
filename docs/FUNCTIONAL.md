@@ -175,7 +175,7 @@ A tela de gastos permite:
 - visualizar gastos como cards compactos agrupados por categoria, como transporte, hospedagem, passeios e outros;
 - selecionar um card alterando o fundo do próprio card;
 - ativar/desativar um gasto por um controle visual de status no card;
-- editar o gasto selecionado em uma janela dedicada com todos os campos da planilha de referência;
+- editar ou criar gastos expandindo o próprio card, sem abrir janela modal;
 - editar descrição, empresa, link, observações, preço unitário, taxas unitárias, pessoas, quantidade, moeda, cotação do item e valor pago;
 - acompanhar o subtotal convertido para BRL;
 - editar manualmente cotações por moeda;

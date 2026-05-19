@@ -22,6 +22,9 @@ public partial class MainWindow : Window
     private TripRepository? _repository;
     private readonly Dictionary<LinkEditorViewModel, (string Title, string Url)> _tipEditSnapshots = [];
     private readonly Dictionary<AttachmentEditorViewModel, string> _attachmentEditSnapshots = [];
+    private readonly Dictionary<ExpenseEditorViewModel, ExpenseItem> _expenseEditSnapshots = [];
+    private readonly HashSet<ExpenseEditorViewModel> _newExpenseEdits = [];
+    private LocalSettings _settings = new();
     private System.Windows.Point _attachmentDragStartPoint;
     private bool _isLoadingTrip;
     private bool _isSavingTasks;
@@ -32,14 +35,17 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        _settings = LocalSettings.Load();
+        RestoreWindowPlacement(_settings);
         DataContext = _viewModel;
         _viewModel.TasksChanged += ViewModel_TasksChanged;
         _viewModel.TipsChanged += ViewModel_TipsChanged;
         _viewModel.AttachmentsChanged += ViewModel_AttachmentsChanged;
         _viewModel.ExpensesChanged += ViewModel_ExpensesChanged;
         _expensesSaveTimer.Tick += ExpensesSaveTimer_Tick;
+        Closing += MainWindow_Closing;
 
-        LoadRepository(LocalSettings.Load().RepositoryPath ?? FindWorkspaceRoot());
+        LoadRepository(_settings.RepositoryPath ?? FindWorkspaceRoot());
         ShowOverview();
     }
 
@@ -58,7 +64,59 @@ public partial class MainWindow : Window
         }
 
         LoadRepository(dialog.SelectedPath);
-        LocalSettings.Save(new LocalSettings { RepositoryPath = dialog.SelectedPath });
+        _settings.RepositoryPath = dialog.SelectedPath;
+        LocalSettings.Save(_settings);
+    }
+
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        var bounds = WindowState == WindowState.Normal ? new Rect(Left, Top, Width, Height) : RestoreBounds;
+        _settings.WindowLeft = bounds.Left;
+        _settings.WindowTop = bounds.Top;
+        _settings.WindowWidth = bounds.Width;
+        _settings.WindowHeight = bounds.Height;
+        _settings.WindowState = WindowState == WindowState.Maximized ? nameof(WindowState.Maximized) : nameof(WindowState.Normal);
+        LocalSettings.Save(_settings);
+    }
+
+    private void RestoreWindowPlacement(LocalSettings settings)
+    {
+        if (settings.WindowLeft is not { } left ||
+            settings.WindowTop is not { } top ||
+            settings.WindowWidth is not { } width ||
+            settings.WindowHeight is not { } height)
+        {
+            return;
+        }
+
+        width = Math.Max(width, MinWidth);
+        height = Math.Max(height, MinHeight);
+        if (!IsWindowPlacementVisible(left, top, width, height))
+        {
+            return;
+        }
+
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Left = left;
+        Top = top;
+        Width = width;
+        Height = height;
+
+        if (string.Equals(settings.WindowState, nameof(WindowState.Maximized), StringComparison.Ordinal))
+        {
+            WindowState = WindowState.Maximized;
+        }
+    }
+
+    private static bool IsWindowPlacementVisible(double left, double top, double width, double height)
+    {
+        var windowBounds = new System.Drawing.Rectangle(
+            (int)Math.Round(left),
+            (int)Math.Round(top),
+            (int)Math.Round(Math.Max(width, 1)),
+            (int)Math.Round(Math.Max(height, 1)));
+
+        return Forms.Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(windowBounds));
     }
 
     private void ShowAbout_Click(object sender, RoutedEventArgs e)
@@ -270,7 +328,11 @@ public partial class MainWindow : Window
     {
         _viewModel.AddExpense();
         SaveExpensesInternal("Novo gasto salvo automaticamente.");
-        OpenExpenseEditor();
+        if (_viewModel.SelectedExpense is not null)
+        {
+            _newExpenseEdits.Add(_viewModel.SelectedExpense);
+        }
+        BeginExpenseEdit(_viewModel.SelectedExpense);
     }
 
     private void DeleteExpense_Click(object sender, RoutedEventArgs e)
@@ -302,7 +364,15 @@ public partial class MainWindow : Window
         _viewModel.SelectedExpense = expense;
         if (e.ClickCount == 2)
         {
-            OpenExpenseEditor();
+            if (expense.IsEditing)
+            {
+                RejectExpenseEdit(expense);
+            }
+            else
+            {
+                BeginExpenseEdit(expense);
+            }
+
             e.Handled = true;
         }
     }
@@ -314,7 +384,53 @@ public partial class MainWindow : Window
             _viewModel.SelectedExpense = expense;
         }
 
-        OpenExpenseEditor();
+        BeginExpenseEdit(_viewModel.SelectedExpense);
+    }
+
+    private void CompleteExpenseEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ExpenseEditorViewModel expense })
+        {
+            CompleteExpenseEdit(expense);
+        }
+    }
+
+    private void RejectExpenseEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ExpenseEditorViewModel expense })
+        {
+            return;
+        }
+
+        RejectExpenseEdit(expense);
+    }
+
+    private void ExpenseEditView_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ExpenseEditorViewModel expense })
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            CompleteExpenseEdit(expense);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            RejectExpenseEdit(expense);
+            e.Handled = true;
+        }
+    }
+
+    private void OpenExpenseLink_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ExpenseEditorViewModel expense })
+        {
+            _viewModel.SelectedExpense = expense;
+            OpenUrl(expense.Link, "Este gasto não tem link cadastrado.");
+        }
     }
 
     private void SaveExpenses_Click(object sender, RoutedEventArgs e)
@@ -322,17 +438,75 @@ public partial class MainWindow : Window
         SaveExpensesInternal($"Gastos salvos em {DateTime.Now:HH:mm}.");
     }
 
-    private void OpenExpenseEditor()
+    private void BeginExpenseEdit(ExpenseEditorViewModel? expense)
     {
-        if (_viewModel.SelectedExpense is null)
+        if (expense is null)
         {
             _viewModel.StatusMessage = "Selecione um gasto para editar.";
             return;
         }
 
-        var window = new ExpenseDetailsWindow(_viewModel.SelectedExpense) { Owner = this };
-        window.ShowDialog();
+        foreach (var item in _viewModel.Expenses)
+        {
+            item.IsEditing = ReferenceEquals(item, expense);
+        }
+
+        if (!_expenseEditSnapshots.ContainsKey(expense))
+        {
+            _expenseEditSnapshots[expense] = expense.ToExpenseItem();
+        }
+
+        _viewModel.SelectedExpense = expense;
+    }
+
+    private void CompleteExpenseEdit(ExpenseEditorViewModel expense)
+    {
+        expense.IsEditing = false;
+        _viewModel.SelectedExpense = expense;
+        _expenseEditSnapshots.Remove(expense);
+        _newExpenseEdits.Remove(expense);
+        _viewModel.RefreshBudget();
         SaveExpensesInternal($"Gasto salvo em {DateTime.Now:HH:mm}.");
+    }
+
+    private void RejectExpenseEdit(ExpenseEditorViewModel expense)
+    {
+        if (_newExpenseEdits.Remove(expense))
+        {
+            _viewModel.SelectedExpense = expense;
+            _expenseEditSnapshots.Remove(expense);
+            _viewModel.DeleteSelectedExpense();
+            SaveExpensesInternal("Novo gasto descartado.");
+            return;
+        }
+
+        if (_expenseEditSnapshots.Remove(expense, out var snapshot))
+        {
+            RestoreExpense(expense, snapshot);
+        }
+
+        expense.IsEditing = false;
+        _viewModel.SelectedExpense = expense;
+        _viewModel.RefreshBudget();
+        SaveExpensesInternal("Edição descartada.");
+    }
+
+    private static void RestoreExpense(ExpenseEditorViewModel expense, ExpenseItem snapshot)
+    {
+        expense.Id = snapshot.Id;
+        expense.IsActive = snapshot.IsActive;
+        expense.Title = snapshot.Title;
+        expense.Type = snapshot.Type ?? "";
+        expense.Company = snapshot.Company ?? "";
+        expense.Link = snapshot.Link ?? "";
+        expense.Notes = snapshot.Notes ?? "";
+        expense.Price = snapshot.Price;
+        expense.Taxes = snapshot.Taxes;
+        expense.People = snapshot.People;
+        expense.Quantity = snapshot.Quantity;
+        expense.Currency = snapshot.Currency;
+        expense.ExchangeRateToBase = snapshot.ExchangeRateToBase;
+        expense.PaidAmount = snapshot.PaidAmount;
     }
 
     private async void UpdateExchangeRates_Click(object sender, RoutedEventArgs e)
@@ -1931,6 +2105,11 @@ public partial class MainWindow : Window
 public sealed class LocalSettings
 {
     public string? RepositoryPath { get; set; }
+    public double? WindowLeft { get; set; }
+    public double? WindowTop { get; set; }
+    public double? WindowWidth { get; set; }
+    public double? WindowHeight { get; set; }
+    public string? WindowState { get; set; }
 
     private static string SettingsPath
     {
