@@ -5,6 +5,7 @@
 - Melhorar acabamento visual dos cards da visão geral.
 - Implementar tela completa de roteiro.
 - Padronizar navegação para todos os painéis.
+- Transformar o menu lateral em expand/collapse.
 - Adicionar validações de URL em dicas e Google My Maps.
 - Definir estratégia de migração de schema para `trip.json`.
 

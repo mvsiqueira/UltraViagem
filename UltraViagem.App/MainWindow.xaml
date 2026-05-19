@@ -185,10 +185,34 @@
                     </Button>
                     <Button Style="{StaticResource NavButton}" Click="ShowAbout_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="!"
-                                       Style="{StaticResource NavIcon}"
-                                       FontFamily="Segoe UI"
-                                       FontWeight="SemiBold" />
+                            <Viewbox Width="28"
+                                     Height="28"
+                                     Margin="0,3,12,0"
+                                     VerticalAlignment="Center"
+                                     Stretch="Uniform">
+                                <Grid Width="24" Height="24">
+                                    <Ellipse Width="18"
+                                             Height="18"
+                                             Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                             StrokeThickness="1.55"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center" />
+                                    <Rectangle Width="1.6"
+                                               Height="7"
+                                               RadiusX="0.8"
+                                               RadiusY="0.8"
+                                               Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               Margin="0,-3,0,0" />
+                                    <Ellipse Width="2.1"
+                                             Height="2.1"
+                                             Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Margin="0,7,0,0" />
+                                </Grid>
+                            </Viewbox>
                             <TextBlock Text="Sobre" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>

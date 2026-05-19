@@ -10,11 +10,7 @@ Este documento registra os combinados operacionais do projeto.
 dotnet build .\UltraViagem.slnx
 ```
 
-- Apos um build bem-sucedido, execute o app Debug para teste:
-
-```powershell
-.\UltraViagem.App\bin\Debug\net10.0-windows\UltraViagem.App.exe
-```
+- Nao execute o app automaticamente apos build; o teste manual fica por conta do usuario.
 
 - Se o build, publish ou execucao falhar porque o UltraViagem esta aberto e travando arquivos, pode fechar o processo do app e repetir o comando.
 
@@ -22,8 +18,8 @@ dotnet build .\UltraViagem.slnx
 
 - A pasta padrao para builds publicados e `publish/`.
 - Nao publique a cada build de desenvolvimento.
-- Gere `publish/` sempre antes de um commit solicitado.
-- Tambem gere `publish/` quando for pedido explicitamente um build publicado, release ou versao final para teste.
+- Gere `publish/` quando for pedido push, build publicado, release ou versao final para teste.
+- Nao gere `publish/` quando for pedido apenas commit.
 
 Comando padrao:
 
@@ -31,13 +27,21 @@ Comando padrao:
 dotnet publish .\UltraViagem.App\UltraViagem.App.csproj -c Release -o .\publish
 ```
 
-## Commit E Push
+## Commit
 
-- Quando for pedido um commit, antes de commitar:
+- Quando for pedido commit, faca apenas o commit local.
+- Antes de commitar:
+  - confira o status do Git;
+  - inclua as mudancas de codigo e documentacao pertinentes.
+- Nao faca push automaticamente quando o pedido for apenas commit.
+
+## Push
+
+- Quando for pedido push:
   - gere o publish atualizado em `publish/`;
   - confira o status do Git;
-  - inclua as mudancas de codigo, documentacao e `publish/` no commit.
-- Sempre que fizer commit, faca tambem push para o remote `origin`.
+  - inclua as mudancas de codigo, documentacao e `publish/` em um commit, se houver mudancas pendentes;
+  - faca push para o remote `origin`.
 
 ## Remote
 
