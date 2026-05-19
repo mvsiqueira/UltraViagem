@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using UltraViagem.Core;
 using Forms = System.Windows.Forms;
 
@@ -17,6 +18,7 @@ public partial class MainWindow : Window
 {
     private readonly AppViewModel _viewModel = new();
     private readonly HttpClient _httpClient = new();
+    private readonly DispatcherTimer _expensesSaveTimer = new() { Interval = TimeSpan.FromMilliseconds(450) };
     private TripRepository? _repository;
     private readonly Dictionary<LinkEditorViewModel, (string Title, string Url)> _tipEditSnapshots = [];
     private readonly Dictionary<AttachmentEditorViewModel, string> _attachmentEditSnapshots = [];
@@ -35,6 +37,7 @@ public partial class MainWindow : Window
         _viewModel.TipsChanged += ViewModel_TipsChanged;
         _viewModel.AttachmentsChanged += ViewModel_AttachmentsChanged;
         _viewModel.ExpensesChanged += ViewModel_ExpensesChanged;
+        _expensesSaveTimer.Tick += ExpensesSaveTimer_Tick;
 
         LoadRepository(LocalSettings.Load().RepositoryPath ?? FindWorkspaceRoot());
         ShowOverview();
@@ -267,17 +270,69 @@ public partial class MainWindow : Window
     {
         _viewModel.AddExpense();
         SaveExpensesInternal("Novo gasto salvo automaticamente.");
+        OpenExpenseEditor();
     }
 
     private void DeleteExpense_Click(object sender, RoutedEventArgs e)
     {
+        if (sender is FrameworkElement { DataContext: ExpenseEditorViewModel expense })
+        {
+            _viewModel.SelectedExpense = expense;
+        }
+
         _viewModel.DeleteSelectedExpense();
         SaveExpensesInternal("Gasto removido e salvo.");
+    }
+
+    private void SelectExpenseCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ExpenseEditorViewModel expense })
+        {
+            _viewModel.SelectedExpense = expense;
+        }
+    }
+
+    private void SelectExpenseCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ExpenseEditorViewModel expense })
+        {
+            return;
+        }
+
+        _viewModel.SelectedExpense = expense;
+        if (e.ClickCount == 2)
+        {
+            OpenExpenseEditor();
+            e.Handled = true;
+        }
+    }
+
+    private void EditExpense_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: ExpenseEditorViewModel expense })
+        {
+            _viewModel.SelectedExpense = expense;
+        }
+
+        OpenExpenseEditor();
     }
 
     private void SaveExpenses_Click(object sender, RoutedEventArgs e)
     {
         SaveExpensesInternal($"Gastos salvos em {DateTime.Now:HH:mm}.");
+    }
+
+    private void OpenExpenseEditor()
+    {
+        if (_viewModel.SelectedExpense is null)
+        {
+            _viewModel.StatusMessage = "Selecione um gasto para editar.";
+            return;
+        }
+
+        var window = new ExpenseDetailsWindow(_viewModel.SelectedExpense) { Owner = this };
+        window.ShowDialog();
+        SaveExpensesInternal($"Gasto salvo em {DateTime.Now:HH:mm}.");
     }
 
     private async void UpdateExchangeRates_Click(object sender, RoutedEventArgs e)
@@ -1211,6 +1266,13 @@ public partial class MainWindow : Window
             return;
         }
 
+        _expensesSaveTimer.Stop();
+        _expensesSaveTimer.Start();
+    }
+
+    private void ExpensesSaveTimer_Tick(object? sender, EventArgs e)
+    {
+        _expensesSaveTimer.Stop();
         SaveExpensesInternal($"Salvo automaticamente às {DateTime.Now:HH:mm}.");
     }
 
@@ -1384,6 +1446,7 @@ public partial class MainWindow : Window
             return;
         }
 
+        _expensesSaveTimer.Stop();
         _isSavingExpenses = true;
         _viewModel.ApplyExpensesToTrip();
         _repository.SaveTrip(_viewModel.CurrentTrip);

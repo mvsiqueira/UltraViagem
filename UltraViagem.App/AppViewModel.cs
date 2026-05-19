@@ -34,6 +34,7 @@ public sealed class AppViewModel : NotifyObject
     public ObservableCollection<LinkEditorViewModel> Tips { get; } = [];
     public ObservableCollection<AttachmentEditorViewModel> Attachments { get; } = [];
     public ObservableCollection<ExpenseEditorViewModel> Expenses { get; } = [];
+    public ObservableCollection<ExpenseCategoryGroupViewModel> ExpenseGroups { get; } = [];
     public ObservableCollection<CurrencyRateViewModel> CurrencyRates { get; } = [];
     public ObservableCollection<BudgetCategoryViewModel> BudgetCategories { get; } = [];
     public ObservableCollection<string> Places { get; } = [];
@@ -73,7 +74,28 @@ public sealed class AppViewModel : NotifyObject
     public ExpenseEditorViewModel? SelectedExpense
     {
         get => _selectedExpense;
-        set => SetField(ref _selectedExpense, value);
+        set
+        {
+            if (ReferenceEquals(_selectedExpense, value))
+            {
+                return;
+            }
+
+            if (_selectedExpense is not null)
+            {
+                _selectedExpense.IsSelectedForEdit = false;
+            }
+
+            if (SetField(ref _selectedExpense, value))
+            {
+                if (_selectedExpense is not null)
+                {
+                    _selectedExpense.IsSelectedForEdit = true;
+                }
+
+                OnPropertyChanged(nameof(HasSelectedExpense));
+            }
+        }
     }
 
     public string StatusMessage
@@ -148,6 +170,7 @@ public sealed class AppViewModel : NotifyObject
         }
     }
     public string ActiveExpensesCount => Expenses.Count(expense => expense.IsActive).ToString(Culture);
+    public bool HasSelectedExpense => SelectedExpense is not null;
 
     public Trip? CurrentTrip => _trip;
     public event EventHandler? TasksChanged;
@@ -222,6 +245,7 @@ public sealed class AppViewModel : NotifyObject
 
         ApplyTaskFilter();
         BudgetCategories.ReplaceWith(BuildBudgetCategories(Expenses));
+        ExpenseGroups.ReplaceWith(BuildExpenseGroups(Expenses));
         Places.ReplaceWith(trip?.Places.Take(5).Select(place => $"{place.Name} · {place.Type ?? "lugar"}") ?? []);
         OverviewFiles.ReplaceWith(Attachments.Take(4));
         OverviewTips.ReplaceWith(Tips.Take(4));
@@ -514,6 +538,7 @@ public sealed class AppViewModel : NotifyObject
         OnPropertyChanged(nameof(PaidTotal));
         OnPropertyChanged(nameof(PendingTotal));
         OnPropertyChanged(nameof(ActiveExpensesCount));
+        OnPropertyChanged(nameof(HasSelectedExpense));
     }
 
     public void RefreshTripDetails()
@@ -582,6 +607,11 @@ public sealed class AppViewModel : NotifyObject
             return;
         }
 
+        if (e.PropertyName is nameof(ExpenseEditorViewModel.IsSelectedForEdit))
+        {
+            return;
+        }
+
         if (sender is ExpenseEditorViewModel expense &&
             expense.PaidAmount <= 0 &&
             e.PropertyName is nameof(ExpenseEditorViewModel.Currency))
@@ -589,7 +619,21 @@ public sealed class AppViewModel : NotifyObject
             expense.ExchangeRateToBase = GetRateForCurrency(expense.Currency);
         }
 
-        RefreshBudget();
+        if (e.PropertyName is nameof(ExpenseEditorViewModel.Type))
+        {
+            RefreshBudget();
+        }
+        else if (e.PropertyName is nameof(ExpenseEditorViewModel.IsActive)
+                 or nameof(ExpenseEditorViewModel.Price)
+                 or nameof(ExpenseEditorViewModel.Taxes)
+                 or nameof(ExpenseEditorViewModel.People)
+                 or nameof(ExpenseEditorViewModel.Quantity)
+                 or nameof(ExpenseEditorViewModel.ExchangeRateToBase)
+                 or nameof(ExpenseEditorViewModel.PaidAmount))
+        {
+            RefreshBudget(rebuildGroups: false);
+        }
+
         ExpensesChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -608,10 +652,27 @@ public sealed class AppViewModel : NotifyObject
         ExpensesChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void RefreshBudget()
+    private void RefreshBudget(bool rebuildGroups = true)
     {
         BudgetCategories.ReplaceWith(BuildBudgetCategories(Expenses));
+        if (rebuildGroups)
+        {
+            ExpenseGroups.ReplaceWith(BuildExpenseGroups(Expenses));
+        }
+        else
+        {
+            RefreshExpenseGroupTotals();
+        }
+
         RefreshSummary();
+    }
+
+    private void RefreshExpenseGroupTotals()
+    {
+        foreach (var group in ExpenseGroups)
+        {
+            group.TotalLabel = FormatMoney(group.Items.Where(expense => expense.IsActive).Sum(expense => expense.SubtotalBase));
+        }
     }
 
     private static IReadOnlyList<CurrencyRateViewModel> BuildCurrencyRates(Trip? trip)
@@ -665,6 +726,19 @@ public sealed class AppViewModel : NotifyObject
                 FormatMoney(total.Total),
                 max == 0 ? 0 : Math.Max(8, (double)(total.Total / max) * 220)))
             .OrderByDescending(category => category.BarWidth)
+            .ToList();
+    }
+
+    private static IReadOnlyList<ExpenseCategoryGroupViewModel> BuildExpenseGroups(IEnumerable<ExpenseEditorViewModel> expenses)
+    {
+        return expenses
+            .GroupBy(expense => string.IsNullOrWhiteSpace(expense.Type) ? "Outros" : expense.Type.Trim())
+            .Select(group => new ExpenseCategoryGroupViewModel(
+                group.Key,
+                FormatMoney(group.Where(expense => expense.IsActive).Sum(expense => expense.SubtotalBase)),
+                group.ToList()))
+            .OrderByDescending(group => group.Items.Where(expense => expense.IsActive).Sum(expense => expense.SubtotalBase))
+            .ThenBy(group => group.Name)
             .ToList();
     }
 
@@ -863,6 +937,8 @@ public sealed record ItineraryDayViewModel(
 
 public sealed class ExpenseEditorViewModel : NotifyObject
 {
+    private static readonly CultureInfo Culture = new("pt-BR");
+
     private string _id = "";
     private bool _isActive = true;
     private string _title = "";
@@ -877,7 +953,7 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     private string _currency = "BRL";
     private decimal _exchangeRateToBase = 1m;
     private decimal _paidAmount;
-    private string _status = "";
+    private bool _isSelectedForEdit;
 
     public string Id { get => _id; set => SetField(ref _id, value); }
     public bool IsActive { get => _isActive; set => SetField(ref _isActive, value); }
@@ -893,11 +969,56 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     public string Currency { get => _currency; set => SetField(ref _currency, NormalizeCurrency(value)); }
     public decimal ExchangeRateToBase { get => _exchangeRateToBase; set => SetField(ref _exchangeRateToBase, value <= 0 ? 1m : value); }
     public decimal PaidAmount { get => _paidAmount; set => SetField(ref _paidAmount, Math.Max(0, value)); }
-    public string Status { get => _status; set => SetField(ref _status, value); }
+    public bool IsSelectedForEdit { get => _isSelectedForEdit; set => SetField(ref _isSelectedForEdit, value); }
     public decimal Subtotal => (Price + Taxes) * People * Quantity;
     public decimal SubtotalBase => IsActive ? Subtotal * ExchangeRateToBase : 0m;
-    public decimal PendingAmount => IsActive ? Math.Max(SubtotalBase - PaidAmount, 0) : 0m;
+    public decimal PendingAmount => IsActive ? Math.Max(decimal.Round(SubtotalBase - PaidAmount, 2, MidpointRounding.AwayFromZero), 0) : 0m;
     public string ActiveGlyph => IsActive ? "►" : "";
+    public string ActiveStatusLabel => IsActive ? "Ativo" : "Inativo";
+    public string SummaryLine
+    {
+        get
+        {
+            var amount = $"total {Currency} {Subtotal:N2}";
+            var currencyDetail = IsBaseCurrency
+                ? amount
+                : $"{amount} · 💱 1 {Currency} = R$ {FormatCompactDecimal(ExchangeRateToBase)}";
+            return currencyDetail;
+        }
+    }
+    public string QuantityLine
+    {
+        get
+        {
+            var taxes = Taxes > 0 ? $" + {Currency} {Taxes:N2}" : "";
+            return $"preço {Currency} {Price:N2}{taxes} · 👤{People} · ＃{Quantity}";
+        }
+    }
+    public string DetailLine
+    {
+        get
+        {
+            var parts = new[]
+            {
+                Company,
+                Notes
+            }.Where(part => !string.IsNullOrWhiteSpace(part));
+            return string.Join(" · ", parts);
+        }
+    }
+    public string TypeLabel => string.IsNullOrWhiteSpace(Type) ? "Outros" : Type.Trim();
+    public string SubtotalBaseLabel => SubtotalBase.ToString("C", Culture);
+    public string PaidLabel => PaidAmount > 0 ? $"Pago {PaidAmount.ToString("C", Culture)}" : "Não pago";
+    public string PendingLabel => PendingAmount > 0 ? $"Falta {PendingAmount.ToString("C", Culture)}" : "Quitado";
+    public string PaymentStatusLabel => PendingAmount <= 0
+        ? "Quitado"
+        : PaidAmount > 0
+            ? $"Falta {PendingAmount.ToString("C", Culture)}"
+            : "A pagar";
+    public bool IsPaymentSettled => PendingAmount <= 0;
+    public bool IsBaseCurrency => string.Equals(NormalizeCurrency(Currency), "BRL", StringComparison.OrdinalIgnoreCase) ||
+                                  string.Equals(Currency.Trim(), "R$", StringComparison.OrdinalIgnoreCase);
+    public bool HasLink => LinkEditorViewModel.IsHttpUrl(Link);
 
     public static ExpenseEditorViewModel FromExpense(ExpenseItem expense)
     {
@@ -916,8 +1037,7 @@ public sealed class ExpenseEditorViewModel : NotifyObject
             Quantity = Math.Max(1, expense.Quantity),
             Currency = NormalizeCurrency(expense.Currency),
             ExchangeRateToBase = expense.ExchangeRateToBase <= 0 ? 1m : expense.ExchangeRateToBase,
-            PaidAmount = expense.PaidAmount,
-            Status = expense.Status ?? ""
+            PaidAmount = expense.PaidAmount
         };
     }
 
@@ -938,8 +1058,7 @@ public sealed class ExpenseEditorViewModel : NotifyObject
             Quantity = Math.Max(1, Quantity),
             Currency = NormalizeCurrency(Currency),
             ExchangeRateToBase = ExchangeRateToBase <= 0 ? 1m : ExchangeRateToBase,
-            PaidAmount = PaidAmount,
-            Status = string.IsNullOrWhiteSpace(Status) ? null : Status.Trim()
+            PaidAmount = PaidAmount
         };
     }
 
@@ -952,6 +1071,31 @@ public sealed class ExpenseEditorViewModel : NotifyObject
             base.OnPropertyChanged(nameof(SubtotalBase));
             base.OnPropertyChanged(nameof(PendingAmount));
             base.OnPropertyChanged(nameof(ActiveGlyph));
+            base.OnPropertyChanged(nameof(ActiveStatusLabel));
+            base.OnPropertyChanged(nameof(SummaryLine));
+            base.OnPropertyChanged(nameof(QuantityLine));
+            base.OnPropertyChanged(nameof(SubtotalBaseLabel));
+            base.OnPropertyChanged(nameof(PaidLabel));
+            base.OnPropertyChanged(nameof(PendingLabel));
+            base.OnPropertyChanged(nameof(PaymentStatusLabel));
+            base.OnPropertyChanged(nameof(IsPaymentSettled));
+        }
+
+        if (propertyName is nameof(Type) or nameof(Currency))
+        {
+            base.OnPropertyChanged(nameof(TypeLabel));
+            base.OnPropertyChanged(nameof(SummaryLine));
+            base.OnPropertyChanged(nameof(IsBaseCurrency));
+        }
+
+        if (propertyName is nameof(Company) or nameof(Notes))
+        {
+            base.OnPropertyChanged(nameof(DetailLine));
+        }
+
+        if (propertyName is nameof(Link))
+        {
+            base.OnPropertyChanged(nameof(HasLink));
         }
     }
 
@@ -959,6 +1103,27 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     {
         return string.IsNullOrWhiteSpace(value) ? "BRL" : value.Trim().ToUpperInvariant();
     }
+
+    private static string FormatCompactDecimal(decimal value)
+    {
+        return value.ToString("0.######", Culture);
+    }
+}
+
+public sealed class ExpenseCategoryGroupViewModel : NotifyObject
+{
+    private string _totalLabel;
+
+    public ExpenseCategoryGroupViewModel(string name, string totalLabel, IReadOnlyList<ExpenseEditorViewModel> items)
+    {
+        Name = name;
+        _totalLabel = totalLabel;
+        Items = items;
+    }
+
+    public string Name { get; }
+    public string TotalLabel { get => _totalLabel; set => SetField(ref _totalLabel, value); }
+    public IReadOnlyList<ExpenseEditorViewModel> Items { get; }
 }
 
 public sealed class CurrencyRateViewModel : NotifyObject

@@ -83,7 +83,6 @@ public sealed class ExpenseItem
     public string Currency { get; set; } = "BRL";
     public decimal ExchangeRateToBase { get; set; } = 1m;
     public decimal PaidAmount { get; set; }
-    public string? Status { get; set; }
 
     public decimal Subtotal => (Price + Taxes) * People * Quantity;
     public decimal SubtotalBase => IsActive ? Subtotal * ExchangeRateToBase : 0m;

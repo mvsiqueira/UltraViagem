@@ -72,7 +72,12 @@
                     </Button>
                     <Button x:Name="BudgetNavButton" Style="{StaticResource NavButton}" Click="ShowBudget_Click">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="R$" Style="{StaticResource NavIcon}" FontFamily="Segoe UI" FontSize="15" FontWeight="Bold" />
+                            <Viewbox Width="28" Height="28" Margin="0,3,12,0" VerticalAlignment="Center">
+                                <Grid Width="24" Height="24">
+                                    <Border Width="20" Height="14" CornerRadius="1.8" BorderBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" BorderThickness="1.45" />
+                                    <TextBlock Text="$" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+                                </Grid>
+                            </Viewbox>
                             <TextBlock Text="Gastos" Style="{StaticResource NavLabel}" />
                         </StackPanel>
                     </Button>
@@ -356,7 +361,12 @@
                             <StackPanel>
                                 <Grid Margin="0,0,0,14">
                                     <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="R$" Style="{StaticResource SectionIcon}" FontFamily="Segoe UI" FontSize="15" FontWeight="Bold" />
+                                <Viewbox Width="24" Height="24" Margin="0,1,9,0" VerticalAlignment="Center">
+                                    <Grid Width="24" Height="24">
+                                        <Border Width="20" Height="14" CornerRadius="1.8" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.45" />
+                                        <TextBlock Text="$" Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+                                    </Grid>
+                                </Viewbox>
                                         <TextBlock Text="Gastos" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
                                     </StackPanel>
                                     <Button Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" Click="ShowBudget_Click" ToolTip="Abrir gastos" />
@@ -656,48 +666,184 @@
                         </Grid.RowDefinitions>
 
                         <Grid Margin="0,0,0,12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="R$" Style="{StaticResource PanelTitleIcon}" FontFamily="Segoe UI" FontSize="16" FontWeight="Bold" />
-                                <StackPanel>
-                                    <TextBlock Text="Gastos" Style="{StaticResource PanelTitleText}" />
-                                    <TextBlock Text="{Binding BudgetSubtitle}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,0" />
-                                </StackPanel>
+                                <Viewbox Width="28" Height="34" Margin="0,8,8,0" VerticalAlignment="Top">
+                                    <Grid Width="24" Height="24">
+                                        <Border Width="20" Height="14" CornerRadius="1.8" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.45" />
+                                        <TextBlock Text="$" Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+                                    </Grid>
+                                </Viewbox>
+                                <TextBlock Text="Gastos" Style="{StaticResource PanelTitleText}" />
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" ToolTip="Voltar para visão geral" Margin="0,0,10,0" />
-                                <Button Content="Novo" Style="{StaticResource SecondaryButton}" Click="AddExpense_Click" Margin="0,0,10,0" />
-                                <Button Content="Excluir" Style="{StaticResource SecondaryButton}" Click="DeleteExpense_Click" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="+  Novo Gasto" Style="{StaticResource SecondaryButton}" Click="AddExpense_Click" Margin="0,0,8,0" />
+                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" ToolTip="Voltar para visão geral" />
                             </StackPanel>
+                            <TextBlock Grid.Row="1" Text="{Binding BudgetSubtitle}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,0" />
                         </Grid>
 
-                        <DataGrid Grid.Row="1"
-                                  ItemsSource="{Binding Expenses}"
-                                  SelectedItem="{Binding SelectedExpense}"
-                                  AutoGenerateColumns="False"
-                                  CanUserAddRows="False"
-                                  HeadersVisibility="Column"
-                                  RowHeaderWidth="0"
-                                  GridLinesVisibility="Horizontal"
-                                  HorizontalScrollBarVisibility="Auto">
-                            <DataGrid.Columns>
-                                <DataGridCheckBoxColumn Header="Ativo" Binding="{Binding IsActive, UpdateSourceTrigger=PropertyChanged}" Width="58" />
-                                <DataGridTextColumn Header="Categoria" Binding="{Binding Type, UpdateSourceTrigger=PropertyChanged}" Width="115" />
-                                <DataGridTextColumn Header="Descrição" Binding="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Width="190" />
-                                <DataGridTextColumn Header="Empresa" Binding="{Binding Company, UpdateSourceTrigger=PropertyChanged}" Width="130" />
-                                <DataGridTextColumn Header="Link" Binding="{Binding Link, UpdateSourceTrigger=PropertyChanged}" Width="160" />
-                                <DataGridTextColumn Header="Obs" Binding="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Width="180" />
-                                <DataGridTextColumn Header="Preço unit." Binding="{Binding Price, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="92" />
-                                <DataGridTextColumn Header="Taxas unit." Binding="{Binding Taxes, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="92" />
-                                <DataGridTextColumn Header="Pessoas" Binding="{Binding People, UpdateSourceTrigger=PropertyChanged}" Width="72" />
-                                <DataGridTextColumn Header="Quant." Binding="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Width="68" />
-                                <DataGridTextColumn Header="Subtotal" Binding="{Binding Subtotal, StringFormat=N2}" IsReadOnly="True" Width="92" />
-                                <DataGridTextColumn Header="Moeda" Binding="{Binding Currency, UpdateSourceTrigger=PropertyChanged}" Width="70" />
-                                <DataGridTextColumn Header="Cotação item" Binding="{Binding ExchangeRateToBase, UpdateSourceTrigger=PropertyChanged, StringFormat=N6}" Width="105" />
-                                <DataGridTextColumn Header="Convertido BRL" Binding="{Binding SubtotalBase, StringFormat=C}" IsReadOnly="True" Width="120" />
-                                <DataGridTextColumn Header="Pago BRL" Binding="{Binding PaidAmount, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="100" />
-                                <DataGridTextColumn Header="Status" Binding="{Binding Status, UpdateSourceTrigger=PropertyChanged}" Width="120" />
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding ExpenseGroups}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,12">
+                                            <Grid Margin="0,0,0,6">
+                                                <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
+                                                <TextBlock Text="{Binding TotalLabel}" HorizontalAlignment="Right" Foreground="{StaticResource MutedTextBrush}" FontWeight="SemiBold" />
+                                            </Grid>
+                                            <ItemsControl ItemsSource="{Binding Items}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="{StaticResource BorderBrushSoft}"
+                                                                BorderThickness="1"
+                                                                CornerRadius="7"
+                                                                Padding="8"
+                                                                Margin="0,0,0,6"
+                                                                MouseLeftButtonDown="SelectExpenseCard_MouseLeftButtonDown">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Setter Property="Background" Value="{StaticResource InputBackground}" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsSelectedForEdit}" Value="True">
+                                                                            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                                                            <Setter Property="BorderBrush" Value="#91CBC2" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding IsActive}" Value="False">
+                                                                            <Setter Property="Opacity" Value="0.72" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="2*" MinWidth="260" />
+                                                                    <ColumnDefinition Width="2.2*" MinWidth="280" />
+                                                                    <ColumnDefinition Width="1.25*" MinWidth="230" />
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <Grid Margin="0,0,18,0" VerticalAlignment="Center">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="56" />
+                                                                        <ColumnDefinition Width="*" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <ToggleButton IsChecked="{Binding IsActive, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                                  HorizontalAlignment="Left"
+                                                                                  VerticalAlignment="Center"
+                                                                                  Width="44"
+                                                                                  Height="24"
+                                                                                  Cursor="Hand"
+                                                                                  ToolTip="{Binding ActiveStatusLabel}">
+                                                                        <ToggleButton.Template>
+                                                                            <ControlTemplate TargetType="ToggleButton">
+                                                                                <Border x:Name="Track"
+                                                                                        Width="44"
+                                                                                        Height="24"
+                                                                                        CornerRadius="12"
+                                                                                        Background="#E8E6E0">
+                                                                                    <Border x:Name="Knob"
+                                                                                            Width="20"
+                                                                                            Height="20"
+                                                                                            CornerRadius="10"
+                                                                                            Background="#FFFFFF"
+                                                                                            HorizontalAlignment="Left"
+                                                                                            Margin="2"
+                                                                                            Effect="{x:Null}" />
+                                                                                </Border>
+                                                                                <ControlTemplate.Triggers>
+                                                                                    <Trigger Property="IsChecked" Value="True">
+                                                                                        <Setter TargetName="Track" Property="Background" Value="{StaticResource AccentBrush}" />
+                                                                                        <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
+                                                                                    </Trigger>
+                                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                                        <Setter TargetName="Track" Property="Opacity" Value="0.9" />
+                                                                                    </Trigger>
+                                                                                </ControlTemplate.Triggers>
+                                                                            </ControlTemplate>
+                                                                        </ToggleButton.Template>
+                                                                    </ToggleButton>
+                                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                                        <TextBlock Text="{Binding DetailLine}" Foreground="#5F6B67" FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                                                                    </StackPanel>
+                                                                </Grid>
+
+                                                                <StackPanel Grid.Column="1" Margin="0,0,18,0" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding QuantityLine}" Foreground="#5F6B67" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                                                    <TextBlock Text="{Binding SummaryLine}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,2,0,0" TextWrapping="NoWrap" />
+                                                                </StackPanel>
+
+                                                                <Grid Grid.Column="2" VerticalAlignment="Center">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="*" />
+                                                                        <ColumnDefinition Width="68" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Grid Margin="0,0,10,0">
+                                                                        <Grid.RowDefinitions>
+                                                                            <RowDefinition Height="Auto" />
+                                                                            <RowDefinition Height="Auto" />
+                                                                        </Grid.RowDefinitions>
+                                                                        <TextBlock Text="{Binding SubtotalBaseLabel}"
+                                                                                   FontSize="15"
+                                                                                   FontWeight="Bold"
+                                                                                   Foreground="{StaticResource AccentBrush}"
+                                                                                   TextAlignment="Right"
+                                                                                   TextTrimming="CharacterEllipsis" />
+                                                                        <TextBlock Grid.Row="1"
+                                                                                   Text="{Binding PaymentStatusLabel}"
+                                                                                   FontSize="12"
+                                                                                   TextAlignment="Right"
+                                                                                   HorizontalAlignment="Right"
+                                                                                   Margin="0,2,0,0"
+                                                                                   TextTrimming="CharacterEllipsis">
+                                                                            <TextBlock.Style>
+                                                                                <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                                                    <Setter Property="Foreground" Value="#B42318" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding IsPaymentSettled}" Value="True">
+                                                                                            <Setter Property="Foreground" Value="#15803D" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </TextBlock.Style>
+                                                                        </TextBlock>
+                                                                    </Grid>
+
+                                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                                        <Button Content="✎"
+                                                                                Style="{StaticResource SecondaryButton}"
+                                                                                Width="28"
+                                                                                Height="28"
+                                                                                Padding="0"
+                                                                                Margin="0,0,6,0"
+                                                                                ToolTip="Editar gasto"
+                                                                                Click="EditExpense_Click" />
+                                                                        <Button Content="×"
+                                                                                Style="{StaticResource SecondaryButton}"
+                                                                                Width="28"
+                                                                                Height="28"
+                                                                                Padding="0"
+                                                                                ToolTip="Excluir gasto"
+                                                                                Click="DeleteExpense_Click" />
+                                                                    </StackPanel>
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
 
                         <Grid Grid.Row="2" Margin="0,16,0,0">
                             <Grid.ColumnDefinitions>
@@ -706,7 +852,7 @@
                                 <ColumnDefinition Width="1*" />
                             </Grid.ColumnDefinitions>
 
-                            <UniformGrid Columns="3" Margin="0,0,14,0">
+                            <UniformGrid Columns="3" Margin="0,0,14,0" MinWidth="330">
                                 <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="7" Padding="12" Margin="0,0,8,0">
                                     <StackPanel>
                                         <TextBlock Text="Total ativo" Style="{StaticResource Caption}" />
@@ -727,7 +873,7 @@
                                 </Border>
                             </UniformGrid>
 
-                            <ItemsControl Grid.Column="1" ItemsSource="{Binding BudgetCategories}" Margin="0,0,14,0">
+                            <ItemsControl Grid.Column="1" ItemsSource="{Binding BudgetCategories}" Margin="0,0,14,0" MinWidth="340">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Grid Margin="0,4">

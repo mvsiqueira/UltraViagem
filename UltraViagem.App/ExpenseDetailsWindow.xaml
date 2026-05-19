@@ -1,0 +1,158 @@
+<Window x:Class="UltraViagem.App.ExpenseDetailsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Editar gasto"
+        Width="720"
+        Height="640"
+        MinWidth="620"
+        MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource PageBackground}">
+    <Border Style="{StaticResource Card}" Margin="14">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Margin="0,0,0,14">
+                <StackPanel Orientation="Horizontal">
+                    <Viewbox Width="28" Height="34" Margin="0,8,8,0" VerticalAlignment="Top">
+                        <Grid Width="24" Height="24">
+                            <Border Width="20" Height="14" CornerRadius="1.8" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.45" />
+                            <TextBlock Text="$" Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+                        </Grid>
+                    </Viewbox>
+                    <StackPanel>
+                        <TextBlock Text="Editar gasto" Style="{StaticResource PanelTitleText}" />
+                        <TextBlock Text="{Binding Title}" Foreground="{StaticResource MutedTextBrush}" Margin="0,-2,0,0" />
+                    </StackPanel>
+                </StackPanel>
+                <ToggleButton IsChecked="{Binding IsActive, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              Content="{Binding ActiveStatusLabel}"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Top"
+                              Width="86"
+                              Height="30"
+                              Cursor="Hand">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <Border x:Name="StatusChrome" CornerRadius="15" Background="#F1F1EE" Padding="10,4">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="StatusChrome" Property="Background" Value="{StaticResource AccentBrush}" />
+                                    <Setter Property="Foreground" Value="White" />
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                </ToggleButton>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Descrição" Style="{StaticResource Caption}" />
+                    <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" Padding="10" Margin="0,4,0,10" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="Categoria" Style="{StaticResource Caption}" />
+                            <TextBox Text="{Binding Type, UpdateSourceTrigger=PropertyChanged}" Padding="10" Margin="0,4,0,10" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Empresa" Style="{StaticResource Caption}" />
+                            <TextBox Text="{Binding Company, UpdateSourceTrigger=PropertyChanged}" Padding="10" Margin="0,4,0,10" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Link" Style="{StaticResource Caption}" />
+                    <TextBox Text="{Binding Link, UpdateSourceTrigger=PropertyChanged}" Padding="10" Margin="0,4,0,10" />
+
+                    <TextBlock Text="Observações" Style="{StaticResource Caption}" />
+                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Padding="10" MinHeight="76" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,4,0,10" />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="Preço unit." Style="{StaticResource Caption}" />
+                            <TextBox Text="{Binding Price, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Padding="10" Margin="0,4,0,10" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                            <TextBlock Text="Taxas unit." Style="{StaticResource Caption}" />
+                            <TextBox Text="{Binding Taxes, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Padding="10" Margin="0,4,0,10" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                            <TextBlock Text="Pessoas" Style="{StaticResource Caption}" />
+                            <TextBox Text="{Binding People, UpdateSourceTrigger=PropertyChanged}" Padding="10" Margin="0,4,0,10" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="3">
+                            <TextBlock Text="Quantidade" Style="{StaticResource Caption}" />
+                            <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" Padding="10" Margin="0,4,0,10" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,8,0">
+                            <TextBlock Text="Moeda" Style="{StaticResource Caption}" />
+                            <TextBox Text="{Binding Currency, UpdateSourceTrigger=PropertyChanged}" Padding="10" Margin="0,4,0,10" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                            <TextBlock Text="Cotação do item" Style="{StaticResource Caption}" />
+                            <TextBox Text="{Binding ExchangeRateToBase, UpdateSourceTrigger=PropertyChanged, StringFormat=N6}" Padding="10" Margin="0,4,0,10" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Valor pago em BRL" Style="{StaticResource Caption}" />
+                            <TextBox Text="{Binding PaidAmount, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Padding="10" Margin="0,4,0,10" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="7" Padding="12" Margin="0,4,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Convertido" Style="{StaticResource Caption}" />
+                                <TextBlock Text="{Binding SubtotalBaseLabel}" FontSize="17" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Pago" Style="{StaticResource Caption}" />
+                                <TextBlock Text="{Binding PaidLabel}" FontSize="15" FontWeight="SemiBold" Foreground="#15803D" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Pendente" Style="{StaticResource Caption}" />
+                                <TextBlock Text="{Binding PendingLabel}" FontSize="15" FontWeight="SemiBold" Foreground="#B42318" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                <Button Content="Fechar" Style="{StaticResource PrimaryButton}" Click="Close_Click" MinWidth="92" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
