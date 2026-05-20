@@ -4,29 +4,25 @@
 
 - Melhorar acabamento visual dos cards da visão geral.
 - Implementar tela completa de roteiro.
-- Padronizar navegação para todos os painéis.
-- Transformar o menu lateral em expand/collapse.
-- Adicionar validações de URL em dicas e Google My Maps.
 - Definir estratégia de migração de schema para `trip.json`.
+- Melhorar validações e listas de categorias/moedas na tela de gastos.
 
 ## Prioridade Média
 
+- Importação XLSX da planilha de referência.
 - Criar exportação para PDF.
-- Associar dicas a dias do roteiro ou lugares.
-- Associar tarefas a roteiro, gasto, lugar ou arquivo.
+- Criar funcionalidade de cópia de viagem
 - Melhorar validações de renomeação de arquivos.
-- Melhorar validações e listas de categorias/moedas na tela de gastos.
 - Melhorar seleção de ícones e estados de hover/foco/acessibilidade.
-- Criar dados de exemplo dentro de uma pasta de viagens dedicada.
+- Publicação empacotada do app Windows.
 
 ## Prioridade Baixa
 
-- Importação XLSX da planilha de referência.
-- Favoritos com ordenação manual.
-- Marcar dicas como `ver depois`, `útil` ou `descartada`.
+- Associar dicas a dias do roteiro ou lugares.
+- Associar tarefas a roteiro, gasto, lugar ou arquivo.
 - Busca global dentro da viagem.
 - Tema claro/escuro.
-- Publicação empacotada do app Windows.
+- Criar dados de exemplo dentro de uma pasta de viagens dedicada.
 
 ## Futuro Android/Web
 

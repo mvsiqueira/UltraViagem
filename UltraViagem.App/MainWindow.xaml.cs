@@ -2220,6 +2220,27 @@ public partial class MainWindow : Window
             return;
         }
 
+        var url = (_viewModel.MyMapsUrl ?? string.Empty).Trim();
+        if (!string.IsNullOrWhiteSpace(url))
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                MapUrlError.Text = "URL inválida. Use um link que comece com http:// ou https://.";
+                MapUrlError.Visibility = Visibility.Visible;
+                return;
+            }
+
+            if (!uri.Host.Contains("google.com", StringComparison.OrdinalIgnoreCase) ||
+                !uri.AbsolutePath.Contains("/maps", StringComparison.OrdinalIgnoreCase))
+            {
+                MapUrlError.Text = "O link não parece ser do Google My Maps (google.com/maps/d/…).";
+                MapUrlError.Visibility = Visibility.Visible;
+                return;
+            }
+        }
+
+        MapUrlError.Visibility = Visibility.Collapsed;
         _repository.SaveTrip(_viewModel.CurrentTrip);
         RefreshMapBrowsers();
         _viewModel.StatusMessage = message;

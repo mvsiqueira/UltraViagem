@@ -1825,24 +1825,32 @@
                                 <RowDefinition Height="*" />
                             </Grid.RowDefinitions>
 
-                            <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock Text="Link público do Google My Maps" Style="{StaticResource Caption}" />
-                                    <TextBox x:Name="MapUrlBox"
-                                             Text="{Binding MyMapsUrl, UpdateSourceTrigger=PropertyChanged}"
-                                             Padding="10"
-                                             Margin="0,4,0,0"
-                                             LostKeyboardFocus="MapUrlBox_LostKeyboardFocus"
-                                             KeyDown="MapUrlBox_KeyDown" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="12,0,0,0">
-                                    <Button Content="Salvar URL" Style="{StaticResource PrimaryButton}" Click="SaveMap_Click" />
-                                </StackPanel>
-                            </Grid>
+                            <StackPanel Margin="0,0,0,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Link público do Google My Maps" Style="{StaticResource Caption}" />
+                                        <TextBox x:Name="MapUrlBox"
+                                                 Text="{Binding MyMapsUrl, UpdateSourceTrigger=PropertyChanged}"
+                                                 Padding="10"
+                                                 Margin="0,4,0,0"
+                                                 LostKeyboardFocus="MapUrlBox_LostKeyboardFocus"
+                                                 KeyDown="MapUrlBox_KeyDown" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="12,0,0,0">
+                                        <Button Content="Salvar URL" Style="{StaticResource PrimaryButton}" Click="SaveMap_Click" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock x:Name="MapUrlError"
+                                           Foreground="#D94F4F"
+                                           FontSize="12"
+                                           Margin="0,5,0,0"
+                                           Visibility="Collapsed"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
 
                             <Border Grid.Row="1" Background="#DDE8DF" CornerRadius="8" ClipToBounds="True">
                                 <Grid>
