@@ -68,7 +68,23 @@ public sealed class AppViewModel : NotifyObject
     public TaskEditorViewModel? SelectedTask
     {
         get => _selectedTask;
-        set => SetField(ref _selectedTask, value);
+        set
+        {
+            if (ReferenceEquals(_selectedTask, value))
+            {
+                return;
+            }
+
+            if (_selectedTask is not null)
+            {
+                _selectedTask.IsSelectedForEdit = false;
+            }
+
+            if (SetField(ref _selectedTask, value) && _selectedTask is not null)
+            {
+                _selectedTask.IsSelectedForEdit = true;
+            }
+        }
     }
 
     public LinkEditorViewModel? SelectedTip
@@ -311,6 +327,30 @@ public sealed class AppViewModel : NotifyObject
         TasksChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public void MoveTask(TaskEditorViewModel task, int targetIndexInTasks)
+    {
+        var targetTask = targetIndexInTasks >= 0 && targetIndexInTasks < Tasks.Count
+            ? Tasks[targetIndexInTasks]
+            : null;
+
+        if (targetTask is null || ReferenceEquals(targetTask, task))
+        {
+            return;
+        }
+
+        var oldIndexInAll = AllTasks.IndexOf(task);
+        var targetIndexInAll = AllTasks.IndexOf(targetTask);
+
+        if (oldIndexInAll < 0 || targetIndexInAll < 0 || oldIndexInAll == targetIndexInAll)
+        {
+            return;
+        }
+
+        AllTasks.Move(oldIndexInAll, targetIndexInAll);
+        ApplyTaskFilter();
+        TasksChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public void ApplyTasksToTrip()
     {
         if (_trip is null)
@@ -351,6 +391,19 @@ public sealed class AppViewModel : NotifyObject
         Tips.Remove(SelectedTip);
         OverviewTips.ReplaceWith(Tips.Take(4));
         SelectedTip = Tips.ElementAtOrDefault(Math.Max(0, index - 1));
+        TipsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void MoveTip(LinkEditorViewModel tip, int targetIndex)
+    {
+        var oldIndex = Tips.IndexOf(tip);
+        if (oldIndex < 0) return;
+
+        var newIndex = Math.Clamp(targetIndex, 0, Math.Max(Tips.Count - 1, 0));
+        if (oldIndex == newIndex) return;
+
+        Tips.Move(oldIndex, newIndex);
+        OverviewTips.ReplaceWith(Tips.Take(4));
         TipsChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -613,6 +666,11 @@ public sealed class AppViewModel : NotifyObject
             return;
         }
 
+        if (e.PropertyName is nameof(TaskEditorViewModel.IsEditing) or nameof(TaskEditorViewModel.IsSelectedForEdit) or nameof(TaskEditorViewModel.HasNotes))
+        {
+            return;
+        }
+
         if (e.PropertyName is nameof(TaskEditorViewModel.Status))
         {
             ApplyTaskFilter();
@@ -831,9 +889,53 @@ public sealed class AppViewModel : NotifyObject
                 group.Key,
                 FormatMoney(group.Where(expense => expense.IsActive).Sum(expense => expense.SubtotalBase)),
                 group.ToList()))
-            .OrderByDescending(group => group.Items.Where(expense => expense.IsActive).Sum(expense => expense.SubtotalBase))
-            .ThenBy(group => group.Name)
             .ToList();
+    }
+
+    public void MoveExpense(ExpenseEditorViewModel expense, ExpenseEditorViewModel targetExpense)
+    {
+        if (ReferenceEquals(expense, targetExpense)) return;
+
+        var oldIndex = Expenses.IndexOf(expense);
+        var newIndex = Expenses.IndexOf(targetExpense);
+        if (oldIndex < 0 || newIndex < 0 || oldIndex == newIndex) return;
+
+        Expenses.Move(oldIndex, newIndex);
+        RefreshBudget();
+        ExpensesChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void MoveExpenseGroup(ExpenseCategoryGroupViewModel group, ExpenseCategoryGroupViewModel targetGroup)
+    {
+        if (ReferenceEquals(group, targetGroup)) return;
+
+        var groupItems = group.Items.ToList();
+        if (groupItems.Count == 0) return;
+
+        var isDraggingDown = ExpenseGroups.IndexOf(group) < ExpenseGroups.IndexOf(targetGroup);
+
+        var anchorExpense = isDraggingDown
+            ? targetGroup.Items.LastOrDefault()
+            : targetGroup.Items.FirstOrDefault();
+
+        foreach (var expense in groupItems)
+            Expenses.Remove(expense);
+
+        var insertAt = anchorExpense is not null ? Expenses.IndexOf(anchorExpense) : -1;
+        if (insertAt < 0)
+        {
+            insertAt = Expenses.Count;
+        }
+        else if (isDraggingDown)
+        {
+            insertAt++;
+        }
+
+        for (var i = groupItems.Count - 1; i >= 0; i--)
+            Expenses.Insert(insertAt, groupItems[i]);
+
+        RefreshBudget();
+        ExpensesChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private static string NormalizeCurrency(string value)
@@ -865,6 +967,8 @@ public sealed class TaskEditorViewModel : NotifyObject
     private string _title = "";
     private string _status = "pending";
     private string _notes = "";
+    private bool _isEditing;
+    private bool _isSelectedForEdit;
 
     public string Id { get => _id; set => SetField(ref _id, value); }
     public string Title { get => _title; set => SetField(ref _title, value); }
@@ -878,11 +982,14 @@ public sealed class TaskEditorViewModel : NotifyObject
     public string? RelatedExpenseId { get; set; }
     public string? RelatedPlaceId { get; set; }
     public string? RelatedAttachment { get; set; }
+    public bool IsEditing { get => _isEditing; set => SetField(ref _isEditing, value); }
+    public bool IsSelectedForEdit { get => _isSelectedForEdit; set => SetField(ref _isSelectedForEdit, value); }
     public bool IsDone
     {
         get => Status == "done";
         set => Status = value ? "done" : "pending";
     }
+    public bool HasNotes => !string.IsNullOrWhiteSpace(Notes);
     public string StatusLabel => Status switch
     {
         "done" => "concluída",
@@ -926,6 +1033,10 @@ public sealed class TaskEditorViewModel : NotifyObject
         {
             base.OnPropertyChanged(nameof(IsDone));
             base.OnPropertyChanged(nameof(StatusLabel));
+        }
+        if (propertyName is nameof(Notes))
+        {
+            base.OnPropertyChanged(nameof(HasNotes));
         }
     }
 }

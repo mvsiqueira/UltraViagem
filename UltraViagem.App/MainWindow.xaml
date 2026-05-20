@@ -831,10 +831,10 @@
                                 <TextBlock Text="Gastos" Style="{StaticResource PanelTitleText}" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="+  Novo Gasto" Style="{StaticResource SecondaryButton}" Click="AddExpense_Click" Margin="0,0,8,0" />
+                                <Button Content="+  Novo Gasto" Style="{StaticResource SecondaryButton}" Height="34" Click="AddExpense_Click" Margin="0,0,8,0" />
                                 <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" ToolTip="Voltar para visão geral" />
                             </StackPanel>
-                            <TextBlock Grid.Row="1" Text="{Binding BudgetSubtitle}" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,0" />
+                            <TextBlock Grid.Row="1" Text="Registre e acompanhe os gastos estimados e realizados da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
                         </Grid>
 
                         <TabControl Grid.Row="1"
@@ -842,11 +842,17 @@
                                     ItemContainerStyle="{StaticResource ExpenseTabItem}">
                             <TabItem Header="Itens">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
-                                    <ItemsControl ItemsSource="{Binding ExpenseGroups}">
+                                    <ItemsControl x:Name="ExpenseGroupsList"
+                                                  ItemsSource="{Binding ExpenseGroups}"
+                                                  AllowDrop="True"
+                                                  PreviewMouseLeftButtonDown="ExpenseGroupsList_PreviewMouseLeftButtonDown"
+                                                  PreviewMouseMove="ExpenseGroupsList_PreviewMouseMove"
+                                                  DragOver="ExpenseGroupsList_DragOver"
+                                                  Drop="ExpenseGroupsList_Drop">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Margin="0,0,0,12">
-                                            <Grid Margin="0,0,0,6">
+                                            <Grid Margin="0,0,0,6" Tag="GroupHeader" Cursor="SizeAll">
                                                 <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" />
                                                 <TextBlock Text="{Binding TotalLabel}" HorizontalAlignment="Right" Foreground="{StaticResource MutedTextBrush}" FontWeight="SemiBold" />
                                             </Grid>
@@ -1378,61 +1384,7 @@
             </Grid>
 
             <Grid x:Name="TasksPanel" Grid.Row="1" Visibility="Collapsed" Margin="24,22,24,18">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="380" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Border Style="{StaticResource Card}" Margin="0,0,18,0">
-                    <DockPanel>
-                        <StackPanel DockPanel.Dock="Top">
-                            <Grid Margin="0,0,0,2">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE73A;" Style="{StaticResource PanelTitleIcon}" />
-                                    <TextBlock Text="Tarefas" Style="{StaticResource PanelTitleText}" />
-                                </StackPanel>
-                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" HorizontalAlignment="Right" ToolTip="Voltar para visão geral" />
-                            </Grid>
-                            <TextBlock Text="Planeje compras, reservas e pendências da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,14" />
-                            <UniformGrid Columns="3" Margin="0,0,0,14">
-                                <Button Content="Todas" Style="{StaticResource SecondaryButton}" Click="ShowAllTasks_Click" Margin="0,0,6,0" />
-                                <Button Content="Pendentes" Style="{StaticResource SecondaryButton}" Click="ShowPendingTasks_Click" Margin="0,0,6,0" />
-                                <Button Content="Concluídas" Style="{StaticResource SecondaryButton}" Click="ShowDoneTasks_Click" />
-                            </UniformGrid>
-                        </StackPanel>
-                        <ListBox ItemsSource="{Binding Tasks}"
-                                 SelectedItem="{Binding SelectedTask}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="24" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <CheckBox IsChecked="{Binding IsDone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" />
-                                        <StackPanel Grid.Column="1">
-                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsDone}" Value="True">
-                                                                <Setter Property="Foreground" Value="#8B928F" />
-                                                                <Setter Property="TextDecorations" Value="Strikethrough" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <TextBlock Text="{Binding Notes}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                    </DockPanel>
-                </Border>
-
-                <Border Grid.Column="1" Style="{StaticResource Card}">
+                <Border Style="{StaticResource Card}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -1440,42 +1392,189 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0" Margin="0,0,0,18">
-                            <TextBlock Text="Editar Tarefa" FontSize="24" FontWeight="Bold" />
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="Nova" Style="{StaticResource SecondaryButton}" Click="AddTask_Click" Margin="0,0,10,0" />
-                                <Button Content="Excluir" Style="{StaticResource SecondaryButton}" Click="DeleteTask_Click" />
+                        <Grid Grid.Row="0" Margin="0,0,0,14">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,2">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE73A;" Style="{StaticResource PanelTitleIcon}" />
+                                        <TextBlock Text="Tarefas" Style="{StaticResource PanelTitleText}" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="Planeje compras, reservas e pendências da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,12" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Todas" Style="{StaticResource SecondaryButton}" Click="ShowAllTasks_Click" Margin="0,0,8,0" />
+                                    <Button Content="Pendentes" Style="{StaticResource SecondaryButton}" Click="ShowPendingTasks_Click" Margin="0,0,8,0" />
+                                    <Button Content="Concluídas" Style="{StaticResource SecondaryButton}" Click="ShowDoneTasks_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                <Button Content="+  Nova Tarefa" Style="{StaticResource SecondaryButton}" Height="34" Click="AddTask_Click" />
+                                <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="10,0,0,0" ToolTip="Voltar para visão geral" />
                             </StackPanel>
                         </Grid>
 
-                        <Grid Grid.Row="1" DataContext="{Binding SelectedTask}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,4,0,0">
+                            <ItemsControl x:Name="TasksList"
+                                          ItemsSource="{Binding Tasks}"
+                                          AllowDrop="True"
+                                          PreviewMouseLeftButtonDown="TasksList_PreviewMouseLeftButtonDown"
+                                          PreviewMouseMove="TasksList_PreviewMouseMove"
+                                          DragOver="TasksList_DragOver"
+                                          Drop="TasksList_Drop">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{StaticResource BorderBrushSoft}"
+                                                BorderThickness="1"
+                                                CornerRadius="7"
+                                                Padding="10"
+                                                Margin="0,0,0,7"
+                                                MouseLeftButtonDown="SelectTaskCard_MouseLeftButtonDown">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{StaticResource InputBackground}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelectedForEdit}" Value="True">
+                                                            <Setter Property="Background" Value="#F5FCFA" />
+                                                            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.ColumnSpan="2">
-                                <TextBlock Text="Título" Foreground="{StaticResource MutedTextBrush}" />
-                                <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" FontSize="18" Padding="10" Margin="0,4,0,14" />
-                            </StackPanel>
+                                                <Border x:Name="TaskSelectionRail"
+                                                        Grid.RowSpan="2"
+                                                        Grid.ColumnSpan="3"
+                                                        Width="4"
+                                                        Margin="-10,-10,0,-10"
+                                                        HorizontalAlignment="Left"
+                                                        Background="{StaticResource AccentBrush}"
+                                                        CornerRadius="7,0,0,7"
+                                                        Visibility="Collapsed" />
 
-                            <StackPanel Grid.Row="1" Margin="0,0,14,0">
-                                <TextBlock Text="Status" Foreground="{StaticResource MutedTextBrush}" />
-                                <ComboBox SelectedValue="{Binding Status, UpdateSourceTrigger=PropertyChanged}" SelectedValuePath="Tag" Margin="0,4,0,14" Padding="8">
-                                    <ComboBoxItem Content="Pendente" Tag="pending" />
-                                    <ComboBoxItem Content="Concluída" Tag="done" />
-                                </ComboBox>
-                            </StackPanel>
+                                                <CheckBox IsChecked="{Binding IsDone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                          VerticalAlignment="Center"
+                                                          Margin="6,0,12,0" />
 
-                            <StackPanel Grid.Row="2">
-                                <TextBlock Text="Notas" Foreground="{StaticResource MutedTextBrush}" />
-                                <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="180" Padding="10" Margin="0,4,0,0" />
-                            </StackPanel>
-                        </Grid>
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" TextWrapping="Wrap">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsDone}" Value="True">
+                                                                        <Setter Property="Foreground" Value="#8B928F" />
+                                                                        <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <TextBlock x:Name="TaskNotesPreview"
+                                                               Text="{Binding Notes}"
+                                                               Foreground="{StaticResource MutedTextBrush}"
+                                                               FontSize="12"
+                                                               Margin="0,2,0,0"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+
+                                                <Grid Grid.Column="2" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                    <StackPanel x:Name="TaskReadActions" Orientation="Horizontal">
+                                                        <Button Style="{StaticResource CardActionButton}"
+                                                                Margin="0,0,6,0"
+                                                                ToolTip="Editar tarefa"
+                                                                Click="EditTask_Click">
+                                                            <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Opacity="0.72" />
+                                                        </Button>
+                                                        <Button Style="{StaticResource CardActionButton}"
+                                                                ToolTip="Excluir tarefa"
+                                                                Click="DeleteTask_Click">
+                                                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="9.5" Opacity="0.72" />
+                                                        </Button>
+                                                    </StackPanel>
+                                                    <StackPanel x:Name="TaskEditActions" Orientation="Horizontal" Visibility="Collapsed">
+                                                        <Button Style="{StaticResource CardAcceptButton}"
+                                                                Margin="0,0,6,0"
+                                                                ToolTip="Aceitar alterações"
+                                                                Click="CompleteTaskEdit_Click">
+                                                            <TextBlock Text="✓" Foreground="White" FontSize="14" FontWeight="SemiBold" />
+                                                        </Button>
+                                                        <Button Style="{StaticResource CardActionButton}"
+                                                                ToolTip="Rejeitar alterações"
+                                                                Click="RejectTaskEdit_Click">
+                                                            <TextBlock Text="×" FontSize="20" FontWeight="SemiBold" Margin="0,-2,0,0" />
+                                                        </Button>
+                                                    </StackPanel>
+                                                </Grid>
+
+                                                <Border Grid.Row="1"
+                                                        Grid.ColumnSpan="3"
+                                                        Background="#FFFFFF"
+                                                        BorderBrush="#B9DED8"
+                                                        BorderThickness="1"
+                                                        CornerRadius="7"
+                                                        Padding="10"
+                                                        Margin="0,10,0,0"
+                                                        PreviewKeyDown="TaskEditView_PreviewKeyDown">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <StackPanel>
+                                                        <StackPanel Margin="0,0,0,10">
+                                                            <TextBlock Text="Título" Style="{StaticResource Caption}" />
+                                                            <TextBox x:Name="TaskTitleEditor"
+                                                                     Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}"
+                                                                     FontSize="14"
+                                                                     FontWeight="SemiBold"
+                                                                     Padding="6"
+                                                                     Margin="0,4,0,0" />
+                                                        </StackPanel>
+                                                        <StackPanel>
+                                                            <TextBlock Text="Notas" Style="{StaticResource Caption}" />
+                                                            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                                                     Padding="6"
+                                                                     MinHeight="84"
+                                                                     MaxHeight="220"
+                                                                     TextWrapping="Wrap"
+                                                                     AcceptsReturn="True"
+                                                                     VerticalScrollBarVisibility="Auto"
+                                                                     Margin="0,4,0,0" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelectedForEdit}" Value="True">
+                                                <Setter TargetName="TaskSelectionRail" Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                                                <Setter TargetName="TaskReadActions" Property="Visibility" Value="Collapsed" />
+                                                <Setter TargetName="TaskEditActions" Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding HasNotes}" Value="False">
+                                                <Setter TargetName="TaskNotesPreview" Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
 
                         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
                             <Button Content="Salvar Tarefas" Style="{StaticResource PrimaryButton}" Click="SaveTasks_Click" />
@@ -1504,7 +1603,7 @@
                                 <TextBlock Text="Guarde links úteis de pesquisa, reservas, blogs e referências da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                <Button Content="+  Nova Dica" Style="{StaticResource SecondaryButton}" Click="AddTip_Click" />
+                                <Button Content="+  Nova Dica" Style="{StaticResource SecondaryButton}" Height="34" Click="AddTip_Click" />
                                 <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="10,0,0,0" ToolTip="Voltar para visão geral" />
                             </StackPanel>
                         </Grid>
@@ -1516,7 +1615,12 @@
                                  PreviewKeyDown="TipsList_PreviewKeyDown"
                                  BorderThickness="0"
                                  Background="Transparent"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 AllowDrop="True"
+                                 PreviewMouseLeftButtonDown="TipsList_PreviewMouseLeftButtonDown"
+                                 PreviewMouseMove="TipsList_PreviewMouseMove"
+                                 DragOver="TipsList_DragOver"
+                                 Drop="TipsList_Drop">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="Margin" Value="0,0,0,5" />
@@ -1679,7 +1783,7 @@
                                 <TextBlock Text="Informe o link público do Google My Maps e visualize o mapa da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                <Button Content="Abrir no navegador" Style="{StaticResource SecondaryButton}" Click="OpenMyMaps_Click" />
+                                <Button Content="Abrir no navegador" Style="{StaticResource SecondaryButton}" Height="34" Click="OpenMyMaps_Click" />
                                 <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="10,0,0,0" ToolTip="Voltar para visão geral" />
                             </StackPanel>
                         </Grid>
@@ -1750,7 +1854,7 @@
                                 <TextBlock Text="Anexe arquivos da viagem. Eles serão copiados para a pasta da viagem." Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" />
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                                <Button Content="+  Anexar arquivos" Style="{StaticResource SecondaryButton}" Click="AttachFiles_Click" />
+                                <Button Content="+  Anexar arquivos" Style="{StaticResource SecondaryButton}" Height="34" Click="AttachFiles_Click" />
                                 <Button Content="‹" Style="{StaticResource ArrowButton}" Click="ShowOverview_Click" Margin="10,0,0,0" ToolTip="Voltar para visão geral" />
                             </StackPanel>
                         </Grid>
@@ -1828,17 +1932,13 @@
                                         </Border>
                                         <Grid Grid.Column="1" Margin="0,0,14,0" VerticalAlignment="Center">
                                             <StackPanel x:Name="AttachmentReadStack" VerticalAlignment="Center">
-                                                <Button x:Name="AttachmentReadView"
-                                                        Style="{StaticResource LinkButton}"
-                                                        ToolTip="Abrir arquivo"
-                                                        PreviewMouseLeftButtonDown="AttachmentFileLink_PreviewMouseLeftButtonDown"
-                                                        Click="OpenAttachment_Click">
-                                                    <TextBlock Text="{Binding File}"
-                                                               FontSize="14"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{StaticResource AccentBrush}"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                </Button>
+                                                <TextBlock x:Name="AttachmentReadView"
+                                                           Text="{Binding File}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextBrush}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           ToolTip="Duplo-clique para abrir" />
                                                 <TextBlock x:Name="AttachmentMetadataView"
                                                            Foreground="{StaticResource MutedTextBrush}"
                                                            FontSize="12"

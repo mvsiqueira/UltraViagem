@@ -267,6 +267,7 @@
             <Setter Property="FontFamily" Value="Segoe UI" />
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
             <Setter Property="SelectionBrush" Value="{StaticResource AccentSoftBrush}" />
+            <EventSetter Event="PreviewMouseLeftButtonDown" Handler="TextBox_TripleClick" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">

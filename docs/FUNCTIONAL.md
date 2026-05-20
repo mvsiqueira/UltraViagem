@@ -72,13 +72,23 @@ Tarefas têm:
 
 Na visão geral, tarefa concluída aparece marcada, cinza e riscada.
 
-Na tela de tarefas, é possível:
+Na tela de tarefas:
 
-- filtrar todas, pendentes e concluídas;
-- criar tarefa;
-- excluir tarefa;
-- editar título, status e notas;
-- salvar manualmente ou por autosave.
+- a lista é única, sem painel lateral de edição;
+- é possível filtrar todas, pendentes e concluídas;
+- o topo da tela mantém apenas a ação global `+ Nova Tarefa`;
+- cada card mostra checkbox de conclusão, título e notas (notas só aparecem se preenchidas);
+- a checkbox alterna o status entre `pending` e `done` (não há campo de status em edição);
+- cada card tem ações por ícone para editar e excluir, no mesmo padrão da tela de gastos;
+- ao acionar editar, o card expande mostrando os campos `Título` e `Notas` inline;
+- os botões de ação trocam para aceitar (✓) e rejeitar (×) enquanto a edição está aberta;
+- `Enter` aceita a edição; `Shift+Enter` quebra linha no campo `Notas`; `Esc` descarta;
+- duplo clique no card também alterna entre editar e descartar;
+- aceitar persiste imediatamente e fecha o editor;
+- rejeitar restaura os valores anteriores (ou descarta a tarefa se ela acabou de ser criada);
+- excluir remove a tarefa imediatamente e salva;
+- é possível reordenar as tarefas com drag-and-drop dentro da lista;
+- botão `Salvar Tarefas` no rodapé da tela.
 
 ## Dicas
 
@@ -102,6 +112,7 @@ Na tela de dicas:
 - sair do foco aplica a edição;
 - duplo clique no espaço do nome ou texto/link entra em edição;
 - cada card tem ação para excluir;
+- é possível reordenar as dicas com drag-and-drop dentro da lista;
 - botão `Salvar Dicas`;
 - autosave em alterações.
 
@@ -121,15 +132,14 @@ Na tela de arquivos:
 - é possível anexar arquivos por botão;
 - é possível anexar arquivos por drag-and-drop em qualquer área da seção;
 - os arquivos anexados são copiados para a pasta da viagem;
-- a lista visual mostra cada arquivo como um card compacto com ícone do tipo de arquivo configurado no Windows, nome clicável, tipo e tamanho;
+- a lista visual mostra cada arquivo como um card compacto com ícone do tipo de arquivo configurado no Windows, nome, tipo e tamanho;
 - clicar no card seleciona o arquivo;
 - o topo da tela mantém apenas a ação global `+ Anexar arquivos`;
-- clicar no nome do arquivo abre o arquivo;
+- duplo clique no card abre o arquivo no aplicativo padrão do Windows;
 - cada card tem ações por ícone para renomear e excluir;
 - os ícones de ação têm tooltip;
 - o botão de renomear permite mudar o nome do arquivo inline;
 - a tecla `F2` renomeia inline o arquivo selecionado;
-- duplo clique no card ou no nome entra em edição inline;
 - `Enter` aplica a edição;
 - `Esc` descarta a edição;
 - sair do foco aplica a edição;
@@ -174,6 +184,8 @@ A tela de gastos permite:
 - ativar/desativar itens para simular opções sem apagar alternativas;
 - navegar por abas de itens, resumo e cotações;
 - visualizar gastos como cards compactos agrupados por categoria, como transporte, hospedagem, passeios e outros;
+- reordenar gastos dentro da mesma categoria com drag-and-drop;
+- reordenar categorias inteiras com drag-and-drop pelo cabeçalho do grupo;
 - selecionar um card alterando o fundo do próprio card;
 - ativar/desativar um gasto por um controle visual de status no card;
 - editar ou criar gastos expandindo o próprio card, sem abrir janela modal;

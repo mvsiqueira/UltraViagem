@@ -26,8 +26,15 @@ public partial class MainWindow : Window
     private readonly Dictionary<AttachmentEditorViewModel, string> _attachmentEditSnapshots = [];
     private readonly Dictionary<ExpenseEditorViewModel, ExpenseItem> _expenseEditSnapshots = [];
     private readonly HashSet<ExpenseEditorViewModel> _newExpenseEdits = [];
+    private readonly Dictionary<TaskEditorViewModel, TaskItem> _taskEditSnapshots = [];
+    private readonly HashSet<TaskEditorViewModel> _newTaskEdits = [];
     private LocalSettings _settings = new();
     private System.Windows.Point _attachmentDragStartPoint;
+    private System.Windows.Point _taskDragStartPoint;
+    private System.Windows.Point _tipDragStartPoint;
+    private System.Windows.Point _expenseDragStartPoint;
+    private DependencyObject? _expenseDragSource;
+    private bool _pendingExpenseDragIsGroup;
     private bool _isLoadingTrip;
     private bool _isSavingTasks;
     private bool _isSavingTips;
@@ -324,6 +331,142 @@ public partial class MainWindow : Window
     private void ShowBudget_Click(object sender, RoutedEventArgs e)
     {
         ShowBudget();
+    }
+
+    private void ExpenseGroupsList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _expenseDragStartPoint = e.GetPosition(null);
+        _expenseDragSource = e.OriginalSource as DependencyObject;
+        _pendingExpenseDragIsGroup = FindAncestorWithTag(_expenseDragSource, "GroupHeader") is not null;
+    }
+
+    private void ExpenseGroupsList_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed)
+        {
+            return;
+        }
+
+        var currentPos = e.GetPosition(null);
+        if (Math.Abs(currentPos.X - _expenseDragStartPoint.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(currentPos.Y - _expenseDragStartPoint.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        if (_pendingExpenseDragIsGroup)
+        {
+            var group = FindExpenseCategoryGroup(_expenseDragSource);
+            if (group is not null)
+            {
+                System.Windows.DragDrop.DoDragDrop(ExpenseGroupsList, group, System.Windows.DragDropEffects.Move);
+            }
+        }
+        else if (_viewModel.SelectedExpense is { IsEditing: false })
+        {
+            System.Windows.DragDrop.DoDragDrop(ExpenseGroupsList, _viewModel.SelectedExpense, System.Windows.DragDropEffects.Move);
+        }
+    }
+
+    private void ExpenseGroupsList_DragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(typeof(ExpenseCategoryGroupViewModel)))
+        {
+            e.Effects = System.Windows.DragDropEffects.Move;
+        }
+        else if (e.Data.GetDataPresent(typeof(ExpenseEditorViewModel)))
+        {
+            var expense = e.Data.GetData(typeof(ExpenseEditorViewModel)) as ExpenseEditorViewModel;
+            var sourceGroup = _viewModel.ExpenseGroups.FirstOrDefault(g => g.Items.Contains(expense));
+            var targetGroup = FindExpenseCategoryGroup(e.OriginalSource as DependencyObject);
+            e.Effects = sourceGroup is not null && targetGroup is not null && ReferenceEquals(sourceGroup, targetGroup)
+                ? System.Windows.DragDropEffects.Move
+                : System.Windows.DragDropEffects.None;
+        }
+        else
+        {
+            e.Effects = System.Windows.DragDropEffects.None;
+        }
+
+        e.Handled = true;
+    }
+
+    private void ExpenseGroupsList_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(typeof(ExpenseCategoryGroupViewModel)))
+        {
+            var group = e.Data.GetData(typeof(ExpenseCategoryGroupViewModel)) as ExpenseCategoryGroupViewModel;
+            var targetGroup = FindExpenseCategoryGroup(e.OriginalSource as DependencyObject);
+            if (group is not null && targetGroup is not null)
+            {
+                _viewModel.MoveExpenseGroup(group, targetGroup);
+            }
+
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Data.GetDataPresent(typeof(ExpenseEditorViewModel)))
+        {
+            var expense = e.Data.GetData(typeof(ExpenseEditorViewModel)) as ExpenseEditorViewModel;
+            var targetExpense = FindExpenseEditorViewModel(e.OriginalSource as DependencyObject);
+            if (expense is not null && targetExpense is not null)
+            {
+                var sourceGroup = _viewModel.ExpenseGroups.FirstOrDefault(g => g.Items.Contains(expense));
+                var targetGroup = _viewModel.ExpenseGroups.FirstOrDefault(g => g.Items.Contains(targetExpense));
+                if (sourceGroup is not null && ReferenceEquals(sourceGroup, targetGroup))
+                {
+                    _viewModel.MoveExpense(expense, targetExpense);
+                }
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    private static ExpenseCategoryGroupViewModel? FindExpenseCategoryGroup(DependencyObject? current)
+    {
+        while (current is not null)
+        {
+            if (current is ContentPresenter { DataContext: ExpenseCategoryGroupViewModel group })
+            {
+                return group;
+            }
+
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
+    }
+
+    private static ExpenseEditorViewModel? FindExpenseEditorViewModel(DependencyObject? current)
+    {
+        while (current is not null)
+        {
+            if (current is ContentPresenter { DataContext: ExpenseEditorViewModel expense })
+            {
+                return expense;
+            }
+
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
+    }
+
+    private static FrameworkElement? FindAncestorWithTag(DependencyObject? current, string tag)
+    {
+        while (current is not null)
+        {
+            if (current is FrameworkElement fe && string.Equals(fe.Tag as string, tag, StringComparison.Ordinal))
+            {
+                return fe;
+            }
+
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
     }
 
     private void AddExpense_Click(object sender, RoutedEventArgs e)
@@ -642,17 +785,334 @@ public partial class MainWindow : Window
     {
         _viewModel.AddTask();
         SaveTasksInternal("Nova tarefa salva automaticamente.");
+        if (_viewModel.SelectedTask is not null)
+        {
+            _newTaskEdits.Add(_viewModel.SelectedTask);
+        }
+        BeginTaskEdit(_viewModel.SelectedTask);
     }
 
     private void DeleteTask_Click(object sender, RoutedEventArgs e)
     {
+        if (sender is FrameworkElement { DataContext: TaskEditorViewModel task })
+        {
+            _viewModel.SelectedTask = task;
+        }
+
         _viewModel.DeleteSelectedTask();
         SaveTasksInternal("Tarefa removida e salva.");
     }
 
-    private void SaveTasks_Click(object sender, RoutedEventArgs e)
+    private void TasksList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        SaveTasksInternal($"Tarefas salvas em {DateTime.Now:HH:mm}.");
+        _taskDragStartPoint = e.GetPosition(null);
+    }
+
+    private void TasksList_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _viewModel.SelectedTask is null || _viewModel.SelectedTask.IsEditing)
+        {
+            return;
+        }
+
+        var currentPosition = e.GetPosition(null);
+        if (Math.Abs(currentPosition.X - _taskDragStartPoint.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(currentPosition.Y - _taskDragStartPoint.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        System.Windows.DragDrop.DoDragDrop(TasksList, _viewModel.SelectedTask, System.Windows.DragDropEffects.Move);
+    }
+
+    private void TasksList_DragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(typeof(TaskEditorViewModel))
+            ? System.Windows.DragDropEffects.Move
+            : System.Windows.DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void TasksList_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(typeof(TaskEditorViewModel)))
+        {
+            return;
+        }
+
+        var task = e.Data.GetData(typeof(TaskEditorViewModel)) as TaskEditorViewModel;
+        if (task is null)
+        {
+            return;
+        }
+
+        var targetIndex = GetTaskDropIndex(e.OriginalSource);
+        _viewModel.MoveTask(task, targetIndex);
+        e.Handled = true;
+    }
+
+    private int GetTaskDropIndex(object originalSource)
+    {
+        var cp = FindAncestor<ContentPresenter>(originalSource as DependencyObject);
+        if (cp?.DataContext is TaskEditorViewModel target)
+        {
+            return _viewModel.Tasks.IndexOf(target);
+        }
+
+        return Math.Max(_viewModel.Tasks.Count - 1, 0);
+    }
+
+    private void SelectTaskCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: TaskEditorViewModel task })
+        {
+            return;
+        }
+
+        _viewModel.SelectedTask = task;
+        if (e.ClickCount == 2)
+        {
+            if (task.IsEditing)
+            {
+                RejectTaskEdit(task);
+            }
+            else
+            {
+                BeginTaskEdit(task);
+            }
+
+            e.Handled = true;
+        }
+    }
+
+    private void EditTask_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: TaskEditorViewModel task })
+        {
+            _viewModel.SelectedTask = task;
+        }
+
+        BeginTaskEdit(_viewModel.SelectedTask);
+    }
+
+    private void CompleteTaskEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { DataContext: TaskEditorViewModel task })
+        {
+            CompleteTaskEdit(task);
+        }
+    }
+
+    private void RejectTaskEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: TaskEditorViewModel task })
+        {
+            return;
+        }
+
+        RejectTaskEdit(task);
+    }
+
+    private void TaskEditView_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: TaskEditorViewModel task })
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter && (Keyboard.Modifiers & ModifierKeys.Shift) == 0)
+        {
+            CompleteTaskEdit(task);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            RejectTaskEdit(task);
+            e.Handled = true;
+        }
+    }
+
+    private void BeginTaskEdit(TaskEditorViewModel? task)
+    {
+        if (task is null)
+        {
+            _viewModel.StatusMessage = "Selecione uma tarefa para editar.";
+            return;
+        }
+
+        foreach (var item in _viewModel.AllTasks)
+        {
+            item.IsEditing = ReferenceEquals(item, task);
+        }
+
+        if (!_taskEditSnapshots.ContainsKey(task))
+        {
+            _taskEditSnapshots[task] = task.ToTaskItem();
+        }
+
+        _viewModel.SelectedTask = task;
+
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (FindTaskTitleEditor(task) is { } editor)
+            {
+                editor.Focus();
+                editor.SelectAll();
+            }
+        });
+    }
+
+    private void CompleteTaskEdit(TaskEditorViewModel task)
+    {
+        task.IsEditing = false;
+        _viewModel.SelectedTask = task;
+        _taskEditSnapshots.Remove(task);
+        _newTaskEdits.Remove(task);
+        SaveTasksInternal($"Tarefa salva em {DateTime.Now:HH:mm}.");
+    }
+
+    private void RejectTaskEdit(TaskEditorViewModel task)
+    {
+        if (_newTaskEdits.Remove(task))
+        {
+            _viewModel.SelectedTask = task;
+            _taskEditSnapshots.Remove(task);
+            _viewModel.DeleteSelectedTask();
+            SaveTasksInternal("Nova tarefa descartada.");
+            return;
+        }
+
+        if (_taskEditSnapshots.Remove(task, out var snapshot))
+        {
+            RestoreTask(task, snapshot);
+        }
+
+        task.IsEditing = false;
+        _viewModel.SelectedTask = task;
+        SaveTasksInternal("Edição descartada.");
+    }
+
+    private static void RestoreTask(TaskEditorViewModel task, TaskItem snapshot)
+    {
+        task.Id = snapshot.Id;
+        task.Title = snapshot.Title;
+        task.Status = snapshot.Status == "done" ? "done" : "pending";
+        task.Notes = snapshot.Notes ?? "";
+        task.RelatedDayId = snapshot.RelatedDayId;
+        task.RelatedExpenseId = snapshot.RelatedExpenseId;
+        task.RelatedPlaceId = snapshot.RelatedPlaceId;
+        task.RelatedAttachment = snapshot.RelatedAttachment;
+    }
+
+    private System.Windows.Controls.TextBox? FindTaskTitleEditor(TaskEditorViewModel task)
+    {
+        var presenter = TaskItemsPresenter(TasksPanel);
+        if (presenter is null)
+        {
+            return null;
+        }
+
+        for (var i = 0; i < presenter.Items.Count; i++)
+        {
+            if (!ReferenceEquals(presenter.Items[i], task))
+            {
+                continue;
+            }
+
+            var container = presenter.ItemContainerGenerator.ContainerFromIndex(i) as DependencyObject;
+            if (container is null)
+            {
+                return null;
+            }
+
+            return FindVisualChildByName<System.Windows.Controls.TextBox>(container, "TaskTitleEditor");
+        }
+
+        return null;
+    }
+
+    private static ItemsControl? TaskItemsPresenter(DependencyObject root)
+    {
+        return FindVisualChild<ItemsControl>(root);
+    }
+
+    private static T? FindVisualChildByName<T>(DependencyObject parent, string name) where T : FrameworkElement
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T typed && typed.Name == name)
+            {
+                return typed;
+            }
+
+            var nested = FindVisualChildByName<T>(child, name);
+            if (nested is not null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
+    }
+
+    private void TipsList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _tipDragStartPoint = e.GetPosition(null);
+    }
+
+    private void TipsList_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _viewModel.SelectedTip is null || _viewModel.SelectedTip.IsEditing)
+        {
+            return;
+        }
+
+        var currentPosition = e.GetPosition(null);
+        if (Math.Abs(currentPosition.X - _tipDragStartPoint.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(currentPosition.Y - _tipDragStartPoint.Y) < SystemParameters.MinimumVerticalDragDistance)
+        {
+            return;
+        }
+
+        System.Windows.DragDrop.DoDragDrop(TipsList, _viewModel.SelectedTip, System.Windows.DragDropEffects.Move);
+    }
+
+    private void TipsList_DragOver(object sender, System.Windows.DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(typeof(LinkEditorViewModel))
+            ? System.Windows.DragDropEffects.Move
+            : System.Windows.DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void TipsList_Drop(object sender, System.Windows.DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(typeof(LinkEditorViewModel)))
+        {
+            return;
+        }
+
+        var tip = e.Data.GetData(typeof(LinkEditorViewModel)) as LinkEditorViewModel;
+        if (tip is null)
+        {
+            return;
+        }
+
+        var targetIndex = GetTipDropIndex(e.OriginalSource);
+        _viewModel.MoveTip(tip, targetIndex);
+        e.Handled = true;
+    }
+
+    private int GetTipDropIndex(object originalSource)
+    {
+        var item = FindAncestor<ListBoxItem>(originalSource as DependencyObject);
+        if (item?.DataContext is LinkEditorViewModel target)
+        {
+            return _viewModel.Tips.IndexOf(target);
+        }
+
+        return Math.Max(_viewModel.Tips.Count - 1, 0);
     }
 
     private void ShowTips_Click(object sender, RoutedEventArgs e)
@@ -670,6 +1130,11 @@ public partial class MainWindow : Window
     {
         _viewModel.DeleteSelectedTip();
         SaveTipsInternal("Dica removida e salva.");
+    }
+
+    private void SaveTasks_Click(object sender, RoutedEventArgs e)
+    {
+        SaveTasksInternal($"Tarefas salvas em {DateTime.Now:HH:mm}.");
     }
 
     private void SaveTips_Click(object sender, RoutedEventArgs e)
@@ -761,26 +1226,6 @@ public partial class MainWindow : Window
 
         attachment.File = newName.Trim();
         SaveAttachmentsInternal($"Arquivo renomeado para {attachment.File}.");
-    }
-
-    private void OpenAttachment_Click(object sender, RoutedEventArgs e)
-    {
-        SelectAttachmentFromSender(sender);
-        OpenSelectedAttachment();
-    }
-
-    private void AttachmentFileLink_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (e.ClickCount != 2)
-        {
-            return;
-        }
-
-        if (SelectAttachmentFromSender(sender) is { } attachment)
-        {
-            BeginAttachmentEdit(attachment);
-        }
-        e.Handled = true;
     }
 
     private void AttachmentEditView_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
@@ -982,12 +1427,18 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (FindAncestor<System.Windows.Controls.TextBox>(e.OriginalSource as DependencyObject) is not null)
+        {
+            return;
+        }
+
         if (FindAncestor<ListBoxItem>(e.OriginalSource as DependencyObject) is not { DataContext: AttachmentEditorViewModel attachment })
         {
             return;
         }
 
-        BeginAttachmentEdit(attachment);
+        _viewModel.SelectedAttachment = attachment;
+        OpenSelectedAttachment();
         e.Handled = true;
     }
 
