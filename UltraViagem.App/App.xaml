@@ -16,6 +16,8 @@
         <SolidColorBrush x:Key="BorderBrushSoft" Color="#E1DED6" />
         <SolidColorBrush x:Key="InputBackground" Color="#FBFAF6" />
 
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
             <Setter Property="FontFamily" Value="Segoe UI" />
@@ -38,7 +40,7 @@
             <Setter Property="FontSize" Value="22" />
             <Setter Property="Width" Value="28" />
             <Setter Property="Height" Value="28" />
-            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="Margin" Value="0" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="TextAlignment" Value="Center" />
             <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
@@ -49,6 +51,7 @@
         <Style x:Key="NavLabel" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16" />
             <Setter Property="Height" Value="28" />
+            <Setter Property="Margin" Value="12,0,0,0" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="LineStackingStrategy" Value="BlockLineHeight" />
             <Setter Property="LineHeight" Value="28" />
@@ -258,6 +261,12 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSidebarExpanded}" Value="False">
+                    <Setter Property="Padding" Value="0,12" />
+                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <Style TargetType="TextBox">

@@ -143,77 +143,92 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="{StaticResource SidebarBackground}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0">
-            <DockPanel Margin="14,18" LastChildFill="False">
+        <Border x:Name="SidebarBorder" Grid.Column="0" Width="220" Background="{StaticResource SidebarBackground}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="0,18" LastChildFill="False">
                 <StackPanel DockPanel.Dock="Top">
-                    <Grid Margin="0,0,0,28">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="48" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Image Source="Assets/AppIcon/app-icon.png"
-                               Width="32"
-                               Height="32"
-                               VerticalAlignment="Center"
-                               RenderOptions.BitmapScalingMode="HighQuality" />
-                        <TextBlock Grid.Column="1" Text="UltraViagem" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" Foreground="#0E4C49" />
-                    </Grid>
+                    <Button x:Name="LogoButton"
+                            Click="ToggleSidebar_Click"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="14,0"
+                            HorizontalContentAlignment="Left"
+                            Cursor="Hand"
+                            Margin="0,0,0,28">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="48" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Image Source="Assets/AppIcon/app-icon.png"
+                                   Width="38"
+                                   Height="38"
+                                   VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality" />
+                            <TextBlock Grid.Column="1"
+                                       Text="UltraViagem"
+                                       FontSize="20"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center"
+                                       Foreground="#0E4C49"
+                                       Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
+                        </Grid>
+                    </Button>
 
                     <Button x:Name="OverviewNavButton" Style="{StaticResource NavButton}" Click="ShowOverview_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE80F;" Style="{StaticResource NavIcon}" />
-                            <TextBlock Text="Visão Geral" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Visão Geral" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="TripDetailsNavButton" Style="{StaticResource NavButton}" Click="EditTrip_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE713;" Style="{StaticResource NavIcon}" />
-                            <TextBlock Text="Dados da viagem" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Dados da viagem" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource NavButton}" IsEnabled="False">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8FD;" Style="{StaticResource NavIcon}" />
-                            <TextBlock Text="Roteiro" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Roteiro" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="TasksNavButton" Style="{StaticResource NavButton}" Click="ShowTasks_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE73A;" Style="{StaticResource NavIcon}" />
-                            <TextBlock Text="Tarefas" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Tarefas" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="MapNavButton" Style="{StaticResource NavButton}" Click="ShowMap_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE707;" Style="{StaticResource NavIcon}" />
-                            <TextBlock Text="Mapa" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Mapa" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="BudgetNavButton" Style="{StaticResource NavButton}" Click="ShowBudget_Click">
                         <StackPanel Orientation="Horizontal">
-                            <Viewbox Width="28" Height="28" Margin="0,3,12,0" VerticalAlignment="Center">
+                            <Viewbox Width="28" Height="28" Margin="0,3,0,0" VerticalAlignment="Center">
                                 <Grid Width="24" Height="24">
                                     <Border Width="20" Height="14" CornerRadius="1.8" BorderBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" BorderThickness="1.45" />
                                     <TextBlock Text="$" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
                                 </Grid>
                             </Viewbox>
-                            <TextBlock Text="Gastos" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Gastos" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="TipsNavButton" Style="{StaticResource NavButton}" Click="ShowTips_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8BD;" Style="{StaticResource NavIcon}" />
-                            <TextBlock Text="Dicas" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Dicas" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
                     <Button x:Name="FilesNavButton" Style="{StaticResource NavButton}" Click="ShowFiles_Click">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8B7;" Style="{StaticResource NavIcon}" />
-                            <TextBlock Text="Arquivos" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Arquivos" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -222,14 +237,14 @@
                     <Button Style="{StaticResource NavButton}" IsEnabled="False">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE713;" Style="{StaticResource NavIcon}" />
-                            <TextBlock Text="Configurações" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Configurações" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
                     <Button Style="{StaticResource NavButton}" Click="ShowAbout_Click">
                         <StackPanel Orientation="Horizontal">
                             <Viewbox Width="28"
                                      Height="28"
-                                     Margin="0,3,12,0"
+                                     Margin="0,3,0,0"
                                      VerticalAlignment="Center"
                                      Stretch="Uniform">
                                 <Grid Width="24" Height="24">
@@ -255,10 +270,10 @@
                                              Margin="0,7,0,0" />
                                 </Grid>
                             </Viewbox>
-                            <TextBlock Text="Sobre" Style="{StaticResource NavLabel}" />
+                            <TextBlock Text="Sobre" Style="{StaticResource NavLabel}" Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Button>
-                    <Border Background="{StaticResource SidebarPanelBackground}" CornerRadius="8" Padding="12" Margin="0,16,0,0">
+                    <Border x:Name="RepoExpandedPanel" Background="{StaticResource SidebarPanelBackground}" CornerRadius="8" Padding="12" Margin="0,16,0,0">
                         <StackPanel>
                             <TextBlock Text="Repositório" Style="{StaticResource Caption}" />
                             <Button Style="{StaticResource LinkButton}" Click="OpenRepositoryFolder_Click" Margin="0,5,0,12" ToolTip="Abrir pasta do repositório">
@@ -267,6 +282,22 @@
                             <Button Content="Selecionar Pasta" Style="{StaticResource SecondaryButton}" Click="SelectRepository_Click" />
                         </StackPanel>
                     </Border>
+                    <Button x:Name="RepoCollapsedButton"
+                            Style="{StaticResource NavButton}"
+                            Click="OpenRepositoryFolder_Click"
+                            ToolTip="Abrir pasta do repositório"
+                            Margin="0,8,0,0"
+                            Visibility="Collapsed">
+                        <TextBlock Text="&#xE8DA;"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   FontSize="22"
+                                   Width="28"
+                                   Height="28"
+                                   TextAlignment="Center"
+                                   LineStackingStrategy="BlockLineHeight"
+                                   LineHeight="28"
+                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                    </Button>
                 </StackPanel>
             </DockPanel>
         </Border>

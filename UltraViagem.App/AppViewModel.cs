@@ -33,6 +33,7 @@ public sealed class AppViewModel : NotifyObject
     private string _statusMessage = "Pronto";
     private string _taskFilter = "all";
     private bool _isCurrentTripFavorite;
+    private bool _isSidebarExpanded = true;
     private bool _isLoadingTasks;
     private bool _isLoadingTips;
     private bool _isLoadingAttachments;
@@ -147,6 +148,12 @@ public sealed class AppViewModel : NotifyObject
     public string TripPath => _trip is null ? RootPath : Path.Combine(RootPath, _trip.Id);
     public string TripTitle => _trip?.Title ?? "Nenhuma viagem";
     public string TripSubtitle => _trip is null ? "Selecione uma pasta com viagens." : BuildTripSubtitle(_trip);
+    public bool IsSidebarExpanded
+    {
+        get => _isSidebarExpanded;
+        set => SetField(ref _isSidebarExpanded, value);
+    }
+
     public bool IsCurrentTripFavorite
     {
         get => _isCurrentTripFavorite;

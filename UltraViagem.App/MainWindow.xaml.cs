@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Collections;
+using System.Windows.Media.Animation;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.IO;
@@ -56,6 +57,16 @@ public partial class MainWindow : Window
 
         LoadRepository(_settings.RepositoryPath ?? FindWorkspaceRoot());
         ShowOverview();
+
+        if (_settings.IsSidebarCollapsed)
+        {
+            _viewModel.IsSidebarExpanded = false;
+            SidebarBorder.Width = 68.0;
+            RepoExpandedPanel.Visibility = Visibility.Collapsed;
+            RepoCollapsedButton.Visibility = Visibility.Visible;
+            LogoButton.Padding = new Thickness(0);
+            LogoButton.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center;
+        }
     }
 
     private void SelectRepository_Click(object sender, RoutedEventArgs e)
@@ -316,6 +327,48 @@ public partial class MainWindow : Window
         var isFavorite = !_viewModel.IsCurrentTripFavorite;
         SetFavorite(_viewModel.CurrentTrip.Id, isFavorite);
         _viewModel.IsCurrentTripFavorite = isFavorite;
+    }
+
+    private void ToggleSidebar_Click(object sender, RoutedEventArgs e) => ToggleSidebar();
+
+    private void ToggleSidebar()
+    {
+        var isExpanding = !_viewModel.IsSidebarExpanded;
+        var targetWidth = isExpanding ? 220.0 : 68.0;
+
+        if (!isExpanding)
+        {
+            _viewModel.IsSidebarExpanded = false;
+            RepoExpandedPanel.Visibility = Visibility.Collapsed;
+            RepoCollapsedButton.Visibility = Visibility.Visible;
+            LogoButton.Padding = new Thickness(0);
+            LogoButton.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center;
+        }
+
+        var animation = new DoubleAnimation
+        {
+            To = targetWidth,
+            Duration = TimeSpan.FromMilliseconds(200),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            FillBehavior = FillBehavior.HoldEnd
+        };
+
+        if (isExpanding)
+        {
+            animation.Completed += (_, _) =>
+            {
+                _viewModel.IsSidebarExpanded = true;
+                RepoExpandedPanel.Visibility = Visibility.Visible;
+                RepoCollapsedButton.Visibility = Visibility.Collapsed;
+                LogoButton.Padding = new Thickness(14, 0, 14, 0);
+                LogoButton.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Left;
+            };
+        }
+
+        SidebarBorder.BeginAnimation(FrameworkElement.WidthProperty, animation);
+
+        _settings.IsSidebarCollapsed = !isExpanding;
+        LocalSettings.Save(_settings);
     }
 
     private void ShowOverview_Click(object sender, RoutedEventArgs e)
@@ -2728,6 +2781,7 @@ public sealed class BudgetPieChart : FrameworkElement
 public sealed class LocalSettings
 {
     public string? RepositoryPath { get; set; }
+    public bool IsSidebarCollapsed { get; set; }
     public double? WindowLeft { get; set; }
     public double? WindowTop { get; set; }
     public double? WindowWidth { get; set; }

@@ -1,5 +1,13 @@
 # Funcionalidades
 
+## Menu Lateral (Sidebar)
+
+A sidebar é colapsável: clicar no logo + nome do app alterna entre o modo expandido (220 px) e o modo colapsado (68 px) com animação suave.
+
+- **Modo expandido**: ícone + label de cada item, logo com nome "UltraViagem" e painel de repositório visível.
+- **Modo colapsado**: apenas os ícones, centralizados horizontalmente; o painel de repositório é substituído por um ícone de pasta que abre a pasta diretamente.
+- O estado (expandido/colapsado) é salvo em `%APPDATA%\UltraViagem\settings.json` e restaurado na próxima abertura.
+
 ## Seleção De Repositório
 
 O usuário escolhe uma pasta raiz onde ficam as viagens. O caminho é salvo em:
@@ -8,7 +16,7 @@ O usuário escolhe uma pasta raiz onde ficam as viagens. O caminho é salvo em:
 %APPDATA%\UltraViagem\settings.json
 ```
 
-Na sidebar, o caminho do repositório aparece como link clicável para abrir a pasta.
+Na sidebar expandida, o caminho do repositório aparece como link clicável para abrir a pasta.
 
 ## Seleção De Viagem
 
