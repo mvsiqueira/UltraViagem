@@ -28,7 +28,8 @@ Sistema de arquivos
 - carregar ou criar `config.json`;
 - listar viagens procurando subpastas com `trip.json`;
 - carregar uma viagem;
-- salvar uma viagem.
+- salvar uma viagem;
+- copiar uma viagem (`CopyTripFolder`): duplica o conteúdo integral da pasta de origem para uma nova pasta de destino.
 
 O formato de dados atual fica em:
 
@@ -41,15 +42,17 @@ O formato de dados atual fica em:
 
 `Trip` contém:
 
-- dados gerais: `id`, `title`, datas, moeda e pessoas;
+- dados gerais: `id`, `title`, datas, `baseCurrency` (moeda base), `people` e `rateDecimalDigits` (casas decimais para exibição de taxas na aba Moedas);
 - `myMapsUrl`: URL pública do Google My Maps exibida pela tela de mapa;
 - `itinerary`: roteiro por dia;
 - `tasks`: tarefas;
 - `places`: lugares;
 - `links`: dicas;
-- `expenses`: gastos, com flag de ativação, categoria, moeda, taxa de conversão e valor pago;
-- `currencyRates`: cotações por moeda para conversão para a moeda base da viagem;
+- `expenses`: gastos, com flag de ativação, categoria, moeda, `exchangeRateToBase`, `useFixedRate` (cotação fixa ou automática) e valor pago;
+- `currencyRates`: moedas com código, nome, símbolo, casas decimais de exibição e taxa para a moeda base;
 - `attachments`: arquivos anexos.
+
+`useFixedRate` em `ExpenseItem`: quando `false` (padrão), a taxa do gasto é sincronizada automaticamente com a aba Moedas ao carregar a viagem, ao trocar a moeda do gasto ou ao atualizar cotações; quando `true`, a taxa é fixa e ignorada nas atualizações automáticas.
 
 `LinkItem` é usado para o quadro de dicas:
 

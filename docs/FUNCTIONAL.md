@@ -38,12 +38,19 @@ O botão `Dados da viagem` abre uma tela interna com:
 - data inicial;
 - data final;
 - pessoas;
-- moeda;
+- moeda base;
+- casas decimais para cotações (controla a precisão das taxas exibidas na aba Moedas);
 - caminho completo da pasta da viagem.
 
 As datas são editadas por controle de calendário e exibidas no formato do sistema. A tela permite renomear apenas a pasta da viagem dentro do repositório atual, sem alterar a pasta raiz escolhida.
 
-A tela segue o mesmo padrão dos demais painéis internos, com ícone, título, botão `<` para voltar e botão `Salvar Dados` no rodapé do formulário.
+A tela segue o mesmo padrão dos demais painéis internos, com ícone, título, botão `<` para voltar e, no rodapé:
+
+- botão `Salvar Dados` (direita);
+- botão `Copiar Viagem` (direita) — abre modal pré-preenchido com "Cópia de [Nome]"; ao confirmar, cria nova pasta com cópia integral do conteúdo e abre a nova viagem;
+- botão `Excluir Viagem` (esquerda, destrutivo) — exige confirmação; remove a pasta da viagem e volta à tela de seleção.
+
+Ao trocar de viagem, o painel de dados é atualizado automaticamente para refletir a viagem carregada.
 
 ## Sobre
 
@@ -190,7 +197,7 @@ A tela de gastos permite:
 
 - criar e excluir itens;
 - ativar/desativar itens para simular opções sem apagar alternativas;
-- navegar por abas de itens, resumo e cotações;
+- navegar por abas de itens, resumo e Moedas;
 - visualizar gastos como cards compactos agrupados por categoria, como transporte, hospedagem, passeios e outros;
 - reordenar gastos dentro da mesma categoria com drag-and-drop;
 - reordenar categorias inteiras com drag-and-drop pelo cabeçalho do grupo;
@@ -198,13 +205,16 @@ A tela de gastos permite:
 - ativar/desativar um gasto por um controle visual de status no card;
 - editar ou criar gastos expandindo o próprio card, sem abrir janela modal;
 - editar descrição, empresa, link, observações, preço unitário, taxas unitárias, pessoas, quantidade, moeda, cotação do item e valor pago;
-- acompanhar o subtotal convertido para BRL;
+- acompanhar o subtotal convertido para a moeda base da viagem;
 - consultar totais e distribuição por categoria na aba de resumo;
-- cadastrar as moedas usadas na viagem por código ISO e símbolo informado pelo usuário;
+- cadastrar as moedas usadas na viagem por código ISO, símbolo e casas decimais (controla a precisão dos valores exibidos nessa moeda);
 - editar nome e símbolo de cada moeda, com nome padrão igual ao código;
-- excluir cotações que não sejam a moeda de referência e que não estejam em uso por gastos;
-- visualizar cotações por moeda com código, nome, símbolo, taxa para a moeda de referência da viagem e data de atualização;
-- editar manualmente cotações por moeda;
-- atualizar automaticamente cotações públicas para BRL usando a AwesomeAPI quando houver internet.
+- excluir moedas que não sejam a moeda de referência e que não estejam em uso por gastos;
+- visualizar moedas com código, nome, símbolo, casas decimais, taxa para a moeda de referência da viagem e data de atualização;
+- editar manualmente a taxa de cada moeda;
+- atualizar automaticamente as taxas públicas usando a AwesomeAPI quando houver internet;
+- definir a precisão das taxas exibidas na aba Moedas pelo parâmetro "casas decimais para cotações" nos dados da viagem.
 
-Quando um item já tem valor pago, a cotação do item não é sobrescrita pela atualização automática das cotações gerais, para preservar a taxa efetivamente usada no pagamento.
+**Cotação automática ou fixa por gasto:** o campo Cotação do card de edição possui um checkbox "Automática". Quando marcado (padrão), a cotação segue a taxa cadastrada na aba Moedas e é atualizada automaticamente; o campo é exibido em cinza e bloqueado para edição. Quando desmarcado, a cotação fica fixa no valor informado manualmente e não é afetada por atualizações da aba Moedas. Ao marcar novamente como automática, o campo sincroniza imediatamente com a taxa atual.
+
+Itens com valor pago ou com cotação fixa não têm a taxa sobrescrita pela atualização automática de cotações gerais, preservando a taxa efetivamente usada.
