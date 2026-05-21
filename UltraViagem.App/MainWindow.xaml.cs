@@ -40,6 +40,13 @@ public partial class MainWindow : Window
     private bool _isSavingTasks;
     private bool _isSavingTips;
     private bool _isSavingAttachments;
+
+    private static readonly HashSet<string> _windowsReservedNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "CON", "PRN", "AUX", "NUL",
+        "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+    };
     private bool _isSavingExpenses;
 
     public MainWindow()
@@ -1329,7 +1336,8 @@ public partial class MainWindow : Window
                 FindVisualChild<System.Windows.Controls.TextBox>(item) is { } input)
             {
                 input.Focus();
-                input.SelectAll();
+                var nameOnly = Path.GetFileNameWithoutExtension(attachment.File);
+                input.Select(0, nameOnly.Length);
             }
         });
     }
@@ -1670,8 +1678,12 @@ public partial class MainWindow : Window
         content.Children.Add(input);
         content.Children.Add(actions);
         dialog.Content = content;
-        input.SelectAll();
-        input.Focus();
+        dialog.Loaded += (_, _) =>
+        {
+            input.Focus();
+            var nameOnly = Path.GetFileNameWithoutExtension(currentName);
+            input.Select(0, nameOnly.Length);
+        };
 
         return dialog.ShowDialog() == true ? result : null;
     }
@@ -2153,17 +2165,11 @@ public partial class MainWindow : Window
 
     private void SetActiveNav(System.Windows.Controls.Button activeButton)
     {
-        var accentBrush = (System.Windows.Media.Brush)FindResource("AccentBrush");
         foreach (var button in new[] { OverviewNavButton, TripDetailsNavButton, BudgetNavButton, TasksNavButton, TipsNavButton, MapNavButton, FilesNavButton })
         {
-            button.Foreground = System.Windows.Media.Brushes.Black;
-            button.Background = System.Windows.Media.Brushes.Transparent;
-            button.FontWeight = FontWeights.Normal;
+            button.Tag = null;
         }
-
-        activeButton.Foreground = System.Windows.Media.Brushes.White;
-        activeButton.Background = accentBrush;
-        activeButton.FontWeight = FontWeights.SemiBold;
+        activeButton.Tag = "Active";
     }
 
     private void SaveTasksInternal(string message)
@@ -2272,7 +2278,8 @@ public partial class MainWindow : Window
     {
         foreach (var attachment in _viewModel.Attachments)
         {
-            var fileName = Path.GetFileName(attachment.File.Trim());
+            var rawName = attachment.File.Trim();
+            var fileName = Path.GetFileName(rawName);
             if (string.IsNullOrWhiteSpace(fileName))
             {
                 _viewModel.StatusMessage = "Nome de arquivo inválido.";
@@ -2280,7 +2287,19 @@ public partial class MainWindow : Window
             }
             if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             {
-                _viewModel.StatusMessage = $"O nome {fileName} contém caracteres inválidos.";
+                _viewModel.StatusMessage = $"O nome \"{fileName}\" contém caracteres inválidos.";
+                return false;
+            }
+
+            if (rawName.EndsWith('.') || rawName.EndsWith(' '))
+            {
+                _viewModel.StatusMessage = $"O nome \"{rawName}\" não pode terminar com ponto ou espaço.";
+                return false;
+            }
+
+            if (_windowsReservedNames.Contains(Path.GetFileNameWithoutExtension(fileName)))
+            {
+                _viewModel.StatusMessage = $"\"{fileName}\" é um nome reservado pelo Windows e não pode ser usado.";
                 return false;
             }
 
@@ -2294,6 +2313,22 @@ public partial class MainWindow : Window
             {
                 attachment.OriginalFile = fileName;
                 continue;
+            }
+
+            var newExt = Path.GetExtension(fileName);
+            var origExt = Path.GetExtension(attachment.OriginalFile);
+            if (!string.IsNullOrEmpty(origExt) && !string.Equals(newExt, origExt, StringComparison.OrdinalIgnoreCase))
+            {
+                var extMsg = string.IsNullOrEmpty(newExt)
+                    ? $"O arquivo será renomeado para \"{fileName}\" sem extensão.\n\nDeseja continuar?"
+                    : $"A extensão será alterada de \"{origExt}\" para \"{newExt}\".\n\nDeseja continuar?";
+                var extTitle = string.IsNullOrEmpty(newExt) ? "Remover extensão" : "Alterar extensão";
+                var confirm = System.Windows.MessageBox.Show(extMsg, extTitle, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (confirm != MessageBoxResult.Yes)
+                {
+                    attachment.File = attachment.OriginalFile;
+                    return false;
+                }
             }
 
             var oldPath = Path.Combine(_viewModel.TripPath, attachment.OriginalFile);

@@ -705,6 +705,13 @@ public sealed class AppViewModel : NotifyObject
             return;
         }
 
+        // File e IsEditing são gerenciados pelo fluxo de rename explícito;
+        // ignorar aqui evita auto-save disparado a cada tecla durante edição inline.
+        if (e.PropertyName is nameof(AttachmentEditorViewModel.File) or nameof(AttachmentEditorViewModel.IsEditing))
+        {
+            return;
+        }
+
         OverviewFiles.ReplaceWith(Attachments.Take(4));
         RefreshSummary();
         AttachmentsChanged?.Invoke(this, EventArgs.Empty);

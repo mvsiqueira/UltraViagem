@@ -12,8 +12,6 @@
 - Importação XLSX da planilha de referência.
 - Criar exportação para PDF.
 - Criar funcionalidade de cópia de viagem
-- Melhorar validações de renomeação de arquivos.
-- Melhorar seleção de ícones e estados de hover/foco/acessibilidade.
 - Publicação empacotada do app Windows.
 
 ## Prioridade Baixa
