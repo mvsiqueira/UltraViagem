@@ -254,6 +254,101 @@ public partial class MainWindow : Window
         ShowTripDetails();
     }
 
+    private void DeleteTrip_Click(object sender, RoutedEventArgs e)
+    {
+        if (_repository is null || _viewModel.CurrentTrip is null)
+        {
+            return;
+        }
+
+        var trip = _viewModel.CurrentTrip;
+        var result = System.Windows.MessageBox.Show(
+            $"Excluir permanentemente a viagem \"{trip.Title}\"?\n\nTodos os arquivos da pasta serão removidos. Essa ação não pode ser desfeita.",
+            "Excluir Viagem",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (result != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        var tripId = trip.Id;
+        var tripPath = Path.Combine(_repository.RootPath, tripId);
+
+        try
+        {
+            Directory.Delete(tripPath, recursive: true);
+        }
+        catch (IOException ex)
+        {
+            System.Windows.MessageBox.Show($"Erro ao excluir a viagem:\n{ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            System.Windows.MessageBox.Show($"Sem permissão para excluir a viagem:\n{ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        var config = _repository.LoadOrCreateConfig();
+        config.RecentTrips.Remove(tripId);
+        config.FavoriteTrips.Remove(tripId);
+        _repository.SaveConfig(config);
+
+        var nextTripId = _repository.GetTripIds().FirstOrDefault() ?? "";
+        ShowOverview();
+        RefreshTrips(nextTripId);
+        _viewModel.StatusMessage = $"Viagem \"{trip.Title}\" excluída.";
+    }
+
+    private void CopyTrip_Click(object sender, RoutedEventArgs e)
+    {
+        if (_repository is null || _viewModel.CurrentTrip is null)
+        {
+            return;
+        }
+
+        var source = _viewModel.CurrentTrip;
+        var draft = new TripDetailsDraft
+        {
+            Title = $"Cópia de {source.Title}",
+            StartDate = source.StartDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "",
+            EndDate = source.EndDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "",
+            People = source.People,
+            BaseCurrency = source.BaseCurrency,
+            MyMapsUrl = source.MyMapsUrl
+        };
+
+        var window = new TripDetailsWindow(draft, "Copiar Viagem") { Owner = this };
+        if (window.ShowDialog() != true)
+        {
+            return;
+        }
+
+        var sourceId = source.Id;
+        var newId = CreateUniqueTripId(window.Draft.Title, window.Draft.StartDate);
+
+        try
+        {
+            _repository.CopyTripFolder(sourceId, newId);
+        }
+        catch (IOException ex)
+        {
+            System.Windows.MessageBox.Show($"Erro ao copiar a pasta da viagem:\n{ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        var copiedTrip = _repository.LoadTrip(newId) ?? new Trip { Id = newId };
+        copiedTrip.Id = newId;
+        ApplyDraftToTrip(window.Draft, copiedTrip);
+        _repository.SaveTrip(copiedTrip);
+
+        AddRecentTrip(newId);
+        RefreshTrips(newId);
+        _viewModel.StatusMessage = $"Viagem copiada como \"{copiedTrip.Title}\".";
+    }
+
     private void SaveTripDetails_Click(object sender, RoutedEventArgs e)
     {
         if (_repository is null || _viewModel.CurrentTrip is null)
@@ -640,6 +735,7 @@ public partial class MainWindow : Window
 
     private void SaveExpenses_Click(object sender, RoutedEventArgs e)
     {
+        AddCurrencyErrorText.Visibility = Visibility.Collapsed;
         SaveExpensesInternal($"Gastos salvos em {DateTime.Now:HH:mm}.");
     }
 
@@ -732,22 +828,23 @@ public partial class MainWindow : Window
         var currency = NewCurrencyCodeBox.Text.Trim().ToUpperInvariant();
         if (string.IsNullOrWhiteSpace(currency))
         {
-            _viewModel.StatusMessage = "Informe o código da moeda.";
+            ShowAddCurrencyError("Informe o código da moeda.");
             return;
         }
 
         if (currency.Length != 3)
         {
-            _viewModel.StatusMessage = "Use o código ISO com 3 letras, como USD, CLP ou EUR.";
+            ShowAddCurrencyError("Use o código ISO com 3 letras, como USD, CLP ou EUR.");
             return;
         }
 
         if (_viewModel.CurrencyRates.Any(rate => string.Equals(rate.Currency, currency, StringComparison.OrdinalIgnoreCase)))
         {
-            _viewModel.StatusMessage = $"Moeda {currency} já cadastrada.";
+            ShowAddCurrencyError($"Moeda {currency} já cadastrada.");
             return;
         }
 
+        AddCurrencyErrorText.Visibility = Visibility.Collapsed;
         var baseCurrency = _viewModel.BaseCurrencyCode;
         _viewModel.AddCurrencyRate(
             currency,
@@ -756,6 +853,12 @@ public partial class MainWindow : Window
             name: currency);
         NewCurrencyCodeBox.Text = "";
         SaveExpensesInternal($"Moeda {currency} cadastrada.");
+    }
+
+    private void ShowAddCurrencyError(string message)
+    {
+        AddCurrencyErrorText.Text = message;
+        AddCurrencyErrorText.Visibility = Visibility.Visible;
     }
 
     private void DeleteCurrencyRate_Click(object sender, RoutedEventArgs e)
@@ -2075,6 +2178,11 @@ public partial class MainWindow : Window
             ? $"Não foi possível abrir {tripId}."
             : $"Viagem {trip.Title} carregada.";
         RefreshMapBrowsers();
+
+        if (TripDetailsPanel.Visibility == Visibility.Visible)
+        {
+            PopulateTripDetailsPanel();
+        }
     }
 
     private void ShowOverview()
@@ -2597,6 +2705,7 @@ public partial class MainWindow : Window
         TripDetailsEndDatePicker.SelectedDate = ParseDraftDate(draft.EndDate);
         TripDetailsPeopleBox.Text = draft.People.ToString(CultureInfo.InvariantCulture);
         TripDetailsCurrencyBox.Text = draft.BaseCurrency;
+        TripDetailsRateDecimalDigitsBox.Text = (_viewModel.CurrentTrip?.RateDecimalDigits ?? 2).ToString(CultureInfo.InvariantCulture);
         TripDetailsPathBox.Text = _viewModel.TripPath;
         TripDetailsErrorText.Visibility = Visibility.Collapsed;
     }
@@ -2611,6 +2720,7 @@ public partial class MainWindow : Window
             EndDate = FormatDraftDate(TripDetailsEndDatePicker.SelectedDate),
             People = int.TryParse(TripDetailsPeopleBox.Text, CultureInfo.InvariantCulture, out var people) ? people : 0,
             BaseCurrency = string.IsNullOrWhiteSpace(TripDetailsCurrencyBox.Text) ? "BRL" : TripDetailsCurrencyBox.Text.Trim().ToUpperInvariant(),
+            RateDecimalDigits = int.TryParse(TripDetailsRateDecimalDigitsBox.Text, CultureInfo.InvariantCulture, out var rdd) ? Math.Clamp(rdd, 0, 8) : 2,
             MyMapsUrl = _viewModel.CurrentTrip?.MyMapsUrl
         };
     }
@@ -2669,6 +2779,7 @@ public partial class MainWindow : Window
         trip.EndDate = DateOnly.TryParse(draft.EndDate, CultureInfo.InvariantCulture, out var endDate) ? endDate : null;
         trip.People = draft.People;
         trip.BaseCurrency = draft.BaseCurrency;
+        trip.RateDecimalDigits = draft.RateDecimalDigits;
         trip.MyMapsUrl = draft.MyMapsUrl;
     }
 

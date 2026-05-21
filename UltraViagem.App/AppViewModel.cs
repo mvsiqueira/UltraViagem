@@ -281,7 +281,9 @@ public sealed class AppViewModel : NotifyObject
         {
             rate.PropertyChanged += CurrencyRate_PropertyChanged;
         }
-        ExpenseEditorViewModel.ConfigureCurrencyRates(CurrencyRates);
+        var rateDecimalDigits = trip?.RateDecimalDigits ?? 2;
+        ExpenseEditorViewModel.Configure(CurrencyRates, BaseCurrencyCode, rateDecimalDigits);
+        CurrencyRateViewModel.ConfigureRateDecimalDigits(rateDecimalDigits);
 
         ApplyTaskFilter();
         BudgetCategories.ReplaceWith(BuildBudgetCategories(Expenses));
@@ -613,6 +615,7 @@ public sealed class AppViewModel : NotifyObject
         _isLoadingExpenses = true;
         foreach (var expense in Expenses.Where(expense =>
                      expense.PaidAmount <= 0 &&
+                     !expense.UseFixedRate &&
                      string.Equals(expense.Currency, currency, StringComparison.OrdinalIgnoreCase)))
         {
             expense.ExchangeRateToBase = rateToBase;
@@ -731,6 +734,7 @@ public sealed class AppViewModel : NotifyObject
 
         if (sender is ExpenseEditorViewModel expense &&
             expense.PaidAmount <= 0 &&
+            !expense.UseFixedRate &&
             e.PropertyName is nameof(ExpenseEditorViewModel.Currency))
         {
             expense.ExchangeRateToBase = GetRateForCurrency(expense.Currency);
@@ -776,6 +780,11 @@ public sealed class AppViewModel : NotifyObject
         }
         if (e.PropertyName is nameof(CurrencyRateViewModel.DecimalDigits))
         {
+            if (sender is CurrencyRateViewModel changedRate)
+            {
+                foreach (var expense in Expenses)
+                    expense.NotifyDecimalDigitsChanged(changedRate.Currency);
+            }
             RefreshBudget(rebuildGroups: false);
         }
 
@@ -868,7 +877,7 @@ public sealed class AppViewModel : NotifyObject
             };
     }
 
-    private static IReadOnlyList<BudgetCategoryViewModel> BuildBudgetCategories(IEnumerable<ExpenseEditorViewModel> expenses)
+    private IReadOnlyList<BudgetCategoryViewModel> BuildBudgetCategories(IEnumerable<ExpenseEditorViewModel> expenses)
     {
         var totals = expenses
             .Where(expense => expense.IsActive)
@@ -890,12 +899,12 @@ public sealed class AppViewModel : NotifyObject
                 sum == 0 ? 0 : (double)(total.Total / sum),
                 sum == 0 ? "0%" : (total.Total / sum).ToString("P0", Culture),
                 BudgetCategoryColors[index % BudgetCategoryColors.Length],
-                max == 0 ? 0 : Math.Max(8, (double)(total.Total / max) * 220)))
+                max == 0 ? 0 : (double)(total.Total / max)))
             .OrderByDescending(category => category.BarWidth)
             .ToList();
     }
 
-    private static IReadOnlyList<ExpenseCategoryGroupViewModel> BuildExpenseGroups(IEnumerable<ExpenseEditorViewModel> expenses)
+    private IReadOnlyList<ExpenseCategoryGroupViewModel> BuildExpenseGroups(IEnumerable<ExpenseEditorViewModel> expenses)
     {
         return expenses
             .GroupBy(expense => string.IsNullOrWhiteSpace(expense.Type) ? "Outros" : expense.Type.Trim())
@@ -969,9 +978,10 @@ public sealed class AppViewModel : NotifyObject
         return $"{trip.StartDate:dd MMM yyyy} - {trip.EndDate:dd MMM yyyy} ({dayLabel})";
     }
 
-    private static string FormatMoney(decimal value)
+    private string FormatMoney(decimal value)
     {
-        return value.ToString("C", Culture);
+        var digits = CurrencyRates.FirstOrDefault(r => string.Equals(r.Currency, BaseCurrencyCode, StringComparison.OrdinalIgnoreCase))?.DecimalDigits ?? 2;
+        return $"{BaseCurrencySymbol} {value.ToString($"N{digits}", Culture)}";
     }
 }
 
@@ -1158,6 +1168,8 @@ public sealed class ExpenseEditorViewModel : NotifyObject
 {
     private static readonly CultureInfo Culture = new("pt-BR");
     private static IReadOnlyList<CurrencyRateViewModel> CurrencyRates { get; set; } = [];
+    private static string BaseCurrency { get; set; } = "BRL";
+    private static int RateDecimalDigits { get; set; } = 2;
 
     private string _id = "";
     private bool _isActive = true;
@@ -1172,6 +1184,7 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     private int _quantity = 1;
     private string _currency = "BRL";
     private decimal _exchangeRateToBase = 1m;
+    private bool _useFixedRate = false;
     private decimal _paidAmount;
     private bool _isSelectedForEdit;
     private bool _isEditing;
@@ -1189,6 +1202,8 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     public int Quantity { get => _quantity; set => SetField(ref _quantity, Math.Max(1, value)); }
     public string Currency { get => _currency; set => SetField(ref _currency, NormalizeCurrency(value)); }
     public decimal ExchangeRateToBase { get => _exchangeRateToBase; set => SetField(ref _exchangeRateToBase, value <= 0 ? 1m : value); }
+    public bool UseFixedRate { get => _useFixedRate; set => SetField(ref _useFixedRate, value); }
+    public bool UseAutomaticRate { get => !UseFixedRate; set => UseFixedRate = !value; }
     public decimal PaidAmount { get => _paidAmount; set => SetField(ref _paidAmount, Math.Max(0, value)); }
     public bool IsSelectedForEdit { get => _isSelectedForEdit; set => SetField(ref _isSelectedForEdit, value); }
     public bool IsEditing { get => _isEditing; set => SetField(ref _isEditing, value); }
@@ -1197,9 +1212,34 @@ public sealed class ExpenseEditorViewModel : NotifyObject
     public decimal PendingAmount => IsActive ? Math.Max(decimal.Round(SubtotalBase - PaidAmount, 2, MidpointRounding.AwayFromZero), 0) : 0m;
     public string ActiveGlyph => IsActive ? "►" : "";
     public string ActiveStatusLabel => IsActive ? "Ativo" : "Inativo";
-    public static void ConfigureCurrencyRates(IReadOnlyList<CurrencyRateViewModel> currencyRates)
+    public void NotifyDecimalDigitsChanged(string changedCurrency)
+    {
+        var normalized = NormalizeCurrency(changedCurrency);
+        var isOwnCurrency = string.Equals(NormalizeCurrency(Currency), normalized, StringComparison.OrdinalIgnoreCase);
+        var isBase = string.Equals(normalized, BaseCurrency, StringComparison.OrdinalIgnoreCase);
+
+        if (isOwnCurrency)
+        {
+            OnPropertyChanged(nameof(PriceText));
+            OnPropertyChanged(nameof(TaxesText));
+            OnPropertyChanged(nameof(SummaryLine));
+            OnPropertyChanged(nameof(QuantityLine));
+        }
+        if (isBase)
+        {
+            OnPropertyChanged(nameof(PaidAmountText));
+            OnPropertyChanged(nameof(SubtotalBaseLabel));
+            OnPropertyChanged(nameof(PaidLabel));
+            OnPropertyChanged(nameof(PendingLabel));
+            OnPropertyChanged(nameof(PaymentStatusLabel));
+        }
+    }
+
+    public static void Configure(IReadOnlyList<CurrencyRateViewModel> currencyRates, string baseCurrency, int rateDecimalDigits)
     {
         CurrencyRates = currencyRates;
+        BaseCurrency = NormalizeCurrency(baseCurrency);
+        RateDecimalDigits = rateDecimalDigits;
     }
 
     public string SummaryLine
@@ -1209,7 +1249,7 @@ public sealed class ExpenseEditorViewModel : NotifyObject
             var amount = $"total {Currency} {FormatCurrencyAmount(Currency, Subtotal)}";
             var currencyDetail = IsBaseCurrency
                 ? amount
-                : $"{amount} · 💱 1 {Currency} = R$ {FormatCompactDecimal(ExchangeRateToBase)}";
+                : $"{amount} · 💱 1 {Currency} = {BaseCurrency} {FormatCompactDecimal(ExchangeRateToBase)}";
             return currencyDetail;
         }
     }
@@ -1234,18 +1274,41 @@ public sealed class ExpenseEditorViewModel : NotifyObject
         }
     }
     public string TypeLabel => string.IsNullOrWhiteSpace(Type) ? "Outros" : Type.Trim();
-    public string SubtotalBaseLabel => SubtotalBase.ToString("C", Culture);
-    public string PaidLabel => PaidAmount > 0 ? $"Pago {PaidAmount.ToString("C", Culture)}" : "Não pago";
-    public string PendingLabel => PendingAmount > 0 ? $"Falta {PendingAmount.ToString("C", Culture)}" : "Quitado";
+    public string SubtotalBaseLabel => FormatBaseCurrencyAmount(SubtotalBase);
+    public string PaidLabel => PaidAmount > 0 ? $"Pago {FormatBaseCurrencyAmount(PaidAmount)}" : "Não pago";
+    public string PendingLabel => PendingAmount > 0 ? $"Falta {FormatBaseCurrencyAmount(PendingAmount)}" : "Quitado";
     public string PaymentStatusLabel => PendingAmount <= 0
         ? "Quitado"
         : PaidAmount > 0
-            ? $"Falta {PendingAmount.ToString("C", Culture)}"
+            ? $"Falta {FormatBaseCurrencyAmount(PendingAmount)}"
             : "A pagar";
     public bool IsPaymentSettled => PendingAmount <= 0;
-    public bool IsBaseCurrency => string.Equals(NormalizeCurrency(Currency), "BRL", StringComparison.OrdinalIgnoreCase) ||
-                                  string.Equals(Currency.Trim(), "R$", StringComparison.OrdinalIgnoreCase);
+    public bool IsBaseCurrency => string.Equals(NormalizeCurrency(Currency), BaseCurrency, StringComparison.OrdinalIgnoreCase);
     public bool HasLink => LinkEditorViewModel.IsHttpUrl(Link);
+
+    public string PriceText
+    {
+        get => _price.ToString($"N{GetDecimalDigits(Currency)}", Culture);
+        set { if (TryParseDecimal(value, out var v)) Price = v; }
+    }
+
+    public string TaxesText
+    {
+        get => _taxes.ToString($"N{GetDecimalDigits(Currency)}", Culture);
+        set { if (TryParseDecimal(value, out var v)) Taxes = v; }
+    }
+
+    public string ExchangeRateText
+    {
+        get => _exchangeRateToBase.ToString($"N{RateDecimalDigits}", Culture);
+        set { if (TryParseDecimal(value, out var v)) ExchangeRateToBase = v; }
+    }
+
+    public string PaidAmountText
+    {
+        get => _paidAmount.ToString($"N{GetDecimalDigits(BaseCurrency)}", Culture);
+        set { if (TryParseDecimal(value, out var v)) PaidAmount = v; }
+    }
 
     public static ExpenseEditorViewModel FromExpense(ExpenseItem expense)
     {
@@ -1264,6 +1327,7 @@ public sealed class ExpenseEditorViewModel : NotifyObject
             Quantity = Math.Max(1, expense.Quantity),
             Currency = NormalizeCurrency(expense.Currency),
             ExchangeRateToBase = expense.ExchangeRateToBase <= 0 ? 1m : expense.ExchangeRateToBase,
+            UseFixedRate = expense.UseFixedRate,
             PaidAmount = expense.PaidAmount
         };
     }
@@ -1285,6 +1349,7 @@ public sealed class ExpenseEditorViewModel : NotifyObject
             Quantity = Math.Max(1, Quantity),
             Currency = NormalizeCurrency(Currency),
             ExchangeRateToBase = ExchangeRateToBase <= 0 ? 1m : ExchangeRateToBase,
+            UseFixedRate = UseFixedRate,
             PaidAmount = PaidAmount
         };
     }
@@ -1308,11 +1373,39 @@ public sealed class ExpenseEditorViewModel : NotifyObject
             base.OnPropertyChanged(nameof(IsPaymentSettled));
         }
 
+        if (propertyName is nameof(Price))
+            base.OnPropertyChanged(nameof(PriceText));
+        if (propertyName is nameof(Taxes))
+            base.OnPropertyChanged(nameof(TaxesText));
+        if (propertyName is nameof(ExchangeRateToBase))
+            base.OnPropertyChanged(nameof(ExchangeRateText));
+        if (propertyName is nameof(PaidAmount))
+            base.OnPropertyChanged(nameof(PaidAmountText));
+
         if (propertyName is nameof(Type) or nameof(Currency))
         {
             base.OnPropertyChanged(nameof(TypeLabel));
             base.OnPropertyChanged(nameof(SummaryLine));
             base.OnPropertyChanged(nameof(IsBaseCurrency));
+        }
+
+        if (propertyName is nameof(Currency))
+        {
+            base.OnPropertyChanged(nameof(PriceText));
+            base.OnPropertyChanged(nameof(TaxesText));
+            base.OnPropertyChanged(nameof(ExchangeRateText));
+        }
+
+        if (propertyName is nameof(UseFixedRate))
+        {
+            base.OnPropertyChanged(nameof(UseAutomaticRate));
+            if (!UseFixedRate)
+            {
+                var rate = CurrencyRates.FirstOrDefault(r =>
+                    string.Equals(r.Currency, NormalizeCurrency(Currency), StringComparison.OrdinalIgnoreCase));
+                if (rate is not null)
+                    ExchangeRateToBase = rate.RateToBase;
+            }
         }
 
         if (propertyName is nameof(Company) or nameof(Notes))
@@ -1336,10 +1429,23 @@ public sealed class ExpenseEditorViewModel : NotifyObject
         return value.ToString("0.######", Culture);
     }
 
+    private static int GetDecimalDigits(string currency)
+    {
+        var rate = CurrencyRates.FirstOrDefault(r => string.Equals(r.Currency, NormalizeCurrency(currency), StringComparison.OrdinalIgnoreCase));
+        return rate?.DecimalDigits ?? 2;
+    }
+
+    private static string FormatBaseCurrencyAmount(decimal value)
+        => $"{BaseCurrency} {value.ToString($"N{GetDecimalDigits(BaseCurrency)}", Culture)}";
+
+    private static bool TryParseDecimal(string? value, out decimal result)
+    {
+        return decimal.TryParse(value, System.Globalization.NumberStyles.Any, Culture, out result);
+    }
+
     private static string FormatCurrencyAmount(string currency, decimal value)
     {
-        var rate = CurrencyRates.FirstOrDefault(rate => string.Equals(rate.Currency, NormalizeCurrency(currency), StringComparison.OrdinalIgnoreCase));
-        var digits = rate?.DecimalDigits ?? 2;
+        var digits = GetDecimalDigits(currency);
         return value.ToString($"N{digits}", Culture);
     }
 }
@@ -1362,6 +1468,9 @@ public sealed class ExpenseCategoryGroupViewModel : NotifyObject
 
 public sealed class CurrencyRateViewModel : NotifyObject
 {
+    private static int _rateDecimalDigits = 2;
+    public static void ConfigureRateDecimalDigits(int digits) => _rateDecimalDigits = digits;
+
     private string _currency = "BRL";
     private string _symbol = "BRL";
     private string _name = "BRL";
@@ -1376,7 +1485,7 @@ public sealed class CurrencyRateViewModel : NotifyObject
     public decimal RateToBase { get => _rateToBase; set => SetField(ref _rateToBase, value <= 0 ? 1m : value); }
     public DateTime? UpdatedAt { get => _updatedAt; set => SetField(ref _updatedAt, value); }
     public bool IsBaseCurrency { get; set; }
-    public string RateLabel => RateToBase.ToString($"N{DecimalDigits}", CultureInfo.GetCultureInfo("pt-BR"));
+    public string RateLabel => RateToBase.ToString($"N{_rateDecimalDigits}", CultureInfo.GetCultureInfo("pt-BR"));
     public string RateText
     {
         get => RateLabel;
@@ -1463,7 +1572,13 @@ public sealed record BudgetCategoryViewModel(
     double Share,
     string ShareLabel,
     string Color,
-    double BarWidth);
+    double BarWidth)
+{
+    public System.Windows.GridLength BarGridLength =>
+        new System.Windows.GridLength(Math.Max(BarWidth, 0.001), System.Windows.GridUnitType.Star);
+    public System.Windows.GridLength FillGridLength =>
+        new System.Windows.GridLength(Math.Max(1.0 - BarWidth, 0.001), System.Windows.GridUnitType.Star);
+}
 
 public sealed class TripSelectionItem
 {

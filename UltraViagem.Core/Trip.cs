@@ -9,6 +9,7 @@ public sealed class Trip
     public DateOnly? EndDate { get; set; }
     public string BaseCurrency { get; set; } = "BRL";
     public int People { get; set; } = 1;
+    public int RateDecimalDigits { get; set; } = 2;
     public string? MyMapsUrl { get; set; }
     public List<ItineraryDay> Itinerary { get; set; } = [];
     public List<TaskItem> Tasks { get; set; } = [];
@@ -82,6 +83,7 @@ public sealed class ExpenseItem
     public int Quantity { get; set; } = 1;
     public string Currency { get; set; } = "BRL";
     public decimal ExchangeRateToBase { get; set; } = 1m;
+    public bool UseFixedRate { get; set; } = false;
     public decimal PaidAmount { get; set; }
 
     public decimal Subtotal => (Price + Taxes) * People * Quantity;

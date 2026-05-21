@@ -20,6 +20,7 @@ public partial class TripDetailsWindow : Window
         EndDatePicker.SelectedDate = ParseDraftDate(draft.EndDate);
         PeopleBox.Text = draft.People.ToString(CultureInfo.InvariantCulture);
         CurrencyBox.Text = draft.BaseCurrency;
+        RateDecimalDigitsBox.Text = draft.RateDecimalDigits.ToString(CultureInfo.InvariantCulture);
     }
 
     public TripDetailsDraft Draft => _draft;
@@ -34,6 +35,7 @@ public partial class TripDetailsWindow : Window
             EndDate = trip.EndDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "",
             People = trip.People,
             BaseCurrency = trip.BaseCurrency,
+            RateDecimalDigits = trip.RateDecimalDigits,
             MyMapsUrl = trip.MyMapsUrl
         };
     }
@@ -67,6 +69,7 @@ public partial class TripDetailsWindow : Window
         _draft.EndDate = FormatDraftDate(endDate);
         _draft.People = people;
         _draft.BaseCurrency = string.IsNullOrWhiteSpace(CurrencyBox.Text) ? "BRL" : CurrencyBox.Text.Trim().ToUpperInvariant();
+        _draft.RateDecimalDigits = int.TryParse(RateDecimalDigitsBox.Text, CultureInfo.InvariantCulture, out var rdd) ? Math.Clamp(rdd, 0, 8) : 2;
 
         DialogResult = true;
     }
@@ -117,5 +120,6 @@ public sealed class TripDetailsDraft
     public string EndDate { get; set; } = "";
     public int People { get; set; } = 1;
     public string BaseCurrency { get; set; } = "BRL";
+    public int RateDecimalDigits { get; set; } = 2;
     public string? MyMapsUrl { get; set; }
 }

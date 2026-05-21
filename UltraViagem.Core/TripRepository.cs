@@ -79,4 +79,15 @@ public sealed class TripRepository
         var path = Path.Combine(tripPath, TripFileName);
         File.WriteAllText(path, JsonSerializer.Serialize(trip, _jsonOptions));
     }
+
+    public void CopyTripFolder(string sourceTripId, string destTripId)
+    {
+        var sourceDir = Path.Combine(RootPath, sourceTripId);
+        var destDir = Path.Combine(RootPath, destTripId);
+        Directory.CreateDirectory(destDir);
+        foreach (var file in Directory.EnumerateFiles(sourceDir))
+        {
+            File.Copy(file, Path.Combine(destDir, Path.GetFileName(file)), overwrite: true);
+        }
+    }
 }

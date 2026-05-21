@@ -2,16 +2,13 @@
 
 ## Prioridade Alta
 
-- Melhorar acabamento visual dos cards da visão geral.
 - Implementar tela completa de roteiro.
 - Definir estratégia de migração de schema para `trip.json`.
-- Melhorar validações e listas de categorias/moedas na tela de gastos.
 
 ## Prioridade Média
 
 - Importação XLSX da planilha de referência.
 - Criar exportação para PDF.
-- Criar funcionalidade de cópia de viagem
 - Publicação empacotada do app Windows.
 
 ## Prioridade Baixa

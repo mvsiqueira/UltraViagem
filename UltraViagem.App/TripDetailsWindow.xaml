@@ -46,7 +46,7 @@
 
                 <StackPanel Grid.Row="1" Grid.Column="1">
                     <TextBlock Text="Pessoas" Style="{StaticResource Caption}" />
-                    <TextBox x:Name="PeopleBox" Padding="10" Margin="0,4,0,14" />
+                    <TextBox x:Name="PeopleBox" Height="34" Margin="0,4,0,14" />
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Margin="0,0,12,0">
@@ -55,8 +55,13 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Grid.Column="1">
-                    <TextBlock Text="Moeda" Style="{StaticResource Caption}" />
-                    <TextBox x:Name="CurrencyBox" Padding="10" Margin="0,4,0,14" />
+                    <TextBlock Text="Moeda base" Style="{StaticResource Caption}" />
+                    <TextBox x:Name="CurrencyBox" Height="34" Margin="0,4,0,14" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="4" Grid.Column="1">
+                    <TextBlock Text="Casas decimais para cotações" Style="{StaticResource Caption}" />
+                    <TextBox x:Name="RateDecimalDigitsBox" Height="34" Margin="0,4,0,14" />
                 </StackPanel>
 
                 <TextBlock Grid.Row="3"
