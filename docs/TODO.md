@@ -3,12 +3,12 @@
 ## Prioridade Alta
 
 - Implementar tela completa de roteiro. Inclui as funcionalidades:
-  
-    - edição de dados do dia
-    - layout do dia
-    - pernoite
+
+    - ~~edição de dados do dia~~ ✓ (duplo-clique no cabeçalho do dia)
+    - ~~layout do dia~~ ✓ (canvas por slots, drag & resize, editor inline)
+    - ~~pernoite~~ ✓ (tipo "Pernoite" na atividade, bloco pílula)
     - banco de atividades
-	- versões de roteiro
+    - versões de roteiro
 - Implementar o card de roteiro na tela principal.
 - Criar exportação para PDF.
 
@@ -16,6 +16,7 @@
 
 - Importação XLSX da planilha de referência.
 - Definir estratégia de migração de schema para `trip.json`.
+- Importar arquivos da pasta ao abrir viagem
 
 ## Prioridade Baixa
 - Publicação empacotada do app Windows.

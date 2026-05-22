@@ -2257,6 +2257,7 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto" />
                                                 <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
 
                                             <!-- Day strip row -->
@@ -2266,8 +2267,9 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Day label -->
-                                            <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0" Padding="12,4">
+                                            <!-- Day label (duplo-clique para editar) -->
+                                            <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0" Padding="12,4"
+                                                    MouseLeftButtonDown="DayLabel_MouseDown" Cursor="Arrow">
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding DateLabel}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{StaticResource AccentBrush}" />
@@ -2284,6 +2286,7 @@
                                             <!-- Canvas area -->
                                             <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled"
                                                           VerticalScrollBarVisibility="Disabled"
+                                                          ClipToBounds="True"
                                                           Margin="6,0">
                                                 <Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}">
                                                     <!-- Activities -->
@@ -2317,9 +2320,31 @@
                                                                             </Style.Triggers>
                                                                         </Style>
                                                                     </Grid.Style>
-                                                                    <Border CornerRadius="5"
-                                                                            Background="{Binding DisplayColor, Converter={StaticResource StringToBrush}}">
-                                                                        <StackPanel VerticalAlignment="Center" Margin="5,2">
+                                                                    <Border>
+                                                                        <Border.Style>
+                                                                            <Style TargetType="Border">
+                                                                                <Setter Property="CornerRadius" Value="5" />
+                                                                                <Setter Property="VerticalAlignment" Value="Stretch" />
+                                                                                <Setter Property="Background" Value="{Binding DisplayColor, Converter={StaticResource StringToBrush}}" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsPernoite}" Value="True">
+                                                                                        <Setter Property="CornerRadius" Value="20" />
+                                                                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Border.Style>
+                                                                        <StackPanel VerticalAlignment="Center">
+                                                                        <StackPanel.Style>
+                                                                            <Style TargetType="StackPanel">
+                                                                                <Setter Property="Margin" Value="5,2" />
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsPernoite}" Value="True">
+                                                                                        <Setter Property="Margin" Value="10,3" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </StackPanel.Style>
                                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                                                                 <TextBlock Text="{Binding DisplayIcon}"
                                                                                            FontFamily="Segoe UI Emoji"
@@ -2329,6 +2354,7 @@
                                                                                            FontSize="{Binding FontSize}" FontWeight="SemiBold"
                                                                                            Foreground="{Binding DisplayTextColor, Converter={StaticResource StringToBrush}}"
                                                                                            VerticalAlignment="Center"
+                                                                                           TextWrapping="Wrap"
                                                                                            TextTrimming="CharacterEllipsis" />
                                                                             </StackPanel>
                                                                             <TextBlock Text="{Binding DisplayDetails}"
@@ -2367,7 +2393,9 @@
                                                     </ItemsControl>
                                                 </Canvas>
                                             </ScrollViewer>
+
                                             </Grid>
+
                                             <!-- Inline edit form (Row 1) -->
                                             <Border Grid.Row="1" Tag="ItineraryEditForm" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0" Padding="14,12">
                                                 <Border.Style>
@@ -2383,7 +2411,8 @@
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
                                                     <Grid.RowDefinitions>
@@ -2392,17 +2421,25 @@
                                                         <RowDefinition Height="Auto" />
                                                     </Grid.RowDefinitions>
 
-                                                    <!-- Row 0: Título + Duração -->
+                                                    <!-- Row 0: Título + Duração + Tipo -->
                                                     <StackPanel Grid.Row="0" Margin="0,0,10,8">
                                                         <TextBlock Text="Título" Style="{StaticResource Caption}" />
                                                         <TextBox Text="{Binding EditingActivity.EditTitle, UpdateSourceTrigger=PropertyChanged}" Height="32" />
                                                     </StackPanel>
                                                     <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,10,8">
                                                         <TextBlock Text="Duração (blocos)" Style="{StaticResource Caption}" />
-                                                        <TextBox Text="{Binding EditingActivity.EditDurationSlots, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+                                                        <TextBox Text="{Binding EditingActivity.EditDurationSlots, UpdateSourceTrigger=PropertyChanged}" Height="32" Width="110" />
                                                     </StackPanel>
-                                                    <!-- Accept / Reject / Delete (Row 0, Col 2) -->
-                                                    <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,8">
+                                                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,10,8">
+                                                        <TextBlock Text="Tipo" Style="{StaticResource Caption}" />
+                                                        <ComboBox ItemsSource="{x:Static local:ItineraryActivityViewModel.TypeOptions}"
+                                                                  SelectedItem="{Binding EditingActivity.EditType, UpdateSourceTrigger=PropertyChanged}"
+                                                                  Height="32" Width="110"
+                                                                  DropDownOpened="EditTypeCombo_DropDownOpened"
+                                                                  DropDownClosed="EditTypeCombo_DropDownClosed" />
+                                                    </StackPanel>
+                                                    <!-- Accept / Reject / Delete (Row 0, Col 3) -->
+                                                    <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,8">
                                                         <Button Style="{StaticResource CardActionButton}" ToolTip="Aceitar (Enter)" Click="AcceptEdit_Click" Margin="0,0,2,0">
                                                             <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
                                                         </Button>
@@ -2422,7 +2459,7 @@
                                                                  VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
                                                                  PreviewKeyDown="MultilineEditField_PreviewKeyDown" />
                                                     </StackPanel>
-                                                    <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,8">
+                                                    <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8">
                                                         <TextBlock Text="Dados adicionais" Style="{StaticResource Caption}" />
                                                         <TextBox Text="{Binding EditingActivity.EditAdditionalData, UpdateSourceTrigger=PropertyChanged}"
                                                                  Height="64" TextWrapping="Wrap"
@@ -2431,7 +2468,7 @@
                                                     </StackPanel>
 
                                                     <!-- Row 2: Ícone + Cor (esquerda) | Copiar Atividade (direita) -->
-                                                    <DockPanel Grid.Row="2" Grid.ColumnSpan="3">
+                                                    <DockPanel Grid.Row="2" Grid.ColumnSpan="4">
                                                         <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
                                                                 Style="{StaticResource SecondaryButton}" Click="CopyEditActivity_Click">
                                                             <StackPanel Orientation="Horizontal">
@@ -2469,6 +2506,45 @@
                                                                     ToolTip="Escolher cor" />
                                                         </StackPanel>
                                                     </DockPanel>
+                                                </Grid>
+                                            </Border>
+                                            <!-- Day data edit form (Row 2) -->
+                                            <Border Grid.Row="2" Tag="ItineraryEditForm" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0" Padding="14,12">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsEditingDay}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                                        <TextBlock Text="Nome do dia" Style="{StaticResource Caption}" />
+                                                        <TextBox Text="{Binding EditDayTitle, UpdateSourceTrigger=PropertyChanged}" Height="32" Margin="0,4,0,0" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                                        <TextBlock Text="Data" Style="{StaticResource Caption}" />
+                                                        <DatePicker SelectedDate="{Binding EditDayDateDt, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Aceitar (Enter)" Click="AcceptDayEdit_Click" Margin="0,0,2,0">
+                                                            <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+                                                        </Button>
+                                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Rejeitar (Esc)" Click="RejectDayEdit_Click">
+                                                            <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+                                                        </Button>
+                                                    </StackPanel>
                                                 </Grid>
                                             </Border>
                                         </Grid>

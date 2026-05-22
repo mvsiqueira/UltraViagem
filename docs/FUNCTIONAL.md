@@ -190,20 +190,24 @@ O roteiro (itinerário) é uma linha do tempo visual baseada em blocos por dia. 
 
 ### Dias
 
-- Cada dia tem um título livre, uma data opcional e um indicador de pernoite.
+- Cada dia tem um título livre e uma data opcional.
 - O botão `+ Dia` adiciona um novo dia ao final.
 - Cada dia exibe um botão de exclusão; a exclusão pede confirmação.
+- Clicar duas vezes no painel do nome do dia entra em modo de edição: campos `Nome` e `Data` ficam editáveis diretamente. Enter confirma; Esc cancela; clicar fora cancela.
 
 ### Atividades
 
 Cada atividade tem:
 
 - **Título**;
-- **Tipo** (selecionado de um cadastro global de tipos — veja abaixo);
+- **Tipo** (`Atividade`, `Refeição` ou `Pernoite`): determina o estilo visual do bloco;
+- **Ícone** (emoji livre, opcional);
+- **Cor** (cor de fundo do bloco, hex);
 - **Slot de início** (`StartSlot`): posição horizontal no canvas do dia;
 - **Duração em slots** (`DurationSlots`): largura do bloco;
-- **Descrição** (opcional);
-- **Distância** (opcional).
+- **Detalhes** (texto livre, opcional).
+
+Atividades do tipo `Pernoite` são exibidas com bordas arredondadas (pílula) e padding vertical reduzido para indicar visualmente a hospedagem.
 
 ### Canvas do dia
 
@@ -213,7 +217,7 @@ O canvas de cada dia representa visualmente todos os slots do dia em uma faixa h
 - **Tarde** (slots 6 a 11): fundo laranja-claro;
 - **Noite** (slots 12 em diante): fundo roxo-claro.
 
-As atividades são blocos coloridos absolutos sobre o canvas. A cor de fundo e a cor do texto de cada bloco vêm do tipo da atividade.
+As atividades são blocos coloridos absolutos sobre o canvas. A cor de fundo é definida individualmente por atividade; a cor do texto é calculada automaticamente (branco ou escuro) para contraste.
 
 ### Drag e redimensionamento
 
@@ -227,25 +231,18 @@ As atividades são blocos coloridos absolutos sobre o canvas. A cor de fundo e a
 Clicar em uma atividade a seleciona (destaque azul na borda). Um painel de edição aparece abaixo do canvas da respectiva linha, mostrando:
 
 - campo `Título`;
-- combobox `Tipo` com os tipos globais cadastrados;
 - campo `Duração (blocos)`;
+- combobox `Tipo` (`Atividade`, `Refeição`, `Pernoite`);
+- campo `Detalhes` (texto livre);
+- seletor de ícone (emoji) e de cor de fundo;
+- botão `Copiar atividade` (duplica a atividade no mesmo dia);
 - botão excluir.
 
-Clicar fora de qualquer atividade (área vazia do canvas) desmarca a seleção.
+Enter confirma a edição; Esc cancela. Clicar fora de qualquer atividade (área vazia do canvas) desmarca a seleção e cancela edições pendentes.
 
 ### Zoom
 
 Os botões `−` e `+` no cabeçalho do painel alteram a largura em pixels de cada slot (`ItinerarySlotWidth`) em passos de 8 px. O valor é salvo em `config.json` e restaurado ao abrir o mesmo repositório.
-
-### Tipos de atividade
-
-O app mantém um cadastro global de tipos de atividade em `config.json` (`ActivityTypes`). Cada tipo tem:
-
-- `Id`, `Name`;
-- `Color` (fundo do bloco, hex);
-- `TextColor` (texto do bloco, hex).
-
-Os 10 tipos padrão são: Vôo, Transfer, Carro, Trilha, Passeio, Barco, Almoço, Jantar, Descanso e Hospedagem.
 
 ### Salvamento
 

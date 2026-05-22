@@ -652,6 +652,7 @@ public sealed class AppViewModel : NotifyObject
         {
             Id = $"act-{Guid.NewGuid():N}",
             Title = source.Title,
+            Type = source.Type,
             Color = source.Color,
             Icon = source.Icon,
             Details = source.Details,
@@ -1331,15 +1332,45 @@ public sealed class ItineraryDayViewModel : NotifyObject
 
     private string _id = "", _title = "";
     private DateOnly? _date;
-    private string? _overnight;
     private bool _isDragTarget;
     private ItineraryActivityViewModel? _editingActivity;
+
+    // ── day edit buffer ─────────────────────────────────────────────────────
+    private bool _isEditingDay;
+    private string _editDayTitle = "";
+    private DateOnly? _editDayDate;
 
     public string Id { get => _id; set => SetField(ref _id, value); }
     public string Title { get => _title; set => SetField(ref _title, value); }
     public DateOnly? Date { get => _date; set { if (SetField(ref _date, value)) OnPropertyChanged(nameof(DateLabel)); } }
-    public string? Overnight { get => _overnight; set { if (SetField(ref _overnight, value)) { OnPropertyChanged(nameof(OvernightLabel)); OnPropertyChanged(nameof(HasOvernight)); } } }
     public bool IsDragTarget { get => _isDragTarget; set => SetField(ref _isDragTarget, value); }
+
+    public bool IsEditingDay { get => _isEditingDay; private set => SetField(ref _isEditingDay, value); }
+    public string EditDayTitle { get => _editDayTitle; set => SetField(ref _editDayTitle, value); }
+    public DateTime? EditDayDateDt
+    {
+        get => _editDayDate.HasValue ? _editDayDate.Value.ToDateTime(TimeOnly.MinValue) : null;
+        set { _editDayDate = value.HasValue ? DateOnly.FromDateTime(value.Value) : null; OnPropertyChanged(nameof(EditDayDateDt)); }
+    }
+
+    public void BeginDayEdit()
+    {
+        RejectEdit(); // fecha edição de atividade se aberta
+        _editDayTitle = Title;
+        _editDayDate = Date;
+        OnPropertyChanged(nameof(EditDayTitle));
+        OnPropertyChanged(nameof(EditDayDateDt));
+        IsEditingDay = true;
+    }
+
+    public void AcceptDayEdit()
+    {
+        Title = string.IsNullOrWhiteSpace(EditDayTitle) ? Title : EditDayTitle.Trim();
+        Date = _editDayDate;
+        IsEditingDay = false;
+    }
+
+    public void RejectDayEdit() => IsEditingDay = false;
 
     public ItineraryActivityViewModel? EditingActivity
     {
@@ -1350,6 +1381,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
 
     public void BeginEdit(ItineraryActivityViewModel activity)
     {
+        RejectDayEdit(); // fecha edição do dia se aberta
         ClearEditState();
         activity.BeginEdit();
         EditingActivity = activity;
@@ -1385,8 +1417,6 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public double AfternoonLabelX => MorningWidth + 4;
     public double EveningLabelX => EveningStartX + 4;
     public string DateLabel => Date?.ToString("ddd dd/MM", CultureInfo.GetCultureInfo("pt-BR")) ?? "";
-    public string OvernightLabel => string.IsNullOrWhiteSpace(Overnight) ? "" : $"Pernoite: {Overnight}";
-    public bool HasOvernight => !string.IsNullOrWhiteSpace(Overnight);
     public string ActivitiesLabel => Activities.Count == 0 ? "Sem atividades" : $"{Activities.Count} atividade{(Activities.Count == 1 ? "" : "s")}";
 
     public void NotifyLayoutChanged()
@@ -1408,8 +1438,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
         {
             Id = day.Id,
             Title = day.Title,
-            Date = day.Date,
-            Overnight = day.Overnight
+            Date = day.Date
         };
         foreach (var a in day.Activities)
             vm.Activities.Add(ItineraryActivityViewModel.FromActivity(a));
@@ -1421,7 +1450,6 @@ public sealed class ItineraryDayViewModel : NotifyObject
         Id = string.IsNullOrWhiteSpace(Id) ? $"dia-{Guid.NewGuid():N}" : Id,
         Title = Title.Trim(),
         Date = Date,
-        Overnight = string.IsNullOrWhiteSpace(Overnight) ? null : Overnight.Trim(),
         Activities = Activities.Select(a => a.ToActivity()).ToList()
     };
 }
@@ -1432,17 +1460,19 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     private static int _blockHeight = 44;
     private static int _fontSize = 11;
 
+    public static IReadOnlyList<string> TypeOptions { get; } = ["Atividade", "Refeição", "Pernoite"];
+
     public static void Configure(double slotWidth) => _slotWidth = slotWidth;
     public static void ConfigureBlockHeight(int height) => _blockHeight = height;
     public static void ConfigureFontSize(int size) => _fontSize = size;
 
-    private string _id = "", _title = "", _color = "#DBEAFE", _icon = "";
+    private string _id = "", _title = "", _color = "#DBEAFE", _icon = "", _type = "Atividade";
     private int _startSlot, _durationSlots = 2;
     private string? _details, _additionalData;
     private bool _isSelected, _isEditing, _isDimmed;
 
     // Edit buffer
-    private string _editTitle = "", _editIcon = "", _editColor = "#DBEAFE";
+    private string _editTitle = "", _editIcon = "", _editColor = "#DBEAFE", _editType = "Atividade";
     private string? _editDetails, _editAdditionalData;
     private int _editDurationSlots = 2;
 
@@ -1450,6 +1480,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     public string Title { get => _title; set => SetField(ref _title, value); }
     public string Color { get => _color; set => SetField(ref _color, value); }
     public string Icon { get => _icon; set => SetField(ref _icon, value); }
+    public string Type { get => _type; set => SetField(ref _type, value); }
     public int StartSlot { get => _startSlot; set => SetField(ref _startSlot, Math.Max(0, value)); }
     public int DurationSlots { get => _durationSlots; set => SetField(ref _durationSlots, Math.Max(1, value)); }
     public string? Details { get => _details; set => SetField(ref _details, value); }
@@ -1462,6 +1493,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     public string EditTitle { get => _editTitle; set => SetField(ref _editTitle, value); }
     public string EditIcon { get => _editIcon; set => SetField(ref _editIcon, value); }
     public string EditColor { get => _editColor; set { if (SetField(ref _editColor, value)) OnPropertyChanged(nameof(EditTextColor)); } }
+    public string EditType { get => _editType; set => SetField(ref _editType, value); }
     public string? EditDetails { get => _editDetails; set => SetField(ref _editDetails, value); }
     public string? EditAdditionalData { get => _editAdditionalData; set => SetField(ref _editAdditionalData, value); }
     public int EditDurationSlots { get => _editDurationSlots; set => SetField(ref _editDurationSlots, Math.Max(1, value)); }
@@ -1471,6 +1503,8 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     public string DisplayTitle => _isEditing ? _editTitle : _title;
     public string DisplayIcon => _isEditing ? _editIcon : _icon;
     public string DisplayColor => _isEditing ? _editColor : _color;
+    public string DisplayType => _isEditing ? _editType : _type;
+    public bool IsPernoite => DisplayType == "Pernoite";
     public string? DisplayDetails => _isEditing ? _editDetails : _details;
     public bool DisplayHasDetails => !string.IsNullOrWhiteSpace(_isEditing ? _editDetails : _details);
     public string DisplayTextColor => ComputeTextColor(_isEditing ? _editColor : _color);
@@ -1509,8 +1543,10 @@ public sealed class ItineraryActivityViewModel : NotifyObject
         if (propertyName is nameof(EditTitle))    base.OnPropertyChanged(nameof(DisplayTitle));
         if (propertyName is nameof(EditIcon))     base.OnPropertyChanged(nameof(DisplayIcon));
         if (propertyName is nameof(EditColor))    { base.OnPropertyChanged(nameof(EditTextColor)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
+        if (propertyName is nameof(EditType))     { base.OnPropertyChanged(nameof(DisplayType)); base.OnPropertyChanged(nameof(IsPernoite)); }
         if (propertyName is nameof(EditDetails))  { base.OnPropertyChanged(nameof(DisplayDetails)); base.OnPropertyChanged(nameof(DisplayHasDetails)); }
-        if (propertyName is nameof(IsEditing))    { base.OnPropertyChanged(nameof(DisplayTitle)); base.OnPropertyChanged(nameof(DisplayIcon)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayDetails)); base.OnPropertyChanged(nameof(DisplayHasDetails)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
+        if (propertyName is nameof(Type))         { base.OnPropertyChanged(nameof(DisplayType)); base.OnPropertyChanged(nameof(IsPernoite)); }
+        if (propertyName is nameof(IsEditing))    { base.OnPropertyChanged(nameof(DisplayTitle)); base.OnPropertyChanged(nameof(DisplayIcon)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayType)); base.OnPropertyChanged(nameof(IsPernoite)); base.OnPropertyChanged(nameof(DisplayDetails)); base.OnPropertyChanged(nameof(DisplayHasDetails)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
     }
 
     public void BeginEdit()
@@ -1518,6 +1554,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
         EditTitle = Title;
         EditIcon = Icon;
         EditColor = Color;
+        EditType = Type;
         EditDetails = Details;
         EditAdditionalData = AdditionalData;
         EditDurationSlots = DurationSlots;
@@ -1529,6 +1566,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
         Title = EditTitle;
         Icon = EditIcon;
         Color = EditColor;
+        Type = EditType;
         Details = string.IsNullOrWhiteSpace(EditDetails) ? null : EditDetails.Trim();
         AdditionalData = string.IsNullOrWhiteSpace(EditAdditionalData) ? null : EditAdditionalData.Trim();
         DurationSlots = EditDurationSlots;
@@ -1554,6 +1592,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     {
         Id = a.Id,
         Title = a.Title,
+        Type = string.IsNullOrWhiteSpace(a.Type) ? "Atividade" : a.Type,
         Color = string.IsNullOrWhiteSpace(a.Color) ? "#DBEAFE" : a.Color,
         Icon = a.Icon ?? "",
         StartSlot = a.StartSlot,
@@ -1566,6 +1605,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     {
         Id = string.IsNullOrWhiteSpace(Id) ? $"act-{Guid.NewGuid():N}" : Id,
         Title = Title.Trim(),
+        Type = _type,
         Color = _color,
         Icon = _icon,
         StartSlot = StartSlot,

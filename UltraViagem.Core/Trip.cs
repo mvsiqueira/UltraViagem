@@ -28,7 +28,6 @@ public sealed class ItineraryDay
     public string Id { get; set; } = "";
     public DateOnly? Date { get; set; }
     public string Title { get; set; } = "";
-    public string? Overnight { get; set; }
     public List<ItineraryActivity> Activities { get; set; } = [];
 }
 
@@ -36,6 +35,7 @@ public sealed class ItineraryActivity
 {
     public string Id { get; set; } = "";
     public string Title { get; set; } = "";
+    public string Type { get; set; } = "Atividade";
     public string Color { get; set; } = "#DBEAFE";
     public string Icon { get; set; } = "";
     public int StartSlot { get; set; } = 0;

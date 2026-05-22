@@ -58,6 +58,7 @@ public partial class MainWindow : Window
         "LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
     };
     private bool _isSavingExpenses;
+    private bool _typeComboOpen;
 
     public MainWindow()
     {
@@ -2401,6 +2402,37 @@ public partial class MainWindow : Window
 
     // ── Inline edit handlers ────────────────────────────────────────────────
 
+    private void EditTypeCombo_DropDownOpened(object sender, EventArgs e) => _typeComboOpen = true;
+    private void EditTypeCombo_DropDownClosed(object sender, EventArgs e) =>
+        Dispatcher.BeginInvoke(() => _typeComboOpen = false, System.Windows.Threading.DispatcherPriority.Input);
+
+    private void DayLabel_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2) return;
+        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
+        {
+            foreach (var d in _viewModel.Itinerary) { d.RejectEdit(); d.RejectDayEdit(); }
+            _viewModel.ClearAllActivityDims();
+            day.BeginDayEdit();
+            e.Handled = true;
+        }
+    }
+
+    private void AcceptDayEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
+        {
+            day.AcceptDayEdit();
+            SaveItineraryInternal("Dia atualizado.");
+        }
+    }
+
+    private void RejectDayEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
+            day.RejectDayEdit();
+    }
+
     private void AcceptEdit_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
@@ -2524,8 +2556,27 @@ public partial class MainWindow : Window
 
     private void ItineraryPanel_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        if (_typeComboOpen) return;
+
         foreach (var day in _viewModel.Itinerary)
         {
+            if (day.IsEditingDay)
+            {
+                if (e.Key == System.Windows.Input.Key.Enter
+                    && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) == 0)
+                {
+                    day.AcceptDayEdit();
+                    SaveItineraryInternal("Dia atualizado.");
+                    e.Handled = true;
+                }
+                else if (e.Key == System.Windows.Input.Key.Escape)
+                {
+                    day.RejectDayEdit();
+                    e.Handled = true;
+                }
+                return;
+            }
+
             if (!day.HasEditingBlock) continue;
             if (e.Key == System.Windows.Input.Key.Enter
                 && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) == 0)
@@ -2568,7 +2619,9 @@ public partial class MainWindow : Window
 
     private void ItineraryPanel_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        // Não fecha se o clique foi dentro do formulário de edição
+        if (_typeComboOpen) return;
+
+        // Não fecha se o clique foi dentro do formulário de edição (árvore visual)
         var node = e.OriginalSource as System.Windows.DependencyObject;
         while (node is not null)
         {
@@ -2577,8 +2630,20 @@ public partial class MainWindow : Window
             node = System.Windows.Media.VisualTreeHelper.GetParent(node);
         }
 
+        // Popup do ComboBox fica fora da árvore visual — caminha pela árvore lógica
+        node = e.OriginalSource as System.Windows.DependencyObject;
+        while (node is not null)
+        {
+            if (node is FrameworkElement fe2 && fe2.Tag is string tag2 && tag2 == "ItineraryEditForm")
+                return;
+            node = System.Windows.LogicalTreeHelper.GetParent(node);
+        }
+
         foreach (var day in _viewModel.Itinerary)
+        {
             day.RejectEdit();
+            day.RejectDayEdit();
+        }
         _viewModel.ClearAllActivityDims();
 
         // Deselecionar apenas se não clicou em um bloco (o handler do bloco reseleciona)
