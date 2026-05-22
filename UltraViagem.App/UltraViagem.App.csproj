@@ -22,6 +22,8 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\AppIcon\app-icon.ico</ApplicationIcon>
+    <AssemblyName>UltraViagem</AssemblyName>
+    <Product>UltraViagem</Product>
   </PropertyGroup>
 
 </Project>

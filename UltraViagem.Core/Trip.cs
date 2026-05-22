@@ -28,6 +28,7 @@ public sealed class ItineraryDay
     public string Id { get; set; } = "";
     public DateOnly? Date { get; set; }
     public string Title { get; set; } = "";
+    public string Summary { get; set; } = "";
     public List<ItineraryActivity> Activities { get; set; } = [];
 }
 

@@ -4,9 +4,6 @@
 
 - Implementar tela completa de roteiro. Inclui as funcionalidades:
 
-    - ~~edição de dados do dia~~ ✓ (duplo-clique no cabeçalho do dia)
-    - ~~layout do dia~~ ✓ (canvas por slots, drag & resize, editor inline)
-    - ~~pernoite~~ ✓ (tipo "Pernoite" na atividade, bloco pílula)
     - banco de atividades
     - versões de roteiro
 - Implementar o card de roteiro na tela principal.

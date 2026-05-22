@@ -641,6 +641,18 @@ public sealed class AppViewModel : NotifyObject
                 a.IsDimmed = false;
     }
 
+    public void SetDayFocus(ItineraryDayViewModel focusedDay)
+    {
+        foreach (var day in Itinerary)
+            day.IsDimmed = day != focusedDay;
+    }
+
+    public void ClearAllDayDims()
+    {
+        foreach (var day in Itinerary)
+            day.IsDimmed = false;
+    }
+
     public void CopySelectedActivity()
     {
         if (SelectedActivity is null) return;
@@ -1330,23 +1342,28 @@ public sealed class ItineraryDayViewModel : NotifyObject
 
     public static void ConfigureBlockHeight(int height) => _blockHeight = height;
 
-    private string _id = "", _title = "";
+    private string _id = "", _title = "", _summary = "";
     private DateOnly? _date;
-    private bool _isDragTarget;
+    private bool _isDragTarget, _isDimmed;
     private ItineraryActivityViewModel? _editingActivity;
 
     // ── day edit buffer ─────────────────────────────────────────────────────
     private bool _isEditingDay;
     private string _editDayTitle = "";
+    private string _editDaySummary = "";
     private DateOnly? _editDayDate;
 
     public string Id { get => _id; set => SetField(ref _id, value); }
     public string Title { get => _title; set => SetField(ref _title, value); }
+    public string Summary { get => _summary; set { if (SetField(ref _summary, value)) OnPropertyChanged(nameof(HasSummary)); } }
+    public bool HasSummary => !string.IsNullOrWhiteSpace(_summary);
     public DateOnly? Date { get => _date; set { if (SetField(ref _date, value)) OnPropertyChanged(nameof(DateLabel)); } }
     public bool IsDragTarget { get => _isDragTarget; set => SetField(ref _isDragTarget, value); }
+    public bool IsDimmed { get => _isDimmed; set => SetField(ref _isDimmed, value); }
 
-    public bool IsEditingDay { get => _isEditingDay; private set => SetField(ref _isEditingDay, value); }
+    public bool IsEditingDay { get => _isEditingDay; private set { if (SetField(ref _isEditingDay, value)) OnPropertyChanged(nameof(IsInEditMode)); } }
     public string EditDayTitle { get => _editDayTitle; set => SetField(ref _editDayTitle, value); }
+    public string EditDaySummary { get => _editDaySummary; set => SetField(ref _editDaySummary, value); }
     public DateTime? EditDayDateDt
     {
         get => _editDayDate.HasValue ? _editDayDate.Value.ToDateTime(TimeOnly.MinValue) : null;
@@ -1357,8 +1374,10 @@ public sealed class ItineraryDayViewModel : NotifyObject
     {
         RejectEdit(); // fecha edição de atividade se aberta
         _editDayTitle = Title;
+        _editDaySummary = Summary;
         _editDayDate = Date;
         OnPropertyChanged(nameof(EditDayTitle));
+        OnPropertyChanged(nameof(EditDaySummary));
         OnPropertyChanged(nameof(EditDayDateDt));
         IsEditingDay = true;
     }
@@ -1366,6 +1385,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public void AcceptDayEdit()
     {
         Title = string.IsNullOrWhiteSpace(EditDayTitle) ? Title : EditDayTitle.Trim();
+        Summary = EditDaySummary.Trim();
         Date = _editDayDate;
         IsEditingDay = false;
     }
@@ -1375,9 +1395,10 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public ItineraryActivityViewModel? EditingActivity
     {
         get => _editingActivity;
-        private set { if (SetField(ref _editingActivity, value)) OnPropertyChanged(nameof(HasEditingBlock)); }
+        private set { if (SetField(ref _editingActivity, value)) { OnPropertyChanged(nameof(HasEditingBlock)); OnPropertyChanged(nameof(IsInEditMode)); } }
     }
     public bool HasEditingBlock => _editingActivity is not null;
+    public bool IsInEditMode => _isEditingDay || _editingActivity is not null;
 
     public void BeginEdit(ItineraryActivityViewModel activity)
     {
@@ -1438,6 +1459,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
         {
             Id = day.Id,
             Title = day.Title,
+            Summary = day.Summary,
             Date = day.Date
         };
         foreach (var a in day.Activities)
@@ -1449,6 +1471,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
     {
         Id = string.IsNullOrWhiteSpace(Id) ? $"dia-{Guid.NewGuid():N}" : Id,
         Title = Title.Trim(),
+        Summary = Summary.Trim(),
         Date = Date,
         Activities = Activities.Select(a => a.ToActivity()).ToList()
     };
@@ -1505,6 +1528,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     public string DisplayColor => _isEditing ? _editColor : _color;
     public string DisplayType => _isEditing ? _editType : _type;
     public bool IsPernoite => DisplayType == "Pernoite";
+    public bool IsRefeicao => DisplayType == "Refeição";
     public string? DisplayDetails => _isEditing ? _editDetails : _details;
     public bool DisplayHasDetails => !string.IsNullOrWhiteSpace(_isEditing ? _editDetails : _details);
     public string DisplayTextColor => ComputeTextColor(_isEditing ? _editColor : _color);
@@ -1543,10 +1567,10 @@ public sealed class ItineraryActivityViewModel : NotifyObject
         if (propertyName is nameof(EditTitle))    base.OnPropertyChanged(nameof(DisplayTitle));
         if (propertyName is nameof(EditIcon))     base.OnPropertyChanged(nameof(DisplayIcon));
         if (propertyName is nameof(EditColor))    { base.OnPropertyChanged(nameof(EditTextColor)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
-        if (propertyName is nameof(EditType))     { base.OnPropertyChanged(nameof(DisplayType)); base.OnPropertyChanged(nameof(IsPernoite)); }
+        if (propertyName is nameof(EditType))     { base.OnPropertyChanged(nameof(DisplayType)); base.OnPropertyChanged(nameof(IsPernoite)); base.OnPropertyChanged(nameof(IsRefeicao)); }
         if (propertyName is nameof(EditDetails))  { base.OnPropertyChanged(nameof(DisplayDetails)); base.OnPropertyChanged(nameof(DisplayHasDetails)); }
-        if (propertyName is nameof(Type))         { base.OnPropertyChanged(nameof(DisplayType)); base.OnPropertyChanged(nameof(IsPernoite)); }
-        if (propertyName is nameof(IsEditing))    { base.OnPropertyChanged(nameof(DisplayTitle)); base.OnPropertyChanged(nameof(DisplayIcon)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayType)); base.OnPropertyChanged(nameof(IsPernoite)); base.OnPropertyChanged(nameof(DisplayDetails)); base.OnPropertyChanged(nameof(DisplayHasDetails)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
+        if (propertyName is nameof(Type))         { base.OnPropertyChanged(nameof(DisplayType)); base.OnPropertyChanged(nameof(IsPernoite)); base.OnPropertyChanged(nameof(IsRefeicao)); }
+        if (propertyName is nameof(IsEditing))    { base.OnPropertyChanged(nameof(DisplayTitle)); base.OnPropertyChanged(nameof(DisplayIcon)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayType)); base.OnPropertyChanged(nameof(IsPernoite)); base.OnPropertyChanged(nameof(IsRefeicao)); base.OnPropertyChanged(nameof(DisplayDetails)); base.OnPropertyChanged(nameof(DisplayHasDetails)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
     }
 
     public void BeginEdit()

@@ -2374,6 +2374,8 @@ public partial class MainWindow : Window
         if (result != MessageBoxResult.Yes)
             return;
 
+        _viewModel.ClearAllActivityDims();
+        _viewModel.ClearAllDayDims();
         _viewModel.RemoveItineraryDay(day);
         SaveItineraryInternal("Dia removido do roteiro.");
     }
@@ -2402,6 +2404,12 @@ public partial class MainWindow : Window
 
     // ── Inline edit handlers ────────────────────────────────────────────────
 
+    private void DayDatePicker_CalendarOpened(object sender, RoutedEventArgs e)
+    {
+        if (sender is DatePicker dp && dp.SelectedDate.HasValue)
+            dp.DisplayDate = dp.SelectedDate.Value;
+    }
+
     private void EditTypeCombo_DropDownOpened(object sender, EventArgs e) => _typeComboOpen = true;
     private void EditTypeCombo_DropDownClosed(object sender, EventArgs e) =>
         Dispatcher.BeginInvoke(() => _typeComboOpen = false, System.Windows.Threading.DispatcherPriority.Input);
@@ -2411,9 +2419,15 @@ public partial class MainWindow : Window
         if (e.ClickCount != 2) return;
         if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
         {
+            var wasEditing = day.IsEditingDay;
             foreach (var d in _viewModel.Itinerary) { d.RejectEdit(); d.RejectDayEdit(); }
             _viewModel.ClearAllActivityDims();
-            day.BeginDayEdit();
+            _viewModel.ClearAllDayDims();
+            if (!wasEditing)
+            {
+                day.BeginDayEdit();
+                _viewModel.SetDayFocus(day);
+            }
             e.Handled = true;
         }
     }
@@ -2423,6 +2437,7 @@ public partial class MainWindow : Window
         if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
         {
             day.AcceptDayEdit();
+            _viewModel.ClearAllDayDims();
             SaveItineraryInternal("Dia atualizado.");
         }
     }
@@ -2430,7 +2445,10 @@ public partial class MainWindow : Window
     private void RejectDayEdit_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
+        {
             day.RejectDayEdit();
+            _viewModel.ClearAllDayDims();
+        }
     }
 
     private void AcceptEdit_Click(object sender, RoutedEventArgs e)
@@ -2439,6 +2457,7 @@ public partial class MainWindow : Window
         {
             day.AcceptEdit();
             _viewModel.ClearAllActivityDims();
+            _viewModel.ClearAllDayDims();
             SaveItineraryInternal("Atividade atualizada.");
         }
     }
@@ -2449,6 +2468,7 @@ public partial class MainWindow : Window
         {
             day.RejectEdit();
             _viewModel.ClearAllActivityDims();
+            _viewModel.ClearAllDayDims();
         }
     }
 
@@ -2459,6 +2479,7 @@ public partial class MainWindow : Window
             var target = day.EditingActivity;
             day.AcceptEdit();
             _viewModel.ClearAllActivityDims();
+            _viewModel.ClearAllDayDims();
             _viewModel.SelectedActivity = target;
             _viewModel.CopySelectedActivity();
             SaveItineraryInternal("Atividade copiada.");
@@ -2472,6 +2493,7 @@ public partial class MainWindow : Window
             var target = day.EditingActivity;
             day.RejectEdit();
             _viewModel.ClearAllActivityDims();
+            _viewModel.ClearAllDayDims();
             _viewModel.SelectedActivity = target;
             _viewModel.RemoveSelectedActivity();
             SaveItineraryInternal("Atividade removida.");
@@ -2566,12 +2588,14 @@ public partial class MainWindow : Window
                     && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) == 0)
                 {
                     day.AcceptDayEdit();
+                    _viewModel.ClearAllDayDims();
                     SaveItineraryInternal("Dia atualizado.");
                     e.Handled = true;
                 }
                 else if (e.Key == System.Windows.Input.Key.Escape)
                 {
                     day.RejectDayEdit();
+                    _viewModel.ClearAllDayDims();
                     e.Handled = true;
                 }
                 return;
@@ -2583,6 +2607,7 @@ public partial class MainWindow : Window
             {
                 day.AcceptEdit();
                 _viewModel.ClearAllActivityDims();
+                _viewModel.ClearAllDayDims();
                 SaveItineraryInternal("Atividade atualizada.");
                 e.Handled = true;
             }
@@ -2590,6 +2615,7 @@ public partial class MainWindow : Window
             {
                 day.RejectEdit();
                 _viewModel.ClearAllActivityDims();
+                _viewModel.ClearAllDayDims();
                 e.Handled = true;
             }
             return;
@@ -2621,31 +2647,6 @@ public partial class MainWindow : Window
     {
         if (_typeComboOpen) return;
 
-        // Não fecha se o clique foi dentro do formulário de edição (árvore visual)
-        var node = e.OriginalSource as System.Windows.DependencyObject;
-        while (node is not null)
-        {
-            if (node is FrameworkElement fe && fe.Tag is string tag && tag == "ItineraryEditForm")
-                return;
-            node = System.Windows.Media.VisualTreeHelper.GetParent(node);
-        }
-
-        // Popup do ComboBox fica fora da árvore visual — caminha pela árvore lógica
-        node = e.OriginalSource as System.Windows.DependencyObject;
-        while (node is not null)
-        {
-            if (node is FrameworkElement fe2 && fe2.Tag is string tag2 && tag2 == "ItineraryEditForm")
-                return;
-            node = System.Windows.LogicalTreeHelper.GetParent(node);
-        }
-
-        foreach (var day in _viewModel.Itinerary)
-        {
-            day.RejectEdit();
-            day.RejectDayEdit();
-        }
-        _viewModel.ClearAllActivityDims();
-
         // Deselecionar apenas se não clicou em um bloco (o handler do bloco reseleciona)
         if (e.OriginalSource is not FrameworkElement src || src.DataContext is not ItineraryActivityViewModel)
             _viewModel.SelectedActivity = null;
@@ -2662,16 +2663,19 @@ public partial class MainWindow : Window
         if (sender is not FrameworkElement grid || grid.DataContext is not ItineraryActivityViewModel activity)
             return;
 
-        // Double-click: open inline editor
+        // Double-click: toggle inline editor
         if (e.ClickCount == 2)
         {
             var day = _viewModel.FindDayForActivity(activity);
             if (day is not null)
             {
-                // Rejeita qualquer edição aberta e limpa dims anteriores
+                var wasEditing = activity.IsEditing;
                 foreach (var d in _viewModel.Itinerary) d.RejectEdit();
                 _viewModel.ClearAllActivityDims();
+                _viewModel.ClearAllDayDims();
+                if (wasEditing) { e.Handled = true; return; }
                 day.BeginEdit(activity);
+                _viewModel.SetDayFocus(day);
                 // Borrar blocos de TODOS os outros dias
                 foreach (var d in _viewModel.Itinerary)
                     if (d != day)
