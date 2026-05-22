@@ -59,6 +59,11 @@
                     <TextBox x:Name="CurrencyBox" Height="34" Margin="0,4,0,14" />
                 </StackPanel>
 
+                <StackPanel Grid.Row="4" Margin="0,0,12,0">
+                    <TextBlock Text="Blocos por dia (roteiro)" Style="{StaticResource Caption}" />
+                    <TextBox x:Name="SlotsPerDayBox" Height="34" Margin="0,4,0,14" />
+                </StackPanel>
+
                 <StackPanel Grid.Row="4" Grid.Column="1">
                     <TextBlock Text="Casas decimais para cotações" Style="{StaticResource Caption}" />
                     <TextBox x:Name="RateDecimalDigitsBox" Height="34" Margin="0,4,0,14" />

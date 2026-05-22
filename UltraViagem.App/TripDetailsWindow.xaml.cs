@@ -21,6 +21,7 @@ public partial class TripDetailsWindow : Window
         PeopleBox.Text = draft.People.ToString(CultureInfo.InvariantCulture);
         CurrencyBox.Text = draft.BaseCurrency;
         RateDecimalDigitsBox.Text = draft.RateDecimalDigits.ToString(CultureInfo.InvariantCulture);
+        SlotsPerDayBox.Text = draft.ItinerarySlotsPerDay.ToString(CultureInfo.InvariantCulture);
     }
 
     public TripDetailsDraft Draft => _draft;
@@ -36,6 +37,7 @@ public partial class TripDetailsWindow : Window
             People = trip.People,
             BaseCurrency = trip.BaseCurrency,
             RateDecimalDigits = trip.RateDecimalDigits,
+            ItinerarySlotsPerDay = trip.ItinerarySlotsPerDay,
             MyMapsUrl = trip.MyMapsUrl
         };
     }
@@ -70,6 +72,7 @@ public partial class TripDetailsWindow : Window
         _draft.People = people;
         _draft.BaseCurrency = string.IsNullOrWhiteSpace(CurrencyBox.Text) ? "BRL" : CurrencyBox.Text.Trim().ToUpperInvariant();
         _draft.RateDecimalDigits = int.TryParse(RateDecimalDigitsBox.Text, CultureInfo.InvariantCulture, out var rdd) ? Math.Clamp(rdd, 0, 8) : 2;
+        _draft.ItinerarySlotsPerDay = int.TryParse(SlotsPerDayBox.Text, CultureInfo.InvariantCulture, out var spd) ? Math.Clamp(spd, 4, 64) : 16;
 
         DialogResult = true;
     }
@@ -121,5 +124,6 @@ public sealed class TripDetailsDraft
     public int People { get; set; } = 1;
     public string BaseCurrency { get; set; } = "BRL";
     public int RateDecimalDigits { get; set; } = 2;
+    public int ItinerarySlotsPerDay { get; set; } = 16;
     public string? MyMapsUrl { get; set; }
 }

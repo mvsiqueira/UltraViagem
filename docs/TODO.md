@@ -2,22 +2,23 @@
 
 ## Prioridade Alta
 
-- Implementar tela completa de roteiro.
-- Definir estratégia de migração de schema para `trip.json`.
+- Implementar tela completa de roteiro. Inclui as funcionalidades:
+  
+    - edição de dados do dia
+    - layout do dia
+    - pernoite
+    - banco de atividades
+	- versões de roteiro
+- Implementar o card de roteiro na tela principal.
+- Criar exportação para PDF.
 
 ## Prioridade Média
 
 - Importação XLSX da planilha de referência.
-- Criar exportação para PDF.
-- Publicação empacotada do app Windows.
+- Definir estratégia de migração de schema para `trip.json`.
 
 ## Prioridade Baixa
-
-- Associar dicas a dias do roteiro ou lugares.
-- Associar tarefas a roteiro, gasto, lugar ou arquivo.
-- Busca global dentro da viagem.
-- Tema claro/escuro.
-- Criar dados de exemplo dentro de uma pasta de viagens dedicada.
+- Publicação empacotada do app Windows.
 
 ## Futuro Android/Web
 

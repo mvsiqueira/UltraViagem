@@ -2206,8 +2206,9 @@
             <!-- ItineraryPanel -->
             <Grid x:Name="ItineraryPanel" Grid.Row="1" Visibility="Collapsed" Margin="24,22,24,18"
                   SizeChanged="ItineraryTimeline_SizeChanged"
-                  MouseLeftButtonDown="ItineraryPanel_MouseDown"
-                  PreviewKeyDown="ItineraryPanel_PreviewKeyDown">
+                  PreviewMouseLeftButtonDown="ItineraryPanel_MouseDown"
+                  PreviewKeyDown="ItineraryPanel_PreviewKeyDown"
+                  PreviewMouseWheel="ItineraryPanel_PreviewMouseWheel">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -2270,7 +2271,7 @@
                                                 <StackPanel VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding DateLabel}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{StaticResource AccentBrush}" />
-                                                    <TextBlock Text="{Binding Title}" FontSize="12" TextTrimming="CharacterEllipsis"
+                                                    <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                                                Margin="0,2,0,3" />
                                                     <Button Style="{StaticResource CardActionButton}" HorizontalAlignment="Left"
                                                             ToolTip="Remover dia" DataContext="{Binding}"
@@ -2284,11 +2285,11 @@
                                             <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled"
                                                           VerticalScrollBarVisibility="Disabled"
                                                           Margin="6,0">
-                                                <Canvas Width="{Binding CanvasWidth}" Height="52">
+                                                <Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}">
                                                     <!-- Activities -->
                                                     <ItemsControl ItemsSource="{Binding Activities}"
                                                                   Canvas.Left="0" Canvas.Top="0"
-                                                                  Width="{Binding CanvasWidth}" Height="52">
+                                                                  Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}">
                                                         <ItemsControl.ItemsPanel>
                                                             <ItemsPanelTemplate>
                                                                 <Canvas />
@@ -2302,7 +2303,7 @@
                                                         </ItemsControl.ItemContainerStyle>
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Grid Width="{Binding BlockWidth}" Height="44"
+                                                                <Grid Width="{Binding BlockWidth}" Height="{Binding BlockHeight}"
                                                                       MouseLeftButtonDown="ActivityBlock_MouseDown"
                                                                       MouseMove="ActivityBlock_MouseMove"
                                                                       MouseLeftButtonUp="ActivityBlock_MouseUp">
@@ -2317,28 +2318,28 @@
                                                                         </Style>
                                                                     </Grid.Style>
                                                                     <Border CornerRadius="5"
-                                                                            Background="{Binding Color, Converter={StaticResource StringToBrush}}">
+                                                                            Background="{Binding DisplayColor, Converter={StaticResource StringToBrush}}">
                                                                         <StackPanel VerticalAlignment="Center" Margin="5,2">
                                                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                                                <TextBlock Text="{Binding Icon}"
+                                                                                <TextBlock Text="{Binding DisplayIcon}"
                                                                                            FontFamily="Segoe UI Emoji"
-                                                                                           FontSize="12" Margin="0,0,3,0" VerticalAlignment="Center"
-                                                                                           Foreground="{Binding TextColor, Converter={StaticResource StringToBrush}}" />
-                                                                                <TextBlock Text="{Binding Title}"
-                                                                                           FontSize="11" FontWeight="SemiBold"
-                                                                                           Foreground="{Binding TextColor, Converter={StaticResource StringToBrush}}"
+                                                                                           FontSize="{Binding IconFontSize}" Margin="0,0,3,0" VerticalAlignment="Center"
+                                                                                           Foreground="{Binding DisplayTextColor, Converter={StaticResource StringToBrush}}" />
+                                                                                <TextBlock Text="{Binding DisplayTitle}"
+                                                                                           FontSize="{Binding FontSize}" FontWeight="SemiBold"
+                                                                                           Foreground="{Binding DisplayTextColor, Converter={StaticResource StringToBrush}}"
                                                                                            VerticalAlignment="Center"
                                                                                            TextTrimming="CharacterEllipsis" />
                                                                             </StackPanel>
-                                                                            <TextBlock Text="{Binding Details}"
-                                                                                       FontSize="9" HorizontalAlignment="Center"
-                                                                                       Foreground="{Binding TextColor, Converter={StaticResource StringToBrush}}"
+                                                                            <TextBlock Text="{Binding DisplayDetails}"
+                                                                                       FontSize="{Binding DetailsFontSize}" HorizontalAlignment="Center"
+                                                                                       Foreground="{Binding DisplayTextColor, Converter={StaticResource StringToBrush}}"
                                                                                        Opacity="0.78" TextTrimming="CharacterEllipsis">
                                                                                 <TextBlock.Style>
                                                                                     <Style TargetType="TextBlock">
                                                                                         <Setter Property="Visibility" Value="Collapsed" />
                                                                                         <Style.Triggers>
-                                                                                            <DataTrigger Binding="{Binding HasDetails}" Value="True">
+                                                                                            <DataTrigger Binding="{Binding DisplayHasDetails}" Value="True">
                                                                                                 <Setter Property="Visibility" Value="Visible" />
                                                                                             </DataTrigger>
                                                                                         </Style.Triggers>
@@ -2368,7 +2369,7 @@
                                             </ScrollViewer>
                                             </Grid>
                                             <!-- Inline edit form (Row 1) -->
-                                            <Border Grid.Row="1" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0" Padding="14,12">
+                                            <Border Grid.Row="1" Tag="ItineraryEditForm" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0" Padding="14,12">
                                                 <Border.Style>
                                                     <Style TargetType="Border">
                                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -2400,16 +2401,13 @@
                                                         <TextBlock Text="Duração (blocos)" Style="{StaticResource Caption}" />
                                                         <TextBox Text="{Binding EditingActivity.EditDurationSlots, UpdateSourceTrigger=PropertyChanged}" Height="32" />
                                                     </StackPanel>
-                                                    <!-- Accept / Reject / Copy / Delete (Row 0, Col 2) -->
+                                                    <!-- Accept / Reject / Delete (Row 0, Col 2) -->
                                                     <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,8">
                                                         <Button Style="{StaticResource CardActionButton}" ToolTip="Aceitar (Enter)" Click="AcceptEdit_Click" Margin="0,0,2,0">
                                                             <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
                                                         </Button>
-                                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Rejeitar (Esc)" Click="RejectEdit_Click" Margin="0,0,6,0">
+                                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Rejeitar (Esc)" Click="RejectEdit_Click" Margin="0,0,2,0">
                                                             <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
-                                                        </Button>
-                                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Copiar atividade" Click="CopyEditActivity_Click" Margin="0,0,2,0">
-                                                            <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
                                                         </Button>
                                                         <Button Style="{StaticResource CardActionButton}" ToolTip="Excluir atividade" Click="DeleteEditActivity_Click">
                                                             <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="11" Opacity="0.72" />
@@ -2419,18 +2417,31 @@
                                                     <!-- Row 1: Detalhes + Dados adicionais -->
                                                     <StackPanel Grid.Row="1" Margin="0,0,10,8">
                                                         <TextBlock Text="Detalhes" Style="{StaticResource Caption}" />
-                                                        <TextBox Text="{Binding EditingActivity.EditDetails, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+                                                        <TextBox Text="{Binding EditingActivity.EditDetails, UpdateSourceTrigger=PropertyChanged}"
+                                                                 Height="64" TextWrapping="Wrap"
+                                                                 VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                                                                 PreviewKeyDown="MultilineEditField_PreviewKeyDown" />
                                                     </StackPanel>
                                                     <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,0,8">
                                                         <TextBlock Text="Dados adicionais" Style="{StaticResource Caption}" />
-                                                        <TextBox Text="{Binding EditingActivity.EditAdditionalData, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+                                                        <TextBox Text="{Binding EditingActivity.EditAdditionalData, UpdateSourceTrigger=PropertyChanged}"
+                                                                 Height="64" TextWrapping="Wrap"
+                                                                 VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                                                                 PreviewKeyDown="MultilineEditField_PreviewKeyDown" />
                                                     </StackPanel>
 
-                                                    <!-- Row 2: Ícone + Cor -->
-                                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Grid.ColumnSpan="3">
-                                                        <StackPanel Margin="0,0,20,0">
-                                                            <TextBlock Text="Ícone" Style="{StaticResource Caption}" Margin="0,0,0,4" />
-                                                            <WrapPanel>
+                                                    <!-- Row 2: Ícone + Cor (esquerda) | Copiar Atividade (direita) -->
+                                                    <DockPanel Grid.Row="2" Grid.ColumnSpan="3">
+                                                        <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                Style="{StaticResource SecondaryButton}" Click="CopyEditActivity_Click">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                                                <TextBlock Text="Copiar Atividade" VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="Ícone" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                            <WrapPanel VerticalAlignment="Center">
                                                                 <Button Tag="" Style="{StaticResource IconPickerButton}" ToolTip="Nenhum" Click="EditActivityIcon_Click">
                                                                     <TextBlock Text="✕" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" />
                                                                 </Button>
@@ -2446,22 +2457,18 @@
                                                                 <Button Tag="🎫" Style="{StaticResource IconPickerButton}" ToolTip="Ingresso" Click="EditActivityIcon_Click"><TextBlock Text="🎫" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
                                                                 <Button Tag="⛺" Style="{StaticResource IconPickerButton}" ToolTip="Acampamento" Click="EditActivityIcon_Click"><TextBlock Text="⛺" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
                                                                 <Button Tag="🥤" Style="{StaticResource IconPickerButton}" ToolTip="Lanche" Click="EditActivityIcon_Click"><TextBlock Text="🥤" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
-                                                                <Button Tag="🏔" Style="{StaticResource IconPickerButton}" ToolTip="Montanha" Click="EditActivityIcon_Click"><TextBlock Text="🏔" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
                                                                 <Button Tag="🛒" Style="{StaticResource IconPickerButton}" ToolTip="Compras" Click="EditActivityIcon_Click"><TextBlock Text="🛒" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
                                                                 <Button Tag="💩" Style="{StaticResource IconPickerButton}" ToolTip="Cocô" Click="EditActivityIcon_Click"><TextBlock Text="💩" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
-                                                                <Button Tag="🌙" Style="{StaticResource IconPickerButton}" ToolTip="Lua" Click="EditActivityIcon_Click"><TextBlock Text="🌙" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
                                                             </WrapPanel>
-                                                        </StackPanel>
-                                                        <StackPanel>
-                                                            <TextBlock Text="Cor" Style="{StaticResource Caption}" Margin="0,0,0,4" />
-                                                            <Button Width="34" Height="34" MinHeight="34"
+                                                            <TextBlock Text="Cor" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="16,0,8,0" />
+                                                            <Button Width="34" Height="34" MinHeight="34" VerticalAlignment="Center"
                                                                     Background="{Binding EditingActivity.EditColor, Converter={StaticResource StringToBrush}}"
                                                                     BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1"
                                                                     Style="{StaticResource ButtonBase}"
                                                                     Click="EditActivityColor_Click"
                                                                     ToolTip="Escolher cor" />
                                                         </StackPanel>
-                                                    </StackPanel>
+                                                    </DockPanel>
                                                 </Grid>
                                             </Border>
                                         </Grid>

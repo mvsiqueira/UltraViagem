@@ -8,6 +8,29 @@ using System.Windows.Media.Imaging;
 
 namespace UltraViagem.App;
 
+public sealed class StringToBrushConverter : System.Windows.Data.IValueConverter
+{
+    private static readonly System.Windows.Media.BrushConverter BrushConverter = new();
+
+    public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+    {
+        if (value is string colorString && !string.IsNullOrWhiteSpace(colorString))
+        {
+            try
+            {
+                var brush = (System.Windows.Media.Brush)BrushConverter.ConvertFromString(colorString)!;
+                brush.Freeze();
+                return brush;
+            }
+            catch (FormatException) { }
+        }
+        return System.Windows.Media.Brushes.LightGray;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 public sealed class AttachmentIconConverter : IMultiValueConverter
 {
     public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture)

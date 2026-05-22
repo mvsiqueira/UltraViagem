@@ -184,6 +184,74 @@ Na visão geral:
 
 A edição do mapa, rotas, camadas e pontos é feita no próprio Google My Maps. O app não edita o conteúdo do mapa nem exporta KML.
 
+## Roteiro
+
+O roteiro (itinerário) é uma linha do tempo visual baseada em blocos por dia. Cada viagem tem um número configurável de blocos por dia (`ItinerarySlotsPerDay`, padrão 16), editável nos Dados da Viagem.
+
+### Dias
+
+- Cada dia tem um título livre, uma data opcional e um indicador de pernoite.
+- O botão `+ Dia` adiciona um novo dia ao final.
+- Cada dia exibe um botão de exclusão; a exclusão pede confirmação.
+
+### Atividades
+
+Cada atividade tem:
+
+- **Título**;
+- **Tipo** (selecionado de um cadastro global de tipos — veja abaixo);
+- **Slot de início** (`StartSlot`): posição horizontal no canvas do dia;
+- **Duração em slots** (`DurationSlots`): largura do bloco;
+- **Descrição** (opcional);
+- **Distância** (opcional).
+
+### Canvas do dia
+
+O canvas de cada dia representa visualmente todos os slots do dia em uma faixa horizontal. Três bandas decorativas mostram os períodos do dia:
+
+- **Manhã** (slots 0 a 5): fundo azul-claro;
+- **Tarde** (slots 6 a 11): fundo laranja-claro;
+- **Noite** (slots 12 em diante): fundo roxo-claro.
+
+As atividades são blocos coloridos absolutos sobre o canvas. A cor de fundo e a cor do texto de cada bloco vêm do tipo da atividade.
+
+### Drag e redimensionamento
+
+- **Mover**: clicar no centro do bloco e arrastar altera o `StartSlot`; o bloco encaixa no slot mais próximo durante o arraste.
+- **Redimensionar**: clicar e arrastar na borda direita do bloco (área de ~10 px) altera o `DurationSlots`.
+- Os valores são clamped para não ultrapassar os limites do dia.
+- Ao soltar o botão do mouse, o roteiro é salvo automaticamente.
+
+### Seleção e editor inline
+
+Clicar em uma atividade a seleciona (destaque azul na borda). Um painel de edição aparece abaixo do canvas da respectiva linha, mostrando:
+
+- campo `Título`;
+- combobox `Tipo` com os tipos globais cadastrados;
+- campo `Duração (blocos)`;
+- botão excluir.
+
+Clicar fora de qualquer atividade (área vazia do canvas) desmarca a seleção.
+
+### Zoom
+
+Os botões `−` e `+` no cabeçalho do painel alteram a largura em pixels de cada slot (`ItinerarySlotWidth`) em passos de 8 px. O valor é salvo em `config.json` e restaurado ao abrir o mesmo repositório.
+
+### Tipos de atividade
+
+O app mantém um cadastro global de tipos de atividade em `config.json` (`ActivityTypes`). Cada tipo tem:
+
+- `Id`, `Name`;
+- `Color` (fundo do bloco, hex);
+- `TextColor` (texto do bloco, hex).
+
+Os 10 tipos padrão são: Vôo, Transfer, Carro, Trilha, Passeio, Barco, Almoço, Jantar, Descanso e Hospedagem.
+
+### Salvamento
+
+- O botão `Salvar Roteiro` salva explicitamente.
+- O roteiro também é salvo automaticamente ao soltar o mouse após mover ou redimensionar uma atividade.
+
 ## Orçamento
 
 Gastos ficam em `expenses`. A visão geral calcula apenas itens ativos:

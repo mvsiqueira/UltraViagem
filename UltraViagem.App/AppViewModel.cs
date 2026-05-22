@@ -243,6 +243,37 @@ public sealed class AppViewModel : NotifyObject
 
     public int ItinerarySlotsPerDay => _trip?.ItinerarySlotsPerDay ?? 16;
 
+    public int ItineraryBlockHeight
+    {
+        get => _trip?.ItineraryBlockHeight ?? 44;
+        set
+        {
+            if (_trip is null) return;
+            var clamped = Math.Clamp(value, 20, 120);
+            if (_trip.ItineraryBlockHeight == clamped) return;
+            _trip.ItineraryBlockHeight = clamped;
+            ItineraryDayViewModel.ConfigureBlockHeight(clamped);
+            ItineraryActivityViewModel.ConfigureBlockHeight(clamped);
+            foreach (var day in Itinerary) day.NotifyLayoutChanged();
+            OnPropertyChanged(nameof(ItineraryBlockHeight));
+        }
+    }
+
+    public int ItineraryFontSize
+    {
+        get => _trip?.ItineraryFontSize ?? 11;
+        set
+        {
+            if (_trip is null) return;
+            var clamped = Math.Clamp(value, 7, 22);
+            if (_trip.ItineraryFontSize == clamped) return;
+            _trip.ItineraryFontSize = clamped;
+            ItineraryActivityViewModel.ConfigureFontSize(clamped);
+            foreach (var day in Itinerary) day.NotifyLayoutChanged();
+            OnPropertyChanged(nameof(ItineraryFontSize));
+        }
+    }
+
     public Trip? CurrentTrip => _trip;
     public event EventHandler? TasksChanged;
     public event EventHandler? TipsChanged;
@@ -289,8 +320,13 @@ public sealed class AppViewModel : NotifyObject
         IsCurrentTripFavorite = false;
 
         var slotsPerDay = trip?.ItinerarySlotsPerDay ?? 16;
+        var blockHeight = trip?.ItineraryBlockHeight ?? 44;
+        var fontSize = trip?.ItineraryFontSize ?? 11;
         ItineraryDayViewModel.Configure(slotsPerDay, _itinerarySlotWidth);
+        ItineraryDayViewModel.ConfigureBlockHeight(blockHeight);
         ItineraryActivityViewModel.Configure(_itinerarySlotWidth);
+        ItineraryActivityViewModel.ConfigureBlockHeight(blockHeight);
+        ItineraryActivityViewModel.ConfigureFontSize(fontSize);
         Itinerary.ReplaceWith(trip?.Itinerary.Select(ItineraryDayViewModel.FromDay) ?? []);
         AllTasks.ReplaceWith(trip?.Tasks.Select(TaskEditorViewModel.FromTask) ?? []);
         Tips.ReplaceWith(trip?.Links.Select(LinkEditorViewModel.FromLink) ?? []);
@@ -598,6 +634,13 @@ public sealed class AppViewModel : NotifyObject
     public ItineraryDayViewModel? FindDayForActivity(ItineraryActivityViewModel activity)
         => Itinerary.FirstOrDefault(d => d.Activities.Contains(activity));
 
+    public void ClearAllActivityDims()
+    {
+        foreach (var day in Itinerary)
+            foreach (var a in day.Activities)
+                a.IsDimmed = false;
+    }
+
     public void CopySelectedActivity()
     {
         if (SelectedActivity is null) return;
@@ -611,6 +654,8 @@ public sealed class AppViewModel : NotifyObject
             Title = source.Title,
             Color = source.Color,
             Icon = source.Icon,
+            Details = source.Details,
+            AdditionalData = source.AdditionalData,
             DurationSlots = source.DurationSlots,
             StartSlot = Math.Clamp(source.StartSlot + source.DurationSlots, 0, ItinerarySlotsPerDay - source.DurationSlots)
         };
@@ -1274,12 +1319,15 @@ public sealed class ItineraryDayViewModel : NotifyObject
 {
     private static int _slotsPerDay = 16;
     private static double _slotWidth = 44;
+    private static int _blockHeight = 44;
 
     public static void Configure(int slotsPerDay, double slotWidth)
     {
         _slotsPerDay = slotsPerDay;
         _slotWidth = slotWidth;
     }
+
+    public static void ConfigureBlockHeight(int height) => _blockHeight = height;
 
     private string _id = "", _title = "";
     private DateOnly? _date;
@@ -1329,6 +1377,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public ObservableCollection<ItineraryActivityViewModel> Activities { get; } = [];
 
     public double CanvasWidth => _slotsPerDay * _slotWidth;
+    public int CanvasHeight => _blockHeight + 8;
     public double MorningWidth => (_slotsPerDay / 3) * _slotWidth;
     public double AfternoonWidth => (_slotsPerDay / 3) * _slotWidth;
     public double EveningStartX => MorningWidth + AfternoonWidth;
@@ -1343,6 +1392,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public void NotifyLayoutChanged()
     {
         OnPropertyChanged(nameof(CanvasWidth));
+        OnPropertyChanged(nameof(CanvasHeight));
         OnPropertyChanged(nameof(MorningWidth));
         OnPropertyChanged(nameof(AfternoonWidth));
         OnPropertyChanged(nameof(EveningStartX));
@@ -1379,8 +1429,12 @@ public sealed class ItineraryDayViewModel : NotifyObject
 public sealed class ItineraryActivityViewModel : NotifyObject
 {
     private static double _slotWidth = 44;
+    private static int _blockHeight = 44;
+    private static int _fontSize = 11;
 
     public static void Configure(double slotWidth) => _slotWidth = slotWidth;
+    public static void ConfigureBlockHeight(int height) => _blockHeight = height;
+    public static void ConfigureFontSize(int size) => _fontSize = size;
 
     private string _id = "", _title = "", _color = "#DBEAFE", _icon = "";
     private int _startSlot, _durationSlots = 2;
@@ -1413,8 +1467,20 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     public int EditDurationSlots { get => _editDurationSlots; set => SetField(ref _editDurationSlots, Math.Max(1, value)); }
     public string EditTextColor => ComputeTextColor(_editColor);
 
+    // Display properties: reflect edit buffer while editing, real values otherwise
+    public string DisplayTitle => _isEditing ? _editTitle : _title;
+    public string DisplayIcon => _isEditing ? _editIcon : _icon;
+    public string DisplayColor => _isEditing ? _editColor : _color;
+    public string? DisplayDetails => _isEditing ? _editDetails : _details;
+    public bool DisplayHasDetails => !string.IsNullOrWhiteSpace(_isEditing ? _editDetails : _details);
+    public string DisplayTextColor => ComputeTextColor(_isEditing ? _editColor : _color);
+
     public double CanvasLeft => StartSlot * _slotWidth;
     public double BlockWidth => Math.Max(DurationSlots * _slotWidth - 2, 10);
+    public int BlockHeight => _blockHeight;
+    public int FontSize => _fontSize;
+    public int IconFontSize => _fontSize + 1;
+    public int DetailsFontSize => Math.Max(_fontSize - 2, 7);
     public string TextColor => ComputeTextColor(_color);
 
     private static string ComputeTextColor(string? hex)
@@ -1434,10 +1500,17 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     protected override void OnPropertyChanged(string propertyName)
     {
         base.OnPropertyChanged(propertyName);
-        if (propertyName is nameof(StartSlot)) base.OnPropertyChanged(nameof(CanvasLeft));
+        if (propertyName is nameof(StartSlot))    base.OnPropertyChanged(nameof(CanvasLeft));
         if (propertyName is nameof(DurationSlots)) base.OnPropertyChanged(nameof(BlockWidth));
-        if (propertyName is nameof(Color)) base.OnPropertyChanged(nameof(TextColor));
-        if (propertyName is nameof(Details)) base.OnPropertyChanged(nameof(HasDetails));
+        if (propertyName is nameof(Color))        { base.OnPropertyChanged(nameof(TextColor)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
+        if (propertyName is nameof(Title))        base.OnPropertyChanged(nameof(DisplayTitle));
+        if (propertyName is nameof(Icon))         base.OnPropertyChanged(nameof(DisplayIcon));
+        if (propertyName is nameof(Details))      { base.OnPropertyChanged(nameof(HasDetails)); base.OnPropertyChanged(nameof(DisplayDetails)); base.OnPropertyChanged(nameof(DisplayHasDetails)); }
+        if (propertyName is nameof(EditTitle))    base.OnPropertyChanged(nameof(DisplayTitle));
+        if (propertyName is nameof(EditIcon))     base.OnPropertyChanged(nameof(DisplayIcon));
+        if (propertyName is nameof(EditColor))    { base.OnPropertyChanged(nameof(EditTextColor)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
+        if (propertyName is nameof(EditDetails))  { base.OnPropertyChanged(nameof(DisplayDetails)); base.OnPropertyChanged(nameof(DisplayHasDetails)); }
+        if (propertyName is nameof(IsEditing))    { base.OnPropertyChanged(nameof(DisplayTitle)); base.OnPropertyChanged(nameof(DisplayIcon)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayDetails)); base.OnPropertyChanged(nameof(DisplayHasDetails)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
     }
 
     public void BeginEdit()
@@ -1471,6 +1544,10 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     {
         OnPropertyChanged(nameof(CanvasLeft));
         OnPropertyChanged(nameof(BlockWidth));
+        OnPropertyChanged(nameof(BlockHeight));
+        OnPropertyChanged(nameof(FontSize));
+        OnPropertyChanged(nameof(IconFontSize));
+        OnPropertyChanged(nameof(DetailsFontSize));
     }
 
     public static ItineraryActivityViewModel FromActivity(ItineraryActivity a) => new()

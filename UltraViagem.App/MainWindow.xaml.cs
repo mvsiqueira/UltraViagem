@@ -2406,6 +2406,7 @@ public partial class MainWindow : Window
         if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
         {
             day.AcceptEdit();
+            _viewModel.ClearAllActivityDims();
             SaveItineraryInternal("Atividade atualizada.");
         }
     }
@@ -2413,7 +2414,10 @@ public partial class MainWindow : Window
     private void RejectEdit_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
+        {
             day.RejectEdit();
+            _viewModel.ClearAllActivityDims();
+        }
     }
 
     private void CopyEditActivity_Click(object sender, RoutedEventArgs e)
@@ -2422,6 +2426,7 @@ public partial class MainWindow : Window
         {
             var target = day.EditingActivity;
             day.AcceptEdit();
+            _viewModel.ClearAllActivityDims();
             _viewModel.SelectedActivity = target;
             _viewModel.CopySelectedActivity();
             SaveItineraryInternal("Atividade copiada.");
@@ -2434,6 +2439,7 @@ public partial class MainWindow : Window
         {
             var target = day.EditingActivity;
             day.RejectEdit();
+            _viewModel.ClearAllActivityDims();
             _viewModel.SelectedActivity = target;
             _viewModel.RemoveSelectedActivity();
             SaveItineraryInternal("Atividade removida.");
@@ -2447,11 +2453,27 @@ public partial class MainWindow : Window
             day.EditingActivity.EditIcon = icon;
     }
 
+    private static readonly int[] _activityPaletteOle =
+    [
+        HexToOle("#DBEAFE"), HexToOle("#E0F2FE"), HexToOle("#DCFCE7"), HexToOle("#FEF3C7"),
+        HexToOle("#FCE7F3"), HexToOle("#FEE2E2"), HexToOle("#EDE9FE"), HexToOle("#CFFAFE"),
+        HexToOle("#D1FAE5"), HexToOle("#FEF9C3"), HexToOle("#E2E8F0"), HexToOle("#FFE4E6"),
+    ];
+
+    private static int HexToOle(string hex)
+    {
+        var h = hex.TrimStart('#');
+        int r = Convert.ToInt32(h[0..2], 16);
+        int g = Convert.ToInt32(h[2..4], 16);
+        int b = Convert.ToInt32(h[4..6], 16);
+        return System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.FromArgb(r, g, b));
+    }
+
     private void EditActivityColor_Click(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
         {
-            var dlg = new System.Windows.Forms.ColorDialog { FullOpen = true };
+            var dlg = new System.Windows.Forms.ColorDialog { FullOpen = true, CustomColors = _activityPaletteOle };
             var hex = (day.EditingActivity.EditColor ?? "#DBEAFE").TrimStart('#');
             if (hex.Length == 6
                 && int.TryParse(hex[0..2], System.Globalization.NumberStyles.HexNumber, null, out int r)
@@ -2463,20 +2485,60 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ItineraryPanel_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        var mods = System.Windows.Input.Keyboard.Modifiers;
+        var ctrl  = (mods & System.Windows.Input.ModifierKeys.Control) != 0;
+        var shift = (mods & System.Windows.Input.ModifierKeys.Shift)   != 0;
+        var step  = e.Delta > 0 ? 1 : -1;
+
+        if (ctrl && !shift)
+        {
+            _viewModel.ItineraryBlockHeight += step * 4;
+            SaveItineraryInternal($"Altura dos blocos: {_viewModel.ItineraryBlockHeight}px");
+            e.Handled = true;
+        }
+        else if (shift && !ctrl)
+        {
+            _viewModel.ItineraryFontSize += step;
+            SaveItineraryInternal($"Tamanho da fonte: {_viewModel.ItineraryFontSize}px");
+            e.Handled = true;
+        }
+    }
+
+    private void MultilineEditField_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter
+            && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) != 0)
+        {
+            if (sender is System.Windows.Controls.TextBox tb)
+            {
+                int caret = tb.CaretIndex;
+                tb.Text = tb.Text.Insert(caret, "\n");
+                tb.CaretIndex = caret + 1;
+            }
+            e.Handled = true; // não borbulha para o painel
+        }
+        // Enter simples: não marca como handled → borbulha para ItineraryPanel_PreviewKeyDown
+    }
+
     private void ItineraryPanel_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         foreach (var day in _viewModel.Itinerary)
         {
             if (!day.HasEditingBlock) continue;
-            if (e.Key == System.Windows.Input.Key.Enter)
+            if (e.Key == System.Windows.Input.Key.Enter
+                && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) == 0)
             {
                 day.AcceptEdit();
+                _viewModel.ClearAllActivityDims();
                 SaveItineraryInternal("Atividade atualizada.");
                 e.Handled = true;
             }
             else if (e.Key == System.Windows.Input.Key.Escape)
             {
                 day.RejectEdit();
+                _viewModel.ClearAllActivityDims();
                 e.Handled = true;
             }
             return;
@@ -2506,15 +2568,22 @@ public partial class MainWindow : Window
 
     private void ItineraryPanel_MouseDown(object sender, MouseButtonEventArgs e)
     {
-        // Reject any open edit when clicking outside a block or edit form
-        if (e.OriginalSource is FrameworkElement fe)
+        // Não fecha se o clique foi dentro do formulário de edição
+        var node = e.OriginalSource as System.Windows.DependencyObject;
+        while (node is not null)
         {
-            if (fe.DataContext is ItineraryActivityViewModel || fe.DataContext is ItineraryDayViewModel)
+            if (node is FrameworkElement fe && fe.Tag is string tag && tag == "ItineraryEditForm")
                 return;
+            node = System.Windows.Media.VisualTreeHelper.GetParent(node);
         }
+
         foreach (var day in _viewModel.Itinerary)
             day.RejectEdit();
-        _viewModel.SelectedActivity = null;
+        _viewModel.ClearAllActivityDims();
+
+        // Deselecionar apenas se não clicou em um bloco (o handler do bloco reseleciona)
+        if (e.OriginalSource is not FrameworkElement src || src.DataContext is not ItineraryActivityViewModel)
+            _viewModel.SelectedActivity = null;
     }
 
     private void DayCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -2534,10 +2603,15 @@ public partial class MainWindow : Window
             var day = _viewModel.FindDayForActivity(activity);
             if (day is not null)
             {
-                // Reject any other open edit first
-                foreach (var d in _viewModel.Itinerary)
-                    if (d != day) d.RejectEdit();
+                // Rejeita qualquer edição aberta e limpa dims anteriores
+                foreach (var d in _viewModel.Itinerary) d.RejectEdit();
+                _viewModel.ClearAllActivityDims();
                 day.BeginEdit(activity);
+                // Borrar blocos de TODOS os outros dias
+                foreach (var d in _viewModel.Itinerary)
+                    if (d != day)
+                        foreach (var a in d.Activities)
+                            a.IsDimmed = true;
                 e.Handled = true;
                 return;
             }

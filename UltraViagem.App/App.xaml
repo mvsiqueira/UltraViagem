@@ -1,6 +1,7 @@
 <Application x:Class="UltraViagem.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:UltraViagem.App"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <SolidColorBrush x:Key="PageBackground" Color="#FAFAF7" />
@@ -17,6 +18,7 @@
         <SolidColorBrush x:Key="InputBackground" Color="#FBFAF6" />
 
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <local:StringToBrushConverter x:Key="StringToBrush" />
 
         <Style x:Key="FocusVisualRing">
             <Setter Property="Control.Template">

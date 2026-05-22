@@ -12,6 +12,8 @@ public sealed class Trip
     public int RateDecimalDigits { get; set; } = 2;
     public string? MyMapsUrl { get; set; }
     public int ItinerarySlotsPerDay { get; set; } = 16;
+    public int ItineraryBlockHeight { get; set; } = 44;
+    public int ItineraryFontSize { get; set; } = 11;
     public List<ItineraryDay> Itinerary { get; set; } = [];
     public List<TaskItem> Tasks { get; set; } = [];
     public List<PlaceItem> Places { get; set; } = [];
