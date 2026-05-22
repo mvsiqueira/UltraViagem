@@ -41,6 +41,16 @@ public partial class MainWindow : Window
     private bool _isSavingTips;
     private bool _isSavingAttachments;
 
+    // Itinerary drag state
+    private ItineraryActivityViewModel? _draggingActivity;
+    private ItineraryActivityViewModel? _resizingActivity;
+    private ItineraryDayViewModel? _activitySourceDay;
+    private ItineraryDayViewModel? _activityDragTargetDay;
+    private System.Windows.Point _activityDragOriginPoint;
+    private int _activityOriginSlot;
+    private int _activityOriginDuration;
+    private bool _activityDragMoved;
+
     private static readonly HashSet<string> _windowsReservedNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "CON", "PRN", "AUX", "NUL",
@@ -59,6 +69,7 @@ public partial class MainWindow : Window
         _viewModel.TipsChanged += ViewModel_TipsChanged;
         _viewModel.AttachmentsChanged += ViewModel_AttachmentsChanged;
         _viewModel.ExpensesChanged += ViewModel_ExpensesChanged;
+        _viewModel.ItineraryChanged += ViewModel_ItineraryChanged;
         _expensesSaveTimer.Tick += ExpensesSaveTimer_Tick;
         Closing += MainWindow_Closing;
 
@@ -486,6 +497,11 @@ public partial class MainWindow : Window
     private void ShowBudget_Click(object sender, RoutedEventArgs e)
     {
         ShowBudget();
+    }
+
+    private void ShowItinerary_Click(object sender, RoutedEventArgs e)
+    {
+        ShowItinerary();
     }
 
     private void ExpenseGroupsList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -2142,6 +2158,7 @@ public partial class MainWindow : Window
         var selectedTripId = config.RecentTrips.FirstOrDefault(tripIds.Contains) ?? tripIds.FirstOrDefault();
         var selectionItems = BuildTripSelectionItems(tripIds, config);
 
+
         _isLoadingTrip = true;
         _viewModel.SetTripsRoot(rootPath, tripIds, selectionItems, selectedTripId);
         _isLoadingTrip = false;
@@ -2189,6 +2206,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Visible;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        ItineraryPanel.Visibility = Visibility.Collapsed;
         BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
@@ -2198,10 +2216,27 @@ public partial class MainWindow : Window
         RefreshMapBrowsers();
     }
 
+    private void ShowItinerary()
+    {
+        OverviewPanel.Visibility = Visibility.Collapsed;
+        TripDetailsPanel.Visibility = Visibility.Collapsed;
+        ItineraryPanel.Visibility = Visibility.Visible;
+        BudgetPanel.Visibility = Visibility.Collapsed;
+        TasksPanel.Visibility = Visibility.Collapsed;
+        TipsPanel.Visibility = Visibility.Collapsed;
+        MapPanel.Visibility = Visibility.Collapsed;
+        FilesPanel.Visibility = Visibility.Collapsed;
+        SetActiveNav(ItineraryNavButton);
+        // Aguarda o layout do pai ser concluído antes de recalcular os slots
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded,
+            new Action(() => RecalcItinerarySlotWidth(ItineraryPanel.ActualWidth)));
+    }
+
     private void ShowTasks()
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        ItineraryPanel.Visibility = Visibility.Collapsed;
         BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Visible;
         TipsPanel.Visibility = Visibility.Collapsed;
@@ -2214,6 +2249,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        ItineraryPanel.Visibility = Visibility.Collapsed;
         BudgetPanel.Visibility = Visibility.Visible;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
@@ -2226,6 +2262,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        ItineraryPanel.Visibility = Visibility.Collapsed;
         BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Visible;
@@ -2238,6 +2275,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        ItineraryPanel.Visibility = Visibility.Collapsed;
         BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
@@ -2251,6 +2289,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
+        ItineraryPanel.Visibility = Visibility.Collapsed;
         BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
@@ -2263,6 +2302,7 @@ public partial class MainWindow : Window
     {
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Visible;
+        ItineraryPanel.Visibility = Visibility.Collapsed;
         BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
@@ -2273,7 +2313,7 @@ public partial class MainWindow : Window
 
     private void SetActiveNav(System.Windows.Controls.Button activeButton)
     {
-        foreach (var button in new[] { OverviewNavButton, TripDetailsNavButton, BudgetNavButton, TasksNavButton, TipsNavButton, MapNavButton, FilesNavButton })
+        foreach (var button in new[] { OverviewNavButton, TripDetailsNavButton, ItineraryNavButton, BudgetNavButton, TasksNavButton, TipsNavButton, MapNavButton, FilesNavButton })
         {
             button.Tag = null;
         }
@@ -2293,6 +2333,327 @@ public partial class MainWindow : Window
         _repository.SaveTrip(_viewModel.CurrentTrip);
         _viewModel.StatusMessage = message;
         _isSavingTasks = false;
+    }
+
+    private void SaveItineraryInternal(string message)
+    {
+        if (_repository is null || _viewModel.CurrentTrip is null)
+        {
+            _viewModel.StatusMessage = "Nenhuma viagem carregada para salvar.";
+            return;
+        }
+
+        _viewModel.ApplyItineraryToTrip();
+        _repository.SaveTrip(_viewModel.CurrentTrip);
+        _viewModel.StatusMessage = message;
+    }
+
+    private void ViewModel_ItineraryChanged(object? sender, EventArgs e)
+    {
+        // Auto-save is handled explicitly by user actions; no auto-save here.
+    }
+
+    private void AddItineraryDay_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.AddItineraryDay();
+        SaveItineraryInternal($"Dia adicionado ao roteiro.");
+    }
+
+    private void RemoveItineraryDay_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ItineraryDayViewModel day })
+            return;
+
+        var result = System.Windows.MessageBox.Show(
+            $"Remover o dia \"{day.Title}\" e todas as suas atividades?",
+            "Remover Dia",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes)
+            return;
+
+        _viewModel.RemoveItineraryDay(day);
+        SaveItineraryInternal("Dia removido do roteiro.");
+    }
+
+    private void AddItineraryActivity_Click(object sender, RoutedEventArgs e)
+    {
+        var targetDay = _viewModel.SelectedActivity is not null
+            ? _viewModel.FindDayForActivity(_viewModel.SelectedActivity)
+            : _viewModel.Itinerary.FirstOrDefault();
+
+        if (targetDay is null)
+        {
+            _viewModel.StatusMessage = "Adicione um dia antes de criar atividades.";
+            return;
+        }
+
+        _viewModel.AddActivity(targetDay);
+        SaveItineraryInternal("Nova atividade adicionada.");
+    }
+
+    private void DeleteSelectedActivity_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.RemoveSelectedActivity();
+        SaveItineraryInternal("Atividade removida.");
+    }
+
+    // ── Inline edit handlers ────────────────────────────────────────────────
+
+    private void AcceptEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
+        {
+            day.AcceptEdit();
+            SaveItineraryInternal("Atividade atualizada.");
+        }
+    }
+
+    private void RejectEdit_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
+            day.RejectEdit();
+    }
+
+    private void CopyEditActivity_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
+        {
+            var target = day.EditingActivity;
+            day.AcceptEdit();
+            _viewModel.SelectedActivity = target;
+            _viewModel.CopySelectedActivity();
+            SaveItineraryInternal("Atividade copiada.");
+        }
+    }
+
+    private void DeleteEditActivity_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
+        {
+            var target = day.EditingActivity;
+            day.RejectEdit();
+            _viewModel.SelectedActivity = target;
+            _viewModel.RemoveSelectedActivity();
+            SaveItineraryInternal("Atividade removida.");
+        }
+    }
+
+    private void EditActivityIcon_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button btn && btn.Tag is string icon
+            && btn.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
+            day.EditingActivity.EditIcon = icon;
+    }
+
+    private void EditActivityColor_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
+        {
+            var dlg = new System.Windows.Forms.ColorDialog { FullOpen = true };
+            var hex = (day.EditingActivity.EditColor ?? "#DBEAFE").TrimStart('#');
+            if (hex.Length == 6
+                && int.TryParse(hex[0..2], System.Globalization.NumberStyles.HexNumber, null, out int r)
+                && int.TryParse(hex[2..4], System.Globalization.NumberStyles.HexNumber, null, out int g)
+                && int.TryParse(hex[4..6], System.Globalization.NumberStyles.HexNumber, null, out int b))
+                dlg.Color = System.Drawing.Color.FromArgb(r, g, b);
+            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                day.EditingActivity.EditColor = $"#{dlg.Color.R:X2}{dlg.Color.G:X2}{dlg.Color.B:X2}";
+        }
+    }
+
+    private void ItineraryPanel_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        foreach (var day in _viewModel.Itinerary)
+        {
+            if (!day.HasEditingBlock) continue;
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                day.AcceptEdit();
+                SaveItineraryInternal("Atividade atualizada.");
+                e.Handled = true;
+            }
+            else if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                day.RejectEdit();
+                e.Handled = true;
+            }
+            return;
+        }
+    }
+
+    private void SaveItinerary_Click(object sender, RoutedEventArgs e)
+    {
+        SaveItineraryInternal($"Roteiro salvo às {DateTime.Now:HH:mm}.");
+    }
+
+    private void ItineraryTimeline_SizeChanged(object sender, SizeChangedEventArgs e)
+        => RecalcItinerarySlotWidth(e.NewSize.Width);
+
+    private void RecalcItinerarySlotWidth(double panelWidth)
+    {
+        var availableWidth = panelWidth - 126; // 112 label column + ~2px border + 6px padding each side
+        if (availableWidth > 0 && _viewModel.ItinerarySlotsPerDay > 0)
+            _viewModel.ItinerarySlotWidth = availableWidth / _viewModel.ItinerarySlotsPerDay;
+    }
+
+    private void CopySelectedActivity_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.CopySelectedActivity();
+        SaveItineraryInternal("Atividade copiada.");
+    }
+
+    private void ItineraryPanel_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        // Reject any open edit when clicking outside a block or edit form
+        if (e.OriginalSource is FrameworkElement fe)
+        {
+            if (fe.DataContext is ItineraryActivityViewModel || fe.DataContext is ItineraryDayViewModel)
+                return;
+        }
+        foreach (var day in _viewModel.Itinerary)
+            day.RejectEdit();
+        _viewModel.SelectedActivity = null;
+    }
+
+    private void DayCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is Canvas)
+            _viewModel.SelectedActivity = null;
+    }
+
+    private void ActivityBlock_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement grid || grid.DataContext is not ItineraryActivityViewModel activity)
+            return;
+
+        // Double-click: open inline editor
+        if (e.ClickCount == 2)
+        {
+            var day = _viewModel.FindDayForActivity(activity);
+            if (day is not null)
+            {
+                // Reject any other open edit first
+                foreach (var d in _viewModel.Itinerary)
+                    if (d != day) d.RejectEdit();
+                day.BeginEdit(activity);
+                e.Handled = true;
+                return;
+            }
+        }
+
+        _viewModel.SelectedActivity = activity;
+
+        var pos = e.GetPosition(grid);
+        var isResize = pos.X >= grid.ActualWidth - 10;
+
+        _draggingActivity = isResize ? null : activity;
+        _resizingActivity = isResize ? activity : null;
+        _activitySourceDay = _viewModel.FindDayForActivity(activity);
+        _activityDragTargetDay = null;
+        _activityDragOriginPoint = e.GetPosition(null);
+        _activityOriginSlot = activity.StartSlot;
+        _activityOriginDuration = activity.DurationSlots;
+        _activityDragMoved = false;
+
+        grid.CaptureMouse();
+        e.Handled = true;
+    }
+
+    private void ActivityBlock_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (_draggingActivity is null && _resizingActivity is null)
+        {
+            // Update cursor hint near right edge
+            if (sender is FrameworkElement grid)
+            {
+                var pos = e.GetPosition(grid);
+                grid.Cursor = pos.X >= grid.ActualWidth - 10 ? System.Windows.Input.Cursors.SizeWE : System.Windows.Input.Cursors.Arrow;
+            }
+            return;
+        }
+
+        if (e.LeftButton != MouseButtonState.Pressed)
+            return;
+
+        var currentPos = e.GetPosition(null);
+        var delta = currentPos.X - _activityDragOriginPoint.X;
+        if (Math.Abs(delta) > 3) _activityDragMoved = true;
+
+        var slotWidth = _viewModel.ItinerarySlotWidth;
+        var slotDelta = (int)Math.Round(delta / slotWidth);
+        var slotsPerDay = _viewModel.ItinerarySlotsPerDay;
+
+        if (_draggingActivity is not null)
+        {
+            var newSlot = Math.Clamp(_activityOriginSlot + slotDelta, 0, slotsPerDay - _draggingActivity.DurationSlots);
+            _draggingActivity.StartSlot = newSlot;
+
+            // Cross-day highlight
+            var posInList = e.GetPosition(ItineraryDaysList);
+            var targetDay = FindDayAtY(posInList.Y);
+            if (targetDay != _activityDragTargetDay)
+            {
+                if (_activityDragTargetDay != null) _activityDragTargetDay.IsDragTarget = false;
+                _activityDragTargetDay = targetDay;
+                if (_activityDragTargetDay != null && _activityDragTargetDay != _activitySourceDay)
+                    _activityDragTargetDay.IsDragTarget = true;
+            }
+        }
+        else if (_resizingActivity is not null)
+        {
+            var newDuration = Math.Clamp(_activityOriginDuration + slotDelta, 1, slotsPerDay - _resizingActivity.StartSlot);
+            _resizingActivity.DurationSlots = newDuration;
+        }
+
+        e.Handled = true;
+    }
+
+    private void ActivityBlock_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        var moved = _activityDragMoved;
+        var activity = _draggingActivity;
+        var sourceDay = _activitySourceDay;
+        var targetDay = _activityDragTargetDay;
+
+        if (_activityDragTargetDay != null) _activityDragTargetDay.IsDragTarget = false;
+        _draggingActivity = null;
+        _resizingActivity = null;
+        _activityDragTargetDay = null;
+        _activitySourceDay = null;
+        _activityDragMoved = false;
+
+        ((FrameworkElement)sender).ReleaseMouseCapture();
+
+        // Cross-day move
+        if (moved && activity is not null && targetDay is not null && targetDay != sourceDay && sourceDay is not null)
+        {
+            var posInList = e.GetPosition(ItineraryDaysList);
+            var newSlot = Math.Clamp(
+                (int)((posInList.X - 112) / _viewModel.ItinerarySlotWidth),
+                0, _viewModel.ItinerarySlotsPerDay - activity.DurationSlots);
+            activity.StartSlot = newSlot;
+            sourceDay.Activities.Remove(activity);
+            targetDay.Activities.Add(activity);
+        }
+
+        if (moved)
+            SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
+
+        e.Handled = true;
+    }
+
+    private ItineraryDayViewModel? FindDayAtY(double y)
+    {
+        for (int i = 0; i < ItineraryDaysList.Items.Count; i++)
+        {
+            if (ItineraryDaysList.ItemContainerGenerator.ContainerFromIndex(i) is not FrameworkElement container) continue;
+            var topLeft = container.TranslatePoint(new System.Windows.Point(0, 0), ItineraryDaysList);
+            if (y >= topLeft.Y && y < topLeft.Y + container.ActualHeight)
+                return ItineraryDaysList.Items[i] as ItineraryDayViewModel;
+        }
+        return null;
     }
 
     private void SaveExpensesInternal(string message)
@@ -2706,6 +3067,7 @@ public partial class MainWindow : Window
         TripDetailsPeopleBox.Text = draft.People.ToString(CultureInfo.InvariantCulture);
         TripDetailsCurrencyBox.Text = draft.BaseCurrency;
         TripDetailsRateDecimalDigitsBox.Text = (_viewModel.CurrentTrip?.RateDecimalDigits ?? 2).ToString(CultureInfo.InvariantCulture);
+        TripDetailsSlotsPerDayBox.Text = (_viewModel.CurrentTrip?.ItinerarySlotsPerDay ?? 16).ToString(CultureInfo.InvariantCulture);
         TripDetailsPathBox.Text = _viewModel.TripPath;
         TripDetailsErrorText.Visibility = Visibility.Collapsed;
     }
@@ -2721,6 +3083,7 @@ public partial class MainWindow : Window
             People = int.TryParse(TripDetailsPeopleBox.Text, CultureInfo.InvariantCulture, out var people) ? people : 0,
             BaseCurrency = string.IsNullOrWhiteSpace(TripDetailsCurrencyBox.Text) ? "BRL" : TripDetailsCurrencyBox.Text.Trim().ToUpperInvariant(),
             RateDecimalDigits = int.TryParse(TripDetailsRateDecimalDigitsBox.Text, CultureInfo.InvariantCulture, out var rdd) ? Math.Clamp(rdd, 0, 8) : 2,
+            ItinerarySlotsPerDay = int.TryParse(TripDetailsSlotsPerDayBox.Text, CultureInfo.InvariantCulture, out var spd) ? Math.Clamp(spd, 4, 64) : 16,
             MyMapsUrl = _viewModel.CurrentTrip?.MyMapsUrl
         };
     }
@@ -2780,6 +3143,7 @@ public partial class MainWindow : Window
         trip.People = draft.People;
         trip.BaseCurrency = draft.BaseCurrency;
         trip.RateDecimalDigits = draft.RateDecimalDigits;
+        trip.ItinerarySlotsPerDay = draft.ItinerarySlotsPerDay;
         trip.MyMapsUrl = draft.MyMapsUrl;
     }
 

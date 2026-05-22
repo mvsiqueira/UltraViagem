@@ -11,6 +11,7 @@ public sealed class Trip
     public int People { get; set; } = 1;
     public int RateDecimalDigits { get; set; } = 2;
     public string? MyMapsUrl { get; set; }
+    public int ItinerarySlotsPerDay { get; set; } = 16;
     public List<ItineraryDay> Itinerary { get; set; } = [];
     public List<TaskItem> Tasks { get; set; } = [];
     public List<PlaceItem> Places { get; set; } = [];
@@ -26,14 +27,19 @@ public sealed class ItineraryDay
     public DateOnly? Date { get; set; }
     public string Title { get; set; } = "";
     public string? Overnight { get; set; }
-    public List<ItineraryBlock> Blocks { get; set; } = [];
-    public List<string> Optional { get; set; } = [];
+    public List<ItineraryActivity> Activities { get; set; } = [];
 }
 
-public sealed class ItineraryBlock
+public sealed class ItineraryActivity
 {
-    public string Period { get; set; } = "";
-    public string Text { get; set; } = "";
+    public string Id { get; set; } = "";
+    public string Title { get; set; } = "";
+    public string Color { get; set; } = "#DBEAFE";
+    public string Icon { get; set; } = "";
+    public int StartSlot { get; set; } = 0;
+    public int DurationSlots { get; set; } = 2;
+    public string? Details { get; set; }
+    public string? AdditionalData { get; set; }
 }
 
 public sealed class TaskItem
