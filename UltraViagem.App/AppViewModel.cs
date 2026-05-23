@@ -813,6 +813,7 @@ public sealed class AppViewModel : NotifyObject
         }
 
         RefreshSummary();
+        StartLoadingCoverImages();
     }
 
     public bool RenameVersion(string id, string newName)
@@ -1709,7 +1710,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
         }
 
         _lastCoverQuery = query;
-        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => CoverImage = null);
+        // Não limpa CoverImage aqui — a imagem antiga permanece visível até a nova carregar
         await FetchAndApplyImageAsync(query, _coverCacheDir, _imageOffset);
     }
 

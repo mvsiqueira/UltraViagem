@@ -1,7 +1,6 @@
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using SkiaSharp;
 using System.Globalization;
 using UltraViagem.Core;
 
@@ -51,30 +50,8 @@ public static class TripPdfExporter
                     page.MarginVertical(1.5f, Unit.Centimetre);
                     page.DefaultTextStyle(ts => ts.FontFamily("Calibri").FontSize(10).FontColor(TextDefault));
 
-                    page.Header().Column(col =>
-                    {
-                        col.Item().Row(row =>
-                        {
-                            row.RelativeItem().Column(c =>
-                            {
-                                c.Item().Text(trip.Title).FontSize(15).SemiBold().FontColor(Accent);
-                                c.Item().Text($"Roteiro Detalhado — {version.Name}").FontSize(9).FontColor(TextMuted);
-                            });
-                            row.ConstantItem(80).AlignRight().AlignBottom()
-                               .Text("UltraViagem").FontSize(9).Italic().FontColor(TextMuted);
-                        });
-                        col.Item().PaddingTop(5).LineHorizontal(1).LineColor(Accent);
-                    });
-
+                    SetupHeader(page, trip, $"Roteiro Detalhado — {version.Name}");
                     page.Content().PaddingTop(8).Element(c => ItineraryDiagram(c, version, trip));
-
-                    page.Footer().AlignCenter().Text(text =>
-                    {
-                        text.Span("Página ").FontSize(8).FontColor(TextMuted);
-                        text.CurrentPageNumber().FontSize(8).FontColor(TextMuted);
-                        text.Span(" de ").FontSize(8).FontColor(TextMuted);
-                        text.TotalPages().FontSize(8).FontColor(TextMuted);
-                    });
                 });
             }
 
@@ -102,7 +79,21 @@ public static class TripPdfExporter
                 });
             }
 
-            // ── 5. Tarefas ────────────────────────────────────────────────
+            // ── 5. Orçamento Detalhado (landscape) ───────────────────────
+            if (trip.Expenses.Count > 0)
+            {
+                container.Page(page =>
+                {
+                    page.Size(new PageSize(297, 210, Unit.Millimetre));
+                    page.MarginHorizontal(1.5f, Unit.Centimetre);
+                    page.MarginVertical(1.5f, Unit.Centimetre);
+                    page.DefaultTextStyle(ts => ts.FontFamily("Calibri").FontSize(10).FontColor(TextDefault));
+                    SetupHeader(page, trip, "Orçamento Detalhado");
+                    page.Content().PaddingTop(8).Element(c => DetailedBudgetTable(c, trip));
+                });
+            }
+
+            // ── 6. Tarefas ────────────────────────────────────────────────
             if (trip.Tasks.Count > 0)
             {
                 container.Page(page =>
@@ -110,7 +101,7 @@ public static class TripPdfExporter
                     ConfigurePortraitPage(page, trip, "Tarefas");
                     page.Content().PaddingTop(10).Column(col =>
                     {
-                        foreach (var task in trip.Tasks.OrderBy(t => t.Status == "done" ? 1 : 0))
+                        foreach (var task in trip.Tasks)
                             col.Item().PaddingBottom(4).Element(c => TaskRow(c, task));
                     });
                 });
@@ -123,29 +114,22 @@ public static class TripPdfExporter
     // Page setup
     // ─────────────────────────────────────────────────────────────────────
 
-    private static void ConfigurePortraitPage(PageDescriptor page, Trip trip, string sectionTitle)
+    /// <summary>Header e footer padronizados (portrait e landscape).</summary>
+    private static void SetupHeader(PageDescriptor page, Trip trip, string sectionTitle)
     {
-        page.Size(PageSizes.A4);
-        page.MarginHorizontal(2.2f, Unit.Centimetre);
-        page.MarginVertical(2f, Unit.Centimetre);
-        page.DefaultTextStyle(ts => ts.FontFamily("Calibri").FontSize(10).FontColor(TextDefault));
-
         page.Header().Column(col =>
         {
             col.Item().Row(row =>
             {
                 row.RelativeItem().Column(c =>
                 {
-                    c.Item().Text(trip.Title).FontSize(18).SemiBold().FontColor(Accent);
-                    var sub = BuildSubtitle(trip);
-                    if (!string.IsNullOrEmpty(sub))
-                        c.Item().PaddingTop(2).Text(sub).FontSize(9).FontColor(TextMuted);
+                    c.Item().Text(trip.Title).FontSize(15).SemiBold().FontColor(Accent);
+                    c.Item().Text(sectionTitle).FontSize(9).FontColor(TextMuted);
                 });
                 row.ConstantItem(80).AlignRight().AlignBottom()
                    .Text("UltraViagem").FontSize(9).Italic().FontColor(TextMuted);
             });
-            col.Item().PaddingTop(4).Background(Accent).Padding(5)
-               .Text(sectionTitle.ToUpperInvariant()).FontSize(10).SemiBold().FontColor(Colors.White);
+            col.Item().PaddingTop(5).LineHorizontal(1).LineColor(Accent);
         });
 
         page.Footer().AlignCenter().Text(text =>
@@ -157,8 +141,17 @@ public static class TripPdfExporter
         });
     }
 
+    private static void ConfigurePortraitPage(PageDescriptor page, Trip trip, string sectionTitle)
+    {
+        page.Size(PageSizes.A4);
+        page.MarginHorizontal(2.2f, Unit.Centimetre);
+        page.MarginVertical(2f, Unit.Centimetre);
+        page.DefaultTextStyle(ts => ts.FontFamily("Calibri").FontSize(10).FontColor(TextDefault));
+        SetupHeader(page, trip, sectionTitle);
+    }
+
     // ─────────────────────────────────────────────────────────────────────
-    // Itinerary diagram (SkiaSharp canvas)
+    // Itinerary diagram — pivotado: dias = linhas, slots = eixo horizontal
     // ─────────────────────────────────────────────────────────────────────
 
     private static void ItineraryDiagram(IContainer container, ItineraryVersion version, Trip trip)
@@ -171,106 +164,57 @@ public static class TripPdfExporter
             return;
         }
 
-        container.Canvas((canvas, size) =>
+        const float DayLabelPt = 62f;  // largura fixa da célula do dia
+        const float RowPt      = 30f;  // altura de cada linha
+        int slotsPerDay        = trip.ItinerarySlotsPerDay;
+
+        container.Column(col =>
         {
-            int dayCount = days.Count;
-            int slotsPerDay = trip.ItinerarySlotsPerDay;
-
-            float totalW = size.Width;
-            float totalH = size.Height;
-            float dayHeaderH = 26f;
-            float colW = totalW / dayCount;
-            float slotH = (totalH - dayHeaderH) / slotsPerDay;
-
-            var colSepColor  = new SKColor(209, 213, 219);
-            var gridColor    = new SKColor(229, 231, 235, 100);
-            var accentColor  = ParseHex(Accent);
-            var borderC      = new SKColor(180, 180, 180);
-
-            for (int d = 0; d < dayCount; d++)
+            foreach (var day in days)
             {
-                var day = days[d];
-                float x = d * colW;
+                col.Item().BorderBottom(0.5f).BorderColor(BorderColor)
+                   .Height(RowPt).Row(row =>
+                   {
+                       // Rótulo do dia
+                       row.ConstantItem(DayLabelPt)
+                          .Background(Accent)
+                          .PaddingHorizontal(4).AlignMiddle()
+                          .Text(day.Date.HasValue
+                              ? $"{day.Title} · {day.Date.Value.ToString("dd/MM", Ptbr)}"
+                              : day.Title)
+                          .FontSize(7.5f).SemiBold().FontColor("#FFFFFF");
 
-                // Left column border
-                using (var p = new SKPaint { Color = colSepColor, StrokeWidth = 0.5f })
-                    canvas.DrawLine(x, 0, x, totalH, p);
+                       // Linha do tempo horizontal
+                       int slot = 0;
+                       foreach (var act in day.Activities.OrderBy(a => a.StartSlot))
+                       {
+                           int start = Math.Max(act.StartSlot, slot);
+                           if (start > slot)
+                               row.RelativeItem(start - slot).Background("#F3F4F6");
 
-                // Day header fill
-                using (var p = new SKPaint { Color = accentColor })
-                    canvas.DrawRect(x, 0, colW, dayHeaderH, p);
+                           int dur = Math.Max(1, act.DurationSlots);
+                           row.RelativeItem(dur)
+                              .Background(act.Color)
+                              .BorderLeft(0.5f).BorderColor(BorderColor)
+                              .Padding(2).AlignCenter().AlignMiddle()
+                              .Column(c =>
+                              {
+                                  c.Item().AlignCenter()
+                                          .Text(act.Title).FontSize(7.5f)
+                                          .FontColor(ContrastColor(act.Color));
+                                  if (!string.IsNullOrWhiteSpace(act.Details))
+                                      c.Item().AlignCenter()
+                                              .Text(act.Details).FontSize(5.5f)
+                                              .FontColor(ContrastColor(act.Color));
+                              });
 
-                // Day header text
-                using (var p = new SKPaint { Color = SKColors.White, TextSize = 7.5f, IsAntialias = true })
-                {
-                    var label = day.Date.HasValue
-                        ? $"{day.Title}  {day.Date.Value.ToString("dd/MM", Ptbr)}"
-                        : day.Title;
-                    label = Truncate(label, p, colW - 4);
-                    canvas.DrawText(label, x + 3, dayHeaderH - 7, p);
-                }
+                           slot = start + dur;
+                       }
 
-                // Horizontal slot grid
-                using (var p = new SKPaint { Color = gridColor, StrokeWidth = 0.5f })
-                {
-                    for (int s = 1; s < slotsPerDay; s++)
-                    {
-                        float gy = dayHeaderH + s * slotH;
-                        canvas.DrawLine(x, gy, x + colW, gy, p);
-                    }
-                }
-
-                // Activity blocks
-                foreach (var act in day.Activities.OrderBy(a => a.StartSlot))
-                {
-                    float ay = dayHeaderH + act.StartSlot * slotH + 1f;
-                    float ah = act.DurationSlots * slotH - 2f;
-                    float ax = x + 1f;
-                    float aw = colW - 2f;
-                    if (ah < 1f) continue;
-
-                    // Fill
-                    using (var p = new SKPaint { Color = ParseHex(act.Color), IsAntialias = true })
-                        canvas.DrawRoundRect(ax, ay, aw, ah, 2, 2, p);
-
-                    // Border
-                    using (var p = new SKPaint
-                    {
-                        Color = DarkenColor(ParseHex(act.Color), 0.65f),
-                        StrokeWidth = 0.7f,
-                        Style = SKPaintStyle.Stroke,
-                        IsAntialias = true
-                    })
-                        canvas.DrawRoundRect(ax, ay, aw, ah, 2, 2, p);
-
-                    // Text
-                    if (ah >= 10f)
-                    {
-                        canvas.Save();
-                        canvas.ClipRect(SKRect.Create(ax + 1, ay + 1, aw - 2, ah - 2));
-
-                        using (var p = new SKPaint { Color = SKColors.Black, TextSize = 7f, IsAntialias = true })
-                        {
-                            var title = Truncate(act.Title, p, aw - 4);
-                            canvas.DrawText(title, ax + 2, ay + p.TextSize + 1, p);
-
-                            if (ah >= 20f)
-                            {
-                                using var ps = new SKPaint { Color = new SKColor(75, 85, 99), TextSize = 6f, IsAntialias = true };
-                                canvas.DrawText(Truncate(act.Type, ps, aw - 4), ax + 2, ay + p.TextSize + ps.TextSize + 3, ps);
-                            }
-                        }
-
-                        canvas.Restore();
-                    }
-                }
-            }
-
-            // Right border + bottom border
-            using (var p = new SKPaint { Color = colSepColor, StrokeWidth = 0.5f })
-            {
-                canvas.DrawLine(totalW, 0, totalW, totalH, p);
-                canvas.DrawLine(0, totalH, totalW, totalH, p);
+                       // Slots restantes vazios
+                       if (slot < slotsPerDay)
+                           row.RelativeItem(slotsPerDay - slot).Background("#F3F4F6");
+                   });
             }
         });
     }
@@ -321,16 +265,29 @@ public static class TripPdfExporter
         var done = task.Status == "done";
         container.Row(row =>
         {
-            row.ConstantItem(16).Text(done ? "☑" : "☐").FontSize(10)
-               .FontColor(done ? Accent : "#9CA3AF");
-            row.RelativeItem().PaddingLeft(6).Column(col =>
+            Checkbox(row.ConstantItem(18), done);
+            row.RelativeItem().PaddingLeft(7).Column(col =>
             {
                 col.Item().Text(task.Title).FontSize(10)
-                   .FontColor(done ? TextMuted : TextDefault);
+                   .FontColor(done ? TextMuted : TextDefault)
+                   .Strikethrough(done);
                 if (!string.IsNullOrWhiteSpace(task.Notes))
                     col.Item().Text(task.Notes).FontSize(8).FontColor(TextMuted);
             });
         });
+    }
+
+    private static void Checkbox(IContainer container, bool done)
+    {
+        var box = container.AlignTop().PaddingTop(1).Width(12).Height(12);
+        if (done)
+            box.Background(Accent).Border(1).BorderColor(Accent)
+               .AlignCenter().AlignMiddle()
+               .Text("✓").FontSize(6.5f).SemiBold().FontColor("#FFFFFF");
+        else
+            box.Border(1).BorderColor("#9CA3AF")
+               .AlignCenter().AlignMiddle()
+               .Text(" ").FontSize(1f);
     }
 
     private static void BudgetTable(IContainer container, Trip trip)
@@ -376,13 +333,114 @@ public static class TripPdfExporter
         });
     }
 
+    private static void DetailedBudgetTable(IContainer container, Trip trip)
+    {
+        decimal totalBase = trip.Expenses.Where(e => e.IsActive).Sum(e => e.SubtotalBase);
+        decimal totalPaid = trip.Expenses.Where(e => e.IsActive).Sum(e => e.PaidAmount);
+
+        container.Table(table =>
+        {
+            table.ColumnsDefinition(cols =>
+            {
+                cols.ConstantColumn(18);    // #
+                cols.RelativeColumn(3.5f);  // Item
+                cols.RelativeColumn(1.5f);  // Tipo
+                cols.RelativeColumn(1.5f);  // Fornecedor
+                cols.RelativeColumn(0.8f);  // Moeda
+                cols.RelativeColumn(1.5f);  // Preço unit.
+                cols.RelativeColumn(1f);    // Pes.×Qtd
+                cols.RelativeColumn(1.2f);  // Câmbio
+                cols.RelativeColumn(1.8f);  // Total base
+                cols.RelativeColumn(1.8f);  // Pago base
+            });
+
+            table.Header(h =>
+            {
+                void HCell(string label, bool right = false)
+                {
+                    var cell = h.Cell().Background(AccentLight).Padding(3);
+                    (right ? cell.AlignRight() : cell)
+                        .Text(label).FontSize(7.5f).SemiBold().FontColor(Accent);
+                }
+                HCell("#",                        right: true);
+                HCell("Item");
+                HCell("Tipo");
+                HCell("Fornecedor");
+                HCell("Moeda");
+                HCell("Preço unit.",               right: true);
+                HCell("Pes.×Qtd",                  right: true);
+                HCell("Câmbio",                    right: true);
+                HCell($"Total ({trip.BaseCurrency})",right: true);
+                HCell($"Pago ({trip.BaseCurrency})", right: true);
+            });
+
+            for (var i = 0; i < trip.Expenses.Count; i++)
+            {
+                var exp = trip.Expenses[i];
+                var bg  = i % 2 == 0 ? "#FFFFFF" : RowAlt;
+                var fg  = exp.IsActive ? TextDefault : TextMuted;
+
+                decimal unitPrice = exp.Price + exp.Taxes;
+                string  rateStr   = string.Equals(exp.Currency, trip.BaseCurrency,
+                                        StringComparison.OrdinalIgnoreCase)
+                                  ? "—"
+                                  : exp.ExchangeRateToBase.ToString($"N{trip.RateDecimalDigits}", Ptbr);
+
+                table.Cell().Background(bg).Padding(3).AlignRight()
+                     .Text($"{i + 1}").FontSize(7.5f).FontColor(TextMuted);
+
+                table.Cell().Background(bg).Padding(3).Column(c =>
+                {
+                    c.Item().Text(exp.IsActive ? exp.Title : $"[inativo] {exp.Title}")
+                            .FontSize(8f).FontColor(fg);
+                    if (!string.IsNullOrWhiteSpace(exp.Notes))
+                        c.Item().Text(exp.Notes).FontSize(6.5f).FontColor(TextMuted);
+                    if (!string.IsNullOrWhiteSpace(exp.Link))
+                        c.Item().Text(exp.Link).FontSize(6.5f).FontColor("#2563EB");
+                });
+
+                table.Cell().Background(bg).Padding(3)
+                     .Text(exp.Type ?? "").FontSize(7.5f).FontColor(TextMuted);
+                table.Cell().Background(bg).Padding(3)
+                     .Text(exp.Company ?? "").FontSize(7.5f).FontColor(TextMuted);
+                table.Cell().Background(bg).Padding(3)
+                     .Text(exp.Currency).FontSize(7.5f).FontColor(TextMuted);
+                table.Cell().Background(bg).Padding(3).AlignRight()
+                     .Text(unitPrice.ToString("N2", Ptbr)).FontSize(7.5f).FontColor(fg);
+                table.Cell().Background(bg).Padding(3).AlignRight()
+                     .Text($"{exp.People}×{exp.Quantity}").FontSize(7.5f).FontColor(fg);
+                table.Cell().Background(bg).Padding(3).AlignRight()
+                     .Text(rateStr).FontSize(7.5f).FontColor(TextMuted);
+                table.Cell().Background(bg).Padding(3).AlignRight()
+                     .Text(exp.IsActive ? Fmt(exp.SubtotalBase, trip.BaseCurrency) : "—")
+                     .FontSize(7.5f).FontColor(fg);
+                table.Cell().Background(bg).Padding(3).AlignRight()
+                     .Text(exp.IsActive && exp.PaidAmount > 0
+                           ? Fmt(exp.PaidAmount, trip.BaseCurrency) : "—")
+                     .FontSize(7.5f).FontColor(fg);
+            }
+
+            // Linha de totais
+            table.Cell().ColumnSpan(8).BorderTop(1).BorderColor(BorderColor).Padding(3)
+                 .Text("Total").FontSize(8).SemiBold();
+            table.Cell().BorderTop(1).BorderColor(BorderColor).Padding(3).AlignRight()
+                 .Text(Fmt(totalBase, trip.BaseCurrency)).FontSize(8).SemiBold().FontColor(Accent);
+            table.Cell().BorderTop(1).BorderColor(BorderColor).Padding(3).AlignRight()
+                 .Text(Fmt(totalPaid, trip.BaseCurrency)).FontSize(8).SemiBold().FontColor(Accent);
+        });
+    }
+
     private static void TipRow(IContainer container, LinkItem link)
     {
         container.Column(col =>
         {
             col.Item().Text(link.Title).FontSize(10).SemiBold();
             if (!string.IsNullOrWhiteSpace(link.Url))
-                col.Item().Text(link.Url).FontSize(8).FontColor("#2563EB");
+            {
+                var isUrl = link.Url.StartsWith("http://",  StringComparison.OrdinalIgnoreCase)
+                         || link.Url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+                col.Item().Text(link.Url).FontSize(8).FontColor(isUrl ? "#2563EB" : TextMuted);
+            }
         });
     }
 
@@ -390,39 +448,16 @@ public static class TripPdfExporter
     // Utilities
     // ─────────────────────────────────────────────────────────────────────
 
-    private static string BuildSubtitle(Trip trip)
+    /// <summary>Retorna preto ou branco conforme o brilho percebido do fundo hex.</summary>
+    private static string ContrastColor(string hexColor)
     {
-        var parts = new List<string>();
-        if (trip.StartDate.HasValue && trip.EndDate.HasValue)
-        {
-            var s = trip.StartDate.Value.ToString("dd MMM. yyyy", Ptbr);
-            var e = trip.EndDate.Value.ToString("dd MMM. yyyy", Ptbr);
-            var days = trip.EndDate.Value.DayNumber - trip.StartDate.Value.DayNumber + 1;
-            parts.Add($"{s} – {e} ({days} dias)");
-        }
-        else if (trip.StartDate.HasValue)
-            parts.Add(trip.StartDate.Value.ToString("dd MMM. yyyy", Ptbr));
-        if (trip.People > 1) parts.Add($"{trip.People} pessoas");
-        return string.Join("  ·  ", parts);
-    }
-
-    private static SKColor ParseHex(string hex)
-        => SKColor.TryParse(hex, out var c) ? c : new SKColor(219, 234, 254);
-
-    private static SKColor DarkenColor(SKColor color, float factor)
-    {
-        color.ToHsl(out float h, out float s, out float l);
-        return SKColor.FromHsl(h, s, l * factor);
-    }
-
-    private static string Truncate(string text, SKPaint paint, float maxWidth)
-    {
-        if (paint.MeasureText(text) <= maxWidth) return text;
-        const string Ellipsis = "…";
-        var ew = paint.MeasureText(Ellipsis);
-        while (text.Length > 0 && paint.MeasureText(text) + ew > maxWidth)
-            text = text[..^1];
-        return text + Ellipsis;
+        hexColor = hexColor.TrimStart('#');
+        if (hexColor.Length < 6) return TextDefault;
+        int r = Convert.ToInt32(hexColor[0..2], 16);
+        int g = Convert.ToInt32(hexColor[2..4], 16);
+        int b = Convert.ToInt32(hexColor[4..6], 16);
+        double brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
+        return brightness > 0.55 ? TextDefault : "#FFFFFF";
     }
 
     private static string Fmt(decimal value, string currency) =>
