@@ -253,7 +253,8 @@ public partial class MainWindow : Window
         }
 
         var id = CreateUniqueTripId(window.Draft.Title, window.Draft.StartDate);
-        var trip = new Trip { Id = id };
+        var defaultVersion = new ItineraryVersion { Id = $"v-{Guid.NewGuid():N}", Name = "Versão 1" };
+        var trip = new Trip { Id = id, ActiveVersionId = defaultVersion.Id, ItineraryVersions = [defaultVersion] };
         ApplyDraftToTrip(window.Draft, trip);
         _repository.SaveTrip(trip);
         AddRecentTrip(id);
@@ -2231,6 +2232,94 @@ public partial class MainWindow : Window
         if (TripDetailsPanel.Visibility == Visibility.Visible)
         {
             PopulateTripDetailsPanel();
+        }
+
+        if (trip is not null)
+        {
+            Dispatcher.BeginInvoke(CheckTripFolderConsistency, System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+    }
+
+    private void CheckTripFolderConsistency()
+    {
+        CheckUnattachedFiles();
+        CheckMissingAttachments();
+    }
+
+    private void CheckUnattachedFiles()
+    {
+        var tripPath = _viewModel.TripPath;
+        if (!Directory.Exists(tripPath)) return;
+
+        var attached = _viewModel.Attachments
+            .Select(a => a.File)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var unattached = Directory
+            .GetFiles(tripPath)
+            .Select(Path.GetFileName)
+            .OfType<string>()
+            .Where(f => !string.Equals(f, "trip.json", StringComparison.OrdinalIgnoreCase))
+            .Where(f => !attached.Contains(f))
+            .OrderBy(f => f)
+            .ToList();
+
+        if (unattached.Count == 0) return;
+
+        var dialog = new UnattachedFilesDialog(unattached) { Owner = this };
+        dialog.ShowDialog();
+
+        switch (dialog.Result)
+        {
+            case UnattachedFilesAction.Incorporate:
+                _isSavingAttachments = true;
+                try
+                {
+                    foreach (var fileName in unattached)
+                        _viewModel.AddAttachment(fileName);
+                }
+                finally
+                {
+                    _isSavingAttachments = false;
+                }
+                SaveAttachmentsInternal(unattached.Count == 1
+                    ? "1 arquivo incorporado aos anexos."
+                    : $"{unattached.Count} arquivos incorporados aos anexos.");
+                break;
+
+            case UnattachedFilesAction.Delete:
+                foreach (var fileName in unattached)
+                {
+                    try { File.Delete(Path.Combine(tripPath, fileName)); }
+                    catch { }
+                }
+                _viewModel.StatusMessage = unattached.Count == 1
+                    ? "1 arquivo excluído da pasta."
+                    : $"{unattached.Count} arquivos excluídos da pasta.";
+                break;
+        }
+    }
+
+    private void CheckMissingAttachments()
+    {
+        var tripPath = _viewModel.TripPath;
+        var missing = _viewModel.Attachments
+            .Where(a => !File.Exists(Path.Combine(tripPath, a.File)))
+            .ToList();
+
+        if (missing.Count == 0) return;
+
+        var dialog = new MissingAttachmentsDialog(missing.Select(a => a.File).ToList()) { Owner = this };
+        dialog.ShowDialog();
+
+        if (dialog.Result == MissingAttachmentsAction.Remove)
+        {
+            _isSavingAttachments = true;
+            try { _viewModel.RemoveAttachmentsSilent(missing); }
+            finally { _isSavingAttachments = false; }
+            SaveAttachmentsInternal(missing.Count == 1
+                ? "1 anexo removido da lista."
+                : $"{missing.Count} anexos removidos da lista.");
         }
     }
 

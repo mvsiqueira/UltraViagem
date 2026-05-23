@@ -17,10 +17,6 @@ public sealed class Trip
     public bool ShowItineraryGrid { get; set; } = false;
     public List<ItineraryVersion> ItineraryVersions { get; set; } = [];
     public string ActiveVersionId { get; set; } = "";
-    // Legacy fields kept for backward-compat / migration (mirrors the active version after save)
-    public int BankRows { get; set; } = 2;
-    public List<ItineraryActivity> BankActivities { get; set; } = [];
-    public List<ItineraryDay> Itinerary { get; set; } = [];
     public List<TaskItem> Tasks { get; set; } = [];
     public List<PlaceItem> Places { get; set; } = [];
     public List<LinkItem> Links { get; set; } = [];

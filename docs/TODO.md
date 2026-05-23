@@ -3,15 +3,10 @@
 ## Prioridade Alta
 
 - Criar exportação para PDF.
-- Guardar posição e zoom do mapa
 
 ## Prioridade Média
 
-- Melhorar as fontes / usar esmaecidas
 - Importação XLSX da planilha de referência.
-- Definir estratégia de migração de schema para `trip.json`.
-- Eliminar funcionalidades para compatibilidade do arquivo 'trip.json'
-- Importar/Remover arquivos da pasta ao abrir viagem
 
 ## Prioridade Baixa
 - Publicação empacotada do app Windows.

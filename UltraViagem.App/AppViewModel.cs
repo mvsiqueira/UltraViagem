@@ -196,7 +196,7 @@ public sealed class AppViewModel : NotifyObject
     }
 
     public string CurrentTripFavoriteGlyph => IsCurrentTripFavorite ? "★" : "☆";
-    public string DaysCount => (_trip?.Itinerary.Count ?? 0).ToString(Culture);
+    public string DaysCount => Itinerary.Count.ToString(Culture);
     public string PendingTasksCount => AllTasks.Count(task => task.Status == "pending").ToString(Culture);
     public string AttachmentsCount => Attachments.Count.ToString(Culture);
     public string MyMapsUrl
@@ -221,6 +221,7 @@ public sealed class AppViewModel : NotifyObject
         }
     }
     public bool HasMyMapsUrl => LinkEditorViewModel.IsHttpUrl(MyMapsUrl);
+
     public string BudgetSubtitle => _trip is null ? "" : $"{Expenses.Count} itens cadastrados em {_trip.BaseCurrency}";
     public string BaseCurrencyCode => NormalizeCurrency(_trip?.BaseCurrency ?? "BRL");
     public string BaseCurrencySymbol => CurrencyRates.FirstOrDefault(rate => string.Equals(rate.Currency, BaseCurrencyCode, StringComparison.OrdinalIgnoreCase))?.Symbol ?? BaseCurrencyCode;
@@ -363,21 +364,6 @@ public sealed class AppViewModel : NotifyObject
         ItineraryActivityViewModel.ConfigureSlotsPerDay(slotsPerDay);
         _showItineraryGrid = trip?.ShowItineraryGrid ?? false;
         OnPropertyChanged(nameof(ShowItineraryGrid));
-
-        // ── Versioning: migrate legacy data if no versions exist ────────────
-        if (trip is not null && (trip.ItineraryVersions is null || trip.ItineraryVersions.Count == 0))
-        {
-            var v1 = new ItineraryVersion
-            {
-                Id = $"v-{Guid.NewGuid():N}",
-                Name = "Versão 1",
-                Itinerary = trip.Itinerary ?? [],
-                BankRows = trip.BankRows,
-                BankActivities = trip.BankActivities ?? []
-            };
-            trip.ItineraryVersions = [v1];
-            trip.ActiveVersionId = v1.Id;
-        }
 
         var activeVersionId = trip?.ActiveVersionId ?? "";
         var activeVersion = trip?.ItineraryVersions?.FirstOrDefault(v => v.Id == activeVersionId)
@@ -625,6 +611,20 @@ public sealed class AppViewModel : NotifyObject
         AttachmentsChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Remove vários anexos da lista sem disparar autosave. Chamador é responsável por salvar.</summary>
+    public void RemoveAttachmentsSilent(IEnumerable<AttachmentEditorViewModel> toRemove)
+    {
+        foreach (var attachment in toRemove.ToList())
+        {
+            attachment.PropertyChanged -= Attachment_PropertyChanged;
+            Attachments.Remove(attachment);
+        }
+        OverviewFiles.ReplaceWith(Attachments.Take(4));
+        if (SelectedAttachment is not null && !Attachments.Contains(SelectedAttachment))
+            SelectedAttachment = Attachments.FirstOrDefault();
+        RefreshSummary();
+    }
+
     public void MoveAttachment(AttachmentEditorViewModel attachment, int targetIndex)
     {
         var oldIndex = Attachments.IndexOf(attachment);
@@ -747,10 +747,6 @@ public sealed class AppViewModel : NotifyObject
             activeVersion.BankActivities = bankActivities;
         }
 
-        // Keep legacy fields in sync with active version
-        _trip.Itinerary = days;
-        _trip.BankRows = bankRowCount;
-        _trip.BankActivities = bankActivities;
         _trip.ActiveVersionId = _activeVersionId;
 
         RefreshSummary();
@@ -808,11 +804,6 @@ public sealed class AppViewModel : NotifyObject
 
         Itinerary.ReplaceWith(version.Itinerary.Select(ItineraryDayViewModel.FromDay));
         RefreshDayNumbers();
-
-        // Sync legacy fields so DaysCount etc. are correct immediately
-        _trip.Itinerary = version.Itinerary;
-        _trip.BankRows = version.BankRows;
-        _trip.BankActivities = version.BankActivities;
 
         BankRows.Clear();
         for (int i = 0; i < Math.Max(1, version.BankRows); i++)
@@ -912,7 +903,6 @@ public sealed class AppViewModel : NotifyObject
     {
         var row = new BankRowViewModel { RowIndex = BankRows.Count };
         BankRows.Add(row);
-        if (_trip is not null) _trip.BankRows = BankRows.Count;
         ItineraryChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -924,7 +914,6 @@ public sealed class AppViewModel : NotifyObject
         foreach (var a in last.Activities.ToList())
             prev.Activities.Add(a);
         BankRows.RemoveAt(BankRows.Count - 1);
-        if (_trip is not null) _trip.BankRows = BankRows.Count;
         ItineraryChanged?.Invoke(this, EventArgs.Empty);
     }
 

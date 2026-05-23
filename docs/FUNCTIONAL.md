@@ -75,20 +75,18 @@ A visão geral resume:
 
 O cabeçalho da visão geral exibe o título da viagem, uma estrela de favorito clicável e o período com duração inclusiva em dias.
 As telas internas de cards ativos, como `Tarefas`, `Dicas` e `Arquivos`, têm um botão `<` no cabeçalho para voltar à visão geral.
-Na visão geral, cards com tela interna usam um botão `>` no canto superior direito para navegação. Criação de novos itens fica nas telas internas, não nos cards de resumo.
+Na visão geral, todos os cabeçalhos de card são clicáveis (cursor de mão, efeito hover) e navegam para a tela correspondente. Não há botões `>` nos cards.
 
 ### Card de roteiro na visão geral
 
-O card de roteiro exibe um scroll horizontal com um card por dia do itinerário ativo. Cada card mostra:
+O card de roteiro exibe um scroll horizontal com um card fixo de 210×240 px por dia do itinerário ativo. O cabeçalho da seção é clicável e navega para o painel de roteiro. Cada card de dia mostra:
 
-- **Círculo numerado** (número do dia, destaque em cor de acento) no canto superior esquerdo.
-- **Título** do dia e **data** (se preenchida) na primeira linha.
-- **OvernightLabel**: título da primeira atividade do tipo `Pernoite`, ou o resumo do dia — exibido abaixo de um ícone de mapa, indicando acomodação/destino.
-- **Contagem de atividades** com ícone de marcador 📍 (ex.: `📍 5 atividades`).
-- **Lista resumida** das primeiras 4 atividades, cada uma mostrando ícone (`OverviewIcon`), título e horário calculado (`TimeLabel`).
-  - Ícones padrão: 🍴 para `Refeição`, 🛏 para `Pernoite`, 📍 para demais tipos.
-  - Horário calculado com base em 08:00 como início do dia e faixa de 16 horas, proporcional ao slot de início da atividade.
-- **"Ver detalhes ›"** — link clicável que navega para o painel de roteiro.
+- **Círculo numerado** (número do dia, cor de acento) e **título** do dia na primeira linha.
+- **Imagem de capa** (60×60 px): buscada automaticamente no Wikimedia Commons/Wikipedia com base no `CardTitle` do dia (resumo ou nome do pernoite). Cacheada localmente em `.cache/day-{hash}-{offset}.jpg`. Ao passar o mouse, um botão ↻ discreto permite recarregar (cada recarga busca um resultado diferente via `sroffset`). Enquanto sem imagem, exibe um emoji de câmera.
+- **CardTitle**: resumo do dia se preenchido; caso contrário, título da atividade `Pernoite`.
+- **PernoiteLabel**: 🛏 + "Pernoite em {nome}" — exibido quando existe atividade do tipo `Pernoite`; o texto quebra se necessário.
+- **Lista de atividades** dinâmica que preenche o espaço restante do card (clipada automaticamente). Exibe atividades ordenadas por slot, excluindo tipos `Refeição` e `Pernoite`. Cada item mostra `OverviewIcon` e título.
+  - Ícones padrão: 📍 para tipos não especificados, ícone customizado quando definido.
 
 O scroll horizontal responde ao rolar do mouse (wheel vertical é convertido em scroll horizontal).
 Clicar em qualquer área do card também navega para o painel de roteiro.
@@ -129,7 +127,7 @@ Na visão geral:
 
 - aparece um card compacto com as primeiras dicas;
 - links válidos aparecem clicáveis diretamente no card;
-- o botão `>` abre a tela completa.
+- o cabeçalho do card é clicável e abre a tela completa.
 
 Na tela de dicas:
 
@@ -156,7 +154,14 @@ Na visão geral:
 - aparece um card compacto com os primeiros arquivos;
 - cada arquivo exibe ícone, nome, tipo e tamanho;
 - o nome do arquivo é clicável para abrir o arquivo;
-- o botão `>` abre a tela completa.
+- o cabeçalho do card é clicável e abre a tela completa.
+
+### Verificação de consistência ao abrir viagem
+
+Ao abrir uma viagem, o app verifica automaticamente dois cenários e exibe um dialog para cada um que se aplique (em sequência):
+
+1. **Arquivos sem vínculo** — arquivos presentes na pasta da viagem que não estão listados nos anexos. Opções: *Incorporar tudo* (adiciona todos aos anexos), *Excluir da pasta* (apaga os arquivos do disco) ou *Não fazer nada*.
+2. **Anexos não encontrados** — arquivos listados nos anexos cujo arquivo físico não existe mais na pasta. Opções: *Remover da lista* (remove as entradas do `trip.json`) ou *Não fazer nada*.
 
 Na tela de arquivos:
 
@@ -195,8 +200,8 @@ Na tela de mapa:
 
 Na visão geral:
 
-- o card de mapa exibe o mesmo mapa embutido em formato compacto;
-- o botão `>` abre a tela completa de mapa.
+- o card de mapa exibe o mesmo mapa embutido em formato compacto via WebView2;
+- o cabeçalho do card é clicável e abre a tela completa de mapa.
 
 A edição do mapa, rotas, camadas e pontos é feita no próprio Google My Maps. O app não edita o conteúdo do mapa nem exporta KML.
 
