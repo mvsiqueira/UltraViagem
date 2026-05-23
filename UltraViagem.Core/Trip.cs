@@ -18,7 +18,6 @@ public sealed class Trip
     public List<ItineraryVersion> ItineraryVersions { get; set; } = [];
     public string ActiveVersionId { get; set; } = "";
     public List<TaskItem> Tasks { get; set; } = [];
-    public List<PlaceItem> Places { get; set; } = [];
     public List<LinkItem> Links { get; set; } = [];
     public List<ExpenseItem> Expenses { get; set; } = [];
     public List<CurrencyRateItem> CurrencyRates { get; set; } = [];
@@ -63,22 +62,6 @@ public sealed class TaskItem
     public string Title { get; set; } = "";
     public string Status { get; set; } = "pending";
     public string? Notes { get; set; }
-    public string? RelatedDayId { get; set; }
-    public string? RelatedExpenseId { get; set; }
-    public string? RelatedPlaceId { get; set; }
-    public string? RelatedAttachment { get; set; }
-}
-
-public sealed class PlaceItem
-{
-    public string Id { get; set; } = "";
-    public string Name { get; set; } = "";
-    public string? City { get; set; }
-    public string? Type { get; set; }
-    public string? Description { get; set; }
-    public string? Url { get; set; }
-    public double? Latitude { get; set; }
-    public double? Longitude { get; set; }
 }
 
 public sealed class LinkItem
@@ -86,7 +69,6 @@ public sealed class LinkItem
     public string Id { get; set; } = "";
     public string Title { get; set; } = "";
     public string Url { get; set; } = "";
-    public string? Notes { get; set; }
 }
 
 public sealed class ExpenseItem
@@ -124,9 +106,5 @@ public sealed class CurrencyRateItem
 public sealed class AttachmentItem
 {
     public string Id { get; set; } = "";
-    public string Title { get; set; } = "";
     public string File { get; set; } = "";
-    public string? Type { get; set; }
-    public string? RelatedExpenseId { get; set; }
-    public string? RelatedDayId { get; set; }
 }

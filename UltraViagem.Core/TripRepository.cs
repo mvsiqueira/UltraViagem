@@ -88,7 +88,6 @@ public sealed class TripRepository
         // Garante que todas as coleções existem
         trip.ItineraryVersions ??= [];
         trip.Tasks                ??= [];
-        trip.Places               ??= [];
         trip.Links                ??= [];
         trip.Expenses             ??= [];
         trip.CurrencyRates        ??= [];

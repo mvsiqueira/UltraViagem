@@ -57,7 +57,6 @@ public sealed class AppViewModel : NotifyObject
     public ObservableCollection<ExpenseCategoryGroupViewModel> ExpenseGroups { get; } = [];
     public ObservableCollection<CurrencyRateViewModel> CurrencyRates { get; } = [];
     public ObservableCollection<BudgetCategoryViewModel> BudgetCategories { get; } = [];
-    public ObservableCollection<string> Places { get; } = [];
     public ObservableCollection<AttachmentEditorViewModel> OverviewFiles { get; } = [];
     public ObservableCollection<LinkEditorViewModel> OverviewTips { get; } = [];
 
@@ -425,7 +424,6 @@ public sealed class AppViewModel : NotifyObject
         ApplyTaskFilter();
         BudgetCategories.ReplaceWith(BuildBudgetCategories(Expenses));
         ExpenseGroups.ReplaceWith(BuildExpenseGroups(Expenses));
-        Places.ReplaceWith(trip?.Places.Take(5).Select(place => $"{place.Name} · {place.Type ?? "lugar"}") ?? []);
         OverviewFiles.ReplaceWith(Attachments.Take(4));
         OverviewTips.ReplaceWith(Tips.Take(4));
 
@@ -1470,10 +1468,6 @@ public sealed class TaskEditorViewModel : NotifyObject
         set => SetField(ref _status, value == "done" ? "done" : "pending");
     }
     public string Notes { get => _notes; set => SetField(ref _notes, value); }
-    public string? RelatedDayId { get; set; }
-    public string? RelatedExpenseId { get; set; }
-    public string? RelatedPlaceId { get; set; }
-    public string? RelatedAttachment { get; set; }
     public bool IsEditing { get => _isEditing; set => SetField(ref _isEditing, value); }
     public bool IsSelectedForEdit { get => _isSelectedForEdit; set => SetField(ref _isSelectedForEdit, value); }
     public bool IsDone
@@ -1495,11 +1489,7 @@ public sealed class TaskEditorViewModel : NotifyObject
             Id = task.Id,
             Title = task.Title,
             Status = task.Status == "done" ? "done" : "pending",
-            Notes = task.Notes ?? "",
-            RelatedDayId = task.RelatedDayId,
-            RelatedExpenseId = task.RelatedExpenseId,
-            RelatedPlaceId = task.RelatedPlaceId,
-            RelatedAttachment = task.RelatedAttachment
+            Notes = task.Notes ?? ""
         };
     }
 
@@ -1510,11 +1500,7 @@ public sealed class TaskEditorViewModel : NotifyObject
             Id = string.IsNullOrWhiteSpace(Id) ? $"tarefa-{Guid.NewGuid():N}" : Id.Trim(),
             Title = Title.Trim(),
             Status = Status == "done" ? "done" : "pending",
-            Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes.Trim(),
-            RelatedDayId = RelatedDayId,
-            RelatedExpenseId = RelatedExpenseId,
-            RelatedPlaceId = RelatedPlaceId,
-            RelatedAttachment = RelatedAttachment
+            Notes = string.IsNullOrWhiteSpace(Notes) ? null : Notes.Trim()
         };
     }
 
@@ -1611,7 +1597,6 @@ public sealed class AttachmentEditorViewModel : NotifyObject
         return new AttachmentItem
         {
             Id = string.IsNullOrWhiteSpace(Id) ? $"arquivo-{Guid.NewGuid():N}" : Id.Trim(),
-            Title = file,
             File = file
         };
     }

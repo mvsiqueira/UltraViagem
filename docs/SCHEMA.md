@@ -34,7 +34,6 @@ O arquivo é serializado em **camelCase**, indentado, com campos nulos omitidos 
 | `activeVersionId` | `string` | `""` | `id` da versão de roteiro atualmente ativa. |
 | `itineraryVersions` | `ItineraryVersion[]` | `[]` | Versões do roteiro (mínimo 1 após criação). |
 | `tasks` | `TaskItem[]` | `[]` | Lista de tarefas da viagem. |
-| `places` | `PlaceItem[]` | `[]` | Lugares de interesse (uso futuro). |
 | `links` | `LinkItem[]` | `[]` | Dicas / links úteis. |
 | `expenses` | `ExpenseItem[]` | `[]` | Itens de orçamento. |
 | `currencyRates` | `CurrencyRateItem[]` | `[]` | Cotações de moedas em relação à `baseCurrency`. |
@@ -93,10 +92,6 @@ Representa uma versão do roteiro. Uma viagem pode ter múltiplas versões (ex.:
 | `title` | `string` | `""` | Descrição da tarefa. |
 | `status` | `string` | `"pending"` | `"pending"` ou `"done"`. |
 | `notes` | `string\|null` | `null` | Notas adicionais. |
-| `relatedDayId` | `string\|null` | `null` | Referência opcional a um `ItineraryDay.id`. |
-| `relatedExpenseId` | `string\|null` | `null` | Referência opcional a um `ExpenseItem.id`. |
-| `relatedPlaceId` | `string\|null` | `null` | Referência opcional a um `PlaceItem.id`. |
-| `relatedAttachment` | `string\|null` | `null` | Referência opcional ao nome de arquivo de um anexo. |
 
 ---
 
@@ -107,7 +102,6 @@ Representa uma versão do roteiro. Uma viagem pode ter múltiplas versões (ex.:
 | `id` | `string` | `""` | Identificador único. |
 | `title` | `string` | `""` | Nome/label do link. |
 | `url` | `string` | `""` | URL ou texto livre. |
-| `notes` | `string\|null` | `null` | Observações adicionais. |
 
 ---
 
@@ -155,11 +149,7 @@ Representa uma versão do roteiro. Uma viagem pode ter múltiplas versões (ex.:
 | Campo | Tipo | Default | Descrição |
 |-------|------|---------|-----------|
 | `id` | `string` | `""` | Identificador único gerado como `arquivo-{timestamp}`. |
-| `title` | `string` | `""` | Nome de exibição (pode diferir do nome físico do arquivo). |
 | `file` | `string` | `""` | Nome do arquivo físico na pasta da viagem (apenas o nome, sem caminho). |
-| `type` | `string\|null` | `null` | Tipo MIME ou extensão (informativo). |
-| `relatedExpenseId` | `string\|null` | `null` | Referência opcional a um `ExpenseItem.id`. |
-| `relatedDayId` | `string\|null` | `null` | Referência opcional a um `ItineraryDay.id`. |
 
 ---
 
@@ -232,13 +222,11 @@ Representa uma versão do roteiro. Uma viagem pode ter múltiplas versões (ex.:
       "notes": "Ligar para o hotel 48h antes"
     }
   ],
-  "places": [],
   "links": [
     {
       "id": "link-001",
       "title": "Trilhas de El Chaltén",
-      "url": "https://elchalten.com/trilhas",
-      "notes": "Não precisa de permissão prévia"
+      "url": "https://elchalten.com/trilhas"
     }
   ],
   "expenses": [
@@ -271,9 +259,7 @@ Representa uma versão do roteiro. Uma viagem pode ter múltiplas versões (ex.:
   "attachments": [
     {
       "id": "arquivo-20241001130000000",
-      "title": "Passagem LATAM",
-      "file": "passagem-latam.pdf",
-      "type": "application/pdf"
+      "file": "passagem-latam.pdf"
     }
   ]
 }

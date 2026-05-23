@@ -7,6 +7,7 @@
 
 ## Prioridade Média
 
+- Importação de pasta.
 - Importação XLSX da planilha de referência.
 
 ## Prioridade Baixa

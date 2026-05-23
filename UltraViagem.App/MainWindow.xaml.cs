@@ -1216,10 +1216,6 @@ public partial class MainWindow : Window
         task.Title = snapshot.Title;
         task.Status = snapshot.Status == "done" ? "done" : "pending";
         task.Notes = snapshot.Notes ?? "";
-        task.RelatedDayId = snapshot.RelatedDayId;
-        task.RelatedExpenseId = snapshot.RelatedExpenseId;
-        task.RelatedPlaceId = snapshot.RelatedPlaceId;
-        task.RelatedAttachment = snapshot.RelatedAttachment;
     }
 
     private System.Windows.Controls.TextBox? FindTaskTitleEditor(TaskEditorViewModel task)
