@@ -2022,13 +2022,26 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// Navega para about:blank e, após a navegação completar, navega para a URL do mapa.
-    /// Isso destrói o contexto JavaScript da página anterior (incluindo zoom e estado do Google Maps),
-    /// garantindo que o mapa recarregue completamente do servidor.
+    /// Garante que o mapa recarregue completamente, destruindo o contexto JavaScript anterior
+    /// (incluindo zoom e estado do Google Maps SDK).
+    /// Se o browser já está em blank, navega direto para a URL (estado JS já limpo).
+    /// Se está num mapa, faz blank → URL via NavigationCompleted.
+    /// Nota: não usa Source = blank quando já estamos em blank porque DependencyProperty
+    /// ignora atribuições com o mesmo valor e NavigationCompleted nunca chegaria.
     /// </summary>
     private static void ForceReloadMapBrowser(Microsoft.Web.WebView2.Wpf.WebView2 browser, string embedUrl)
     {
         browser.Tag = embedUrl;
+
+        var isAtBlank = browser.Source is null
+            || browser.Source.ToString().StartsWith("about:", StringComparison.OrdinalIgnoreCase);
+
+        if (isAtBlank)
+        {
+            // JS context já está limpo; navega direto para evitar o no-op da DependencyProperty
+            browser.Source = new Uri(embedUrl);
+            return;
+        }
 
         void OnNavigationCompleted(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
         {
