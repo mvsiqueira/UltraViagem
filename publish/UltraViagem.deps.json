@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v10.0": {
-      "UltraViagem.App/1.0.0": {
+      "UltraViagem/1.0.0": {
         "dependencies": {
           "Microsoft.Web.WebView2": "1.0.3967.48",
           "UltraViagem.Core": "1.0.0",
@@ -15,7 +15,7 @@
           "Microsoft.Web.WebView2.Wpf": "1.0.3967.48"
         },
         "runtime": {
-          "UltraViagem.App.dll": {}
+          "UltraViagem.dll": {}
         }
       },
       "Microsoft.Web.WebView2/1.0.3967.48": {
@@ -72,7 +72,7 @@
     }
   },
   "libraries": {
-    "UltraViagem.App/1.0.0": {
+    "UltraViagem/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

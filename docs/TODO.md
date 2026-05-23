@@ -2,7 +2,6 @@
 
 ## Prioridade Alta
 
-- ~~Implementar tela completa de roteiro~~ ✓ (versões implementadas)
 - Implementar o card de roteiro na tela principal.
 - Criar exportação para PDF.
 
