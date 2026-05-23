@@ -2009,8 +2009,35 @@ public partial class MainWindow : Window
             return;
         }
 
-        NavigateMapBrowser(OverviewMapBrowser, embedUrl, forceReload);
-        NavigateMapBrowser(MainMapBrowser, embedUrl, forceReload);
+        if (forceReload)
+        {
+            ForceReloadMapBrowser(OverviewMapBrowser, embedUrl);
+            ForceReloadMapBrowser(MainMapBrowser, embedUrl);
+        }
+        else
+        {
+            NavigateMapBrowser(OverviewMapBrowser, embedUrl);
+            NavigateMapBrowser(MainMapBrowser, embedUrl);
+        }
+    }
+
+    /// <summary>
+    /// Navega para about:blank e, após a navegação completar, navega para a URL do mapa.
+    /// Isso destrói o contexto JavaScript da página anterior (incluindo zoom e estado do Google Maps),
+    /// garantindo que o mapa recarregue completamente do servidor.
+    /// </summary>
+    private static void ForceReloadMapBrowser(Microsoft.Web.WebView2.Wpf.WebView2 browser, string embedUrl)
+    {
+        browser.Tag = embedUrl;
+
+        void OnNavigationCompleted(object? sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
+        {
+            browser.NavigationCompleted -= OnNavigationCompleted;
+            browser.Source = new Uri(embedUrl);
+        }
+
+        browser.NavigationCompleted += OnNavigationCompleted;
+        browser.Source = new Uri("about:blank");
     }
 
     private static string? BuildMyMapsEmbedUrl(string url)
@@ -2038,23 +2065,15 @@ public partial class MainWindow : Window
         return $"https://www.google.com/maps/d/embed?mid={Uri.EscapeDataString(mid)}";
     }
 
-    private static void NavigateMapBrowser(Microsoft.Web.WebView2.Wpf.WebView2 browser, string embedUrl, bool forceReload = false)
+    private static void NavigateMapBrowser(Microsoft.Web.WebView2.Wpf.WebView2 browser, string embedUrl)
     {
-        if (!forceReload && string.Equals(browser.Tag as string, embedUrl, StringComparison.Ordinal))
+        if (string.Equals(browser.Tag as string, embedUrl, StringComparison.Ordinal))
         {
             return;
         }
 
-        // Tag armazena a URL limpa para comparações futuras (sem cache-buster)
         browser.Tag = embedUrl;
-
-        // Acrescenta timestamp para forçar requisição fresh ao servidor do Google,
-        // contornando o cache HTTP do WebView2
-        var navigateUrl = forceReload
-            ? embedUrl + "&_=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-            : embedUrl;
-
-        browser.Source = new Uri(navigateUrl);
+        browser.Source = new Uri(embedUrl);
     }
 
     private static string? GetQueryParameter(string query, string name)
