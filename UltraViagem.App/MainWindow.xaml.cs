@@ -1376,6 +1376,8 @@ public partial class MainWindow : Window
         await OverviewMapBrowser.CoreWebView2.ExecuteScriptAsync(@"
             (function() {
                 const SELECTORS = [
+                    '.i4ewOd-pzNkMb-haAclf',
+                    '.QUIbkc',
                     '.mapTitle',
                     'div[role=""banner""]',
                     '.widget-titlecard',
