@@ -37,6 +37,7 @@ public sealed class AppViewModel : NotifyObject
     private bool _isSidebarExpanded = true;
     private bool _isBankExpanded = true;
     private bool _showItineraryGrid;
+    private string _activeVersionId = "";
     private bool _isLoadingTasks;
     private bool _isLoadingTips;
     private bool _isLoadingAttachments;
@@ -47,6 +48,7 @@ public sealed class AppViewModel : NotifyObject
     public ObservableCollection<TripSelectionItem> TripSelectionItems { get; } = [];
     public ObservableCollection<ItineraryDayViewModel> Itinerary { get; } = [];
     public ObservableCollection<BankRowViewModel> BankRows { get; } = [];
+    public ObservableCollection<ItineraryVersionTabViewModel> VersionTabs { get; } = [];
     public ObservableCollection<TaskEditorViewModel> AllTasks { get; } = [];
     public ObservableCollection<TaskEditorViewModel> Tasks { get; } = [];
     public ObservableCollection<LinkEditorViewModel> Tips { get; } = [];
@@ -163,6 +165,12 @@ public sealed class AppViewModel : NotifyObject
     {
         get => _isBankExpanded;
         set => SetField(ref _isBankExpanded, value);
+    }
+
+    public string ActiveVersionId
+    {
+        get => _activeVersionId;
+        private set => SetField(ref _activeVersionId, value);
     }
 
     public bool ShowItineraryGrid
@@ -352,17 +360,46 @@ public sealed class AppViewModel : NotifyObject
         ItineraryActivityViewModel.Configure(_itinerarySlotWidth);
         ItineraryActivityViewModel.ConfigureBlockHeight(blockHeight);
         ItineraryActivityViewModel.ConfigureFontSize(fontSize);
-        Itinerary.ReplaceWith(trip?.Itinerary.Select(ItineraryDayViewModel.FromDay) ?? []);
-
         _showItineraryGrid = trip?.ShowItineraryGrid ?? false;
         OnPropertyChanged(nameof(ShowItineraryGrid));
 
-        var bankRowCount = trip?.BankRows ?? 2;
+        // ── Versioning: migrate legacy data if no versions exist ────────────
+        if (trip is not null && (trip.ItineraryVersions is null || trip.ItineraryVersions.Count == 0))
+        {
+            var v1 = new ItineraryVersion
+            {
+                Id = $"v-{Guid.NewGuid():N}",
+                Name = "Versão 1",
+                Itinerary = trip.Itinerary ?? [],
+                BankRows = trip.BankRows,
+                BankActivities = trip.BankActivities ?? []
+            };
+            trip.ItineraryVersions = [v1];
+            trip.ActiveVersionId = v1.Id;
+        }
+
+        var activeVersionId = trip?.ActiveVersionId ?? "";
+        var activeVersion = trip?.ItineraryVersions?.FirstOrDefault(v => v.Id == activeVersionId)
+                            ?? trip?.ItineraryVersions?.FirstOrDefault();
+
+        VersionTabs.ReplaceWith(trip?.ItineraryVersions?.Select(v => new ItineraryVersionTabViewModel
+        {
+            Id = v.Id,
+            Name = v.Name,
+            IsActive = v.Id == activeVersion?.Id
+        }) ?? []);
+
+        _activeVersionId = activeVersion?.Id ?? "";
+        OnPropertyChanged(nameof(ActiveVersionId));
+
+        Itinerary.ReplaceWith((activeVersion?.Itinerary ?? []).Select(ItineraryDayViewModel.FromDay));
+
+        var bankRowCount = activeVersion?.BankRows ?? 2;
         BankRows.Clear();
         for (int i = 0; i < Math.Max(1, bankRowCount); i++)
         {
             var row = new BankRowViewModel { RowIndex = i };
-            foreach (var a in (trip?.BankActivities ?? []).Where(a => a.BankRow == i))
+            foreach (var a in (activeVersion?.BankActivities ?? []).Where(a => a.BankRow == i))
                 row.Activities.Add(ItineraryActivityViewModel.FromActivity(a));
             BankRows.Add(row);
         }
@@ -674,9 +711,10 @@ public sealed class AppViewModel : NotifyObject
     public void ApplyItineraryToTrip()
     {
         if (_trip is null) return;
-        _trip.Itinerary = Itinerary.Select(d => d.ToDay()).ToList();
-        _trip.BankRows = BankRows.Count;
-        _trip.BankActivities = BankRows
+
+        var days = Itinerary.Select(d => d.ToDay()).ToList();
+        var bankRowCount = BankRows.Count;
+        var bankActivities = BankRows
             .SelectMany(row => row.Activities.Select(a =>
             {
                 var act = a.ToActivity();
@@ -684,8 +722,147 @@ public sealed class AppViewModel : NotifyObject
                 return act;
             }))
             .ToList();
+
+        // Save to active version
+        var activeVersion = _trip.ItineraryVersions?.FirstOrDefault(v => v.Id == _activeVersionId);
+        if (activeVersion is not null)
+        {
+            activeVersion.Itinerary = days;
+            activeVersion.BankRows = bankRowCount;
+            activeVersion.BankActivities = bankActivities;
+        }
+
+        // Keep legacy fields in sync with active version
+        _trip.Itinerary = days;
+        _trip.BankRows = bankRowCount;
+        _trip.BankActivities = bankActivities;
+        _trip.ActiveVersionId = _activeVersionId;
+
         RefreshSummary();
     }
+
+    // ── Version management ──────────────────────────────────────────────────
+
+    public void AddVersion(bool duplicateCurrent = false)
+    {
+        if (_trip is null) return;
+        ApplyItineraryToTrip();
+
+        var number = (_trip.ItineraryVersions?.Count ?? 0) + 1;
+        var source = duplicateCurrent
+            ? _trip.ItineraryVersions?.FirstOrDefault(v => v.Id == _activeVersionId)
+            : null;
+
+        var newVersion = new ItineraryVersion
+        {
+            Id = $"v-{Guid.NewGuid():N}",
+            Name = $"Versão {number}",
+            Itinerary = source?.Itinerary.Select(CloneDay).ToList() ?? [],
+            BankRows = source?.BankRows ?? 2,
+            BankActivities = source?.BankActivities.Select(CloneActivity).ToList() ?? []
+        };
+
+        (_trip.ItineraryVersions ??= []).Add(newVersion);
+        VersionTabs.Add(new ItineraryVersionTabViewModel { Id = newVersion.Id, Name = newVersion.Name });
+        SwitchToVersion(newVersion.Id);
+    }
+
+    public void SwitchToVersion(string id)
+    {
+        if (_trip is null) return;
+
+        // Save current version to memory
+        ApplyItineraryToTrip();
+
+        var version = _trip.ItineraryVersions?.FirstOrDefault(v => v.Id == id);
+        if (version is null) return;
+
+        _trip.ActiveVersionId = id;
+        _activeVersionId = id;
+        OnPropertyChanged(nameof(ActiveVersionId));
+
+        foreach (var tab in VersionTabs)
+            tab.IsActive = tab.Id == id;
+
+        // Close any open edits
+        SelectedActivity = null;
+        ClearAllActivityDims();
+        ClearAllDayDims();
+        foreach (var day in Itinerary) { day.RejectEdit(); day.RejectDayEdit(); }
+        foreach (var row in BankRows) row.RejectEdit();
+
+        Itinerary.ReplaceWith(version.Itinerary.Select(ItineraryDayViewModel.FromDay));
+
+        // Sync legacy fields so DaysCount etc. are correct immediately
+        _trip.Itinerary = version.Itinerary;
+        _trip.BankRows = version.BankRows;
+        _trip.BankActivities = version.BankActivities;
+
+        BankRows.Clear();
+        for (int i = 0; i < Math.Max(1, version.BankRows); i++)
+        {
+            var row = new BankRowViewModel { RowIndex = i };
+            foreach (var a in version.BankActivities.Where(a => a.BankRow == i))
+                row.Activities.Add(ItineraryActivityViewModel.FromActivity(a));
+            BankRows.Add(row);
+        }
+
+        RefreshSummary();
+    }
+
+    public bool RenameVersion(string id, string newName)
+    {
+        if (_trip is null || string.IsNullOrWhiteSpace(newName)) return false;
+        var version = _trip.ItineraryVersions?.FirstOrDefault(v => v.Id == id);
+        if (version is null) return false;
+        version.Name = newName.Trim();
+        var tab = VersionTabs.FirstOrDefault(t => t.Id == id);
+        if (tab is not null) tab.Name = newName.Trim();
+        return true;
+    }
+
+    public bool DeleteVersion(string id, out string switchedToId)
+    {
+        switchedToId = _activeVersionId;
+        if (_trip is null || (_trip.ItineraryVersions?.Count ?? 0) <= 1) return false;
+        var idx = _trip.ItineraryVersions!.FindIndex(v => v.Id == id);
+        if (idx < 0) return false;
+
+        _trip.ItineraryVersions.RemoveAt(idx);
+        var tabToRemove = VersionTabs.FirstOrDefault(t => t.Id == id);
+        if (tabToRemove is not null) VersionTabs.Remove(tabToRemove);
+
+        if (_activeVersionId == id)
+        {
+            var nextVersion = _trip.ItineraryVersions[Math.Max(0, idx - 1)];
+            SwitchToVersion(nextVersion.Id);
+            switchedToId = nextVersion.Id;
+        }
+        return true;
+    }
+
+    private static ItineraryActivity CloneActivity(ItineraryActivity a) => new()
+    {
+        Id = $"act-{Guid.NewGuid():N}",
+        Title = a.Title,
+        Type = a.Type,
+        Color = a.Color,
+        Icon = a.Icon,
+        StartSlot = a.StartSlot,
+        DurationSlots = a.DurationSlots,
+        BankRow = a.BankRow,
+        Details = a.Details,
+        AdditionalData = a.AdditionalData
+    };
+
+    private static ItineraryDay CloneDay(ItineraryDay d) => new()
+    {
+        Id = $"dia-{Guid.NewGuid():N}",
+        Title = d.Title,
+        Summary = d.Summary,
+        Date = d.Date,
+        Activities = d.Activities.Select(CloneActivity).ToList()
+    };
 
     public ItineraryDayViewModel? FindDayForActivity(ItineraryActivityViewModel activity)
         => Itinerary.FirstOrDefault(d => d.Activities.Contains(activity));
@@ -1427,6 +1604,21 @@ public sealed class AttachmentEditorViewModel : NotifyObject
             File = file
         };
     }
+}
+
+public sealed class ItineraryVersionTabViewModel : NotifyObject
+{
+    private string _id = "";
+    private string _name = "Versão 1";
+    private bool _isActive;
+    private bool _isRenaming;
+    private string _editName = "";
+
+    public string Id { get => _id; set => SetField(ref _id, value); }
+    public string Name { get => _name; set => SetField(ref _name, value); }
+    public bool IsActive { get => _isActive; set => SetField(ref _isActive, value); }
+    public bool IsRenaming { get => _isRenaming; set => SetField(ref _isRenaming, value); }
+    public string EditName { get => _editName; set => SetField(ref _editName, value); }
 }
 
 public sealed class ItineraryDayViewModel : NotifyObject

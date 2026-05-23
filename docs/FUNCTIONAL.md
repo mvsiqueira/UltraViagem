@@ -188,6 +188,21 @@ A edição do mapa, rotas, camadas e pontos é feita no próprio Google My Maps.
 
 O roteiro (itinerário) é uma linha do tempo visual baseada em blocos por dia. Cada viagem tem um número configurável de blocos por dia (`ItinerarySlotsPerDay`, padrão 16), editável nos Dados da Viagem. O campo `ShowItineraryGrid` (padrão `false`) ativa linhas verticais divisórias de slot no canvas de cada dia e do banco; pode ser ativado ou desativado em Dados da Viagem.
 
+### Versões de roteiro
+
+Cada viagem pode ter múltiplas versões independentes do roteiro, armazenadas em `itineraryVersions` no `trip.json`. Cada versão possui dias, atividades e banco próprios.
+
+- Uma barra de abas exibida abaixo do cabeçalho do painel lista as versões existentes.
+- A versão ativa tem fundo branco (`PanelBackground`) e borda de destaque (`AccentBrush`); as demais ficam com fundo `SidebarPanelBackground`.
+- Clicar em uma aba inativa salva a versão atual e carrega a versão selecionada.
+- Duplo-clique na aba inicia renomeação inline; `Enter` ou perda de foco confirma; `Esc` cancela.
+- O botão `+ Nova versão` cria uma versão vazia.
+- O botão `⧉ Duplicar` cria uma cópia independente da versão ativa com todos os dias, atividades e banco.
+- O botão de lixeira em cada aba exclui a versão com confirmação; a última versão não pode ser excluída.
+- Ao trocar de versão, qualquer edição aberta de dia ou atividade é descartada.
+- Viagens criadas antes da funcionalidade são migradas automaticamente: o roteiro existente vira "Versão 1".
+- `activeVersionId` no `trip.json` indica a versão ativa; os campos legados (`itinerary`, `bankRows`, `bankActivities`) espelham a versão ativa após cada salvamento para compatibilidade com versões antigas do app.
+
 ### Dias
 
 - Cada dia tem um título livre, uma data opcional e um resumo de texto livre.

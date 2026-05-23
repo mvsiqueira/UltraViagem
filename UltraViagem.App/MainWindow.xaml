@@ -2218,6 +2218,7 @@
                   PreviewMouseWheel="ItineraryPanel_PreviewMouseWheel">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
@@ -2240,8 +2241,94 @@
                     </StackPanel>
                 </Grid>
 
+                <!-- Version tabs (Row 1) -->
+                <Border Grid.Row="1" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,0,1" Margin="0,0,0,10" Padding="0,0,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <!-- Scrollable tab list -->
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding VersionTabs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,4,4,0" Padding="10,5" CornerRadius="4,4,0,0" Cursor="Hand"
+                                                MouseLeftButtonDown="VersionTab_MouseDown">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{StaticResource SidebarPanelBackground}" />
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+                                                    <Setter Property="BorderThickness" Value="1,1,1,0" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                            <Setter Property="Background" Value="{StaticResource PanelBackground}" />
+                                                            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <!-- Name (display mode) -->
+                                                <TextBlock VerticalAlignment="Center" FontSize="12" Text="{Binding Name}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="FontWeight" Value="Normal" />
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding IsRenaming}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <!-- Rename input -->
+                                                <TextBox FontSize="12" Width="110" Height="24" VerticalAlignment="Center"
+                                                         Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                                         PreviewKeyDown="VersionTabRename_PreviewKeyDown"
+                                                         LostFocus="VersionTabRename_LostFocus"
+                                                         IsVisibleChanged="VersionTabRenameBox_IsVisibleChanged">
+                                                    <TextBox.Style>
+                                                        <Style TargetType="TextBox">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsRenaming}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBox.Style>
+                                                </TextBox>
+                                                <!-- Delete button -->
+                                                <Button Style="{StaticResource CardActionButton}" ToolTip="Excluir versão"
+                                                        Click="DeleteVersion_Click" Margin="4,0,0,0">
+                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="9" Opacity="0.6" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <!-- New / Duplicate buttons -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,4">
+                            <Button Content="+ Nova versão" Style="{StaticResource SecondaryButton}" Click="AddVersion_Click" Margin="0,0,6,0" />
+                            <Button Content="⧉ Duplicar" Style="{StaticResource SecondaryButton}" Click="DuplicateVersion_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <!-- Timeline -->
-                <ScrollViewer x:Name="ItineraryScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer x:Name="ItineraryScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
 
 
@@ -2966,7 +3053,7 @@
                 </ScrollViewer>
 
                 <!-- Footer -->
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
                     <Button Content="Salvar Roteiro" Style="{StaticResource PrimaryButton}" Click="SaveItinerary_Click" />
                 </StackPanel>
             </Grid>

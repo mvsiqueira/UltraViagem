@@ -2730,6 +2730,101 @@ public partial class MainWindow : Window
         SaveItineraryInternal($"Roteiro salvo às {DateTime.Now:HH:mm}.");
     }
 
+    // ── Version tab handlers ─────────────────────────────────────────────────
+
+    private void AddVersion_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.AddVersion(duplicateCurrent: false);
+        SaveItineraryInternal($"Nova versão adicionada.");
+    }
+
+    private void DuplicateVersion_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.AddVersion(duplicateCurrent: true);
+        SaveItineraryInternal($"Versão duplicada.");
+    }
+
+    private void VersionTab_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ItineraryVersionTabViewModel tab }) return;
+        e.Handled = true;
+
+        if (e.ClickCount >= 2)
+        {
+            // Start inline rename
+            tab.EditName = tab.Name;
+            tab.IsRenaming = true;
+            return;
+        }
+
+        // Single click: switch version (no-op if already active)
+        if (!tab.IsActive && !tab.IsRenaming)
+        {
+            _viewModel.SwitchToVersion(tab.Id);
+            SaveItineraryInternal($"Versão '{tab.Name}' ativada.");
+        }
+    }
+
+    private void VersionTabRenameBox_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if ((bool)e.NewValue && sender is TextBox tb)
+        {
+            tb.Focus();
+            tb.SelectAll();
+        }
+    }
+
+    private void VersionTabRename_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox { DataContext: ItineraryVersionTabViewModel tab }) return;
+        if (e.Key == Key.Enter)
+        {
+            CommitVersionRename(tab);
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            tab.IsRenaming = false;
+            e.Handled = true;
+        }
+    }
+
+    private void VersionTabRename_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox { DataContext: ItineraryVersionTabViewModel tab } && tab.IsRenaming)
+            CommitVersionRename(tab);
+    }
+
+    private void CommitVersionRename(ItineraryVersionTabViewModel tab)
+    {
+        var name = tab.EditName?.Trim() ?? "";
+        tab.IsRenaming = false;
+        if (string.IsNullOrEmpty(name)) return;
+        if (_viewModel.RenameVersion(tab.Id, name))
+            SaveItineraryInternal($"Versão renomeada para '{name}'.");
+    }
+
+    private void DeleteVersion_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { DataContext: ItineraryVersionTabViewModel tab }) return;
+
+        if (_viewModel.VersionTabs.Count <= 1)
+        {
+            System.Windows.MessageBox.Show("Não é possível excluir a única versão do roteiro.",
+                "Excluir versão", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var result = System.Windows.MessageBox.Show(
+            $"Excluir a versão \"{tab.Name}\" e todas as suas atividades?",
+            "Excluir versão", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes) return;
+
+        if (_viewModel.DeleteVersion(tab.Id, out _))
+            SaveItineraryInternal($"Versão excluída.");
+    }
+
     private void ItineraryTimeline_SizeChanged(object sender, SizeChangedEventArgs e)
         => RecalcItinerarySlotWidth(e.NewSize.Width);
 

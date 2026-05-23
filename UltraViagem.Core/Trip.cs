@@ -15,6 +15,9 @@ public sealed class Trip
     public int ItineraryBlockHeight { get; set; } = 44;
     public int ItineraryFontSize { get; set; } = 11;
     public bool ShowItineraryGrid { get; set; } = false;
+    public List<ItineraryVersion> ItineraryVersions { get; set; } = [];
+    public string ActiveVersionId { get; set; } = "";
+    // Legacy fields kept for backward-compat / migration (mirrors the active version after save)
     public int BankRows { get; set; } = 2;
     public List<ItineraryActivity> BankActivities { get; set; } = [];
     public List<ItineraryDay> Itinerary { get; set; } = [];
@@ -24,6 +27,15 @@ public sealed class Trip
     public List<ExpenseItem> Expenses { get; set; } = [];
     public List<CurrencyRateItem> CurrencyRates { get; set; } = [];
     public List<AttachmentItem> Attachments { get; set; } = [];
+}
+
+public sealed class ItineraryVersion
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "Versão 1";
+    public List<ItineraryDay> Itinerary { get; set; } = [];
+    public int BankRows { get; set; } = 2;
+    public List<ItineraryActivity> BankActivities { get; set; } = [];
 }
 
 public sealed class ItineraryDay
