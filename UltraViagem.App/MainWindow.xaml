@@ -2234,7 +2234,7 @@
                 </Grid>
 
                 <!-- Timeline -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer x:Name="ItineraryScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
 
 
@@ -2601,6 +2601,328 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+
+                        <!-- Bank Section -->
+                        <Border Margin="0,6,0,0" CornerRadius="8">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{StaticResource PanelBackground}" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+                                    <Setter Property="BorderThickness" Value="1" />
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <!-- Bank header -->
+                                <Grid Grid.Row="0" Margin="12,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Style="{StaticResource ButtonBase}" Padding="0" Background="Transparent" BorderThickness="0"
+                                            Click="ToggleBank_Click" Cursor="Hand">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock FontSize="11" VerticalAlignment="Center" Margin="0,0,5,0"
+                                                       Foreground="{StaticResource MutedTextBrush}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="▾" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsBankExpanded}" Value="False">
+                                                                <Setter Property="Text" Value="▸" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="Banco" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Remover linha" Click="RemoveBankRow_Click" Margin="0,0,4,0">
+                                            <TextBlock Text="−" FontSize="13" />
+                                        </Button>
+                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Adicionar linha" Click="AddBankRow_Click" Margin="0,0,8,0">
+                                            <TextBlock Text="+" FontSize="13" />
+                                        </Button>
+                                        <Button Content="+ Atividade" Style="{StaticResource SecondaryButton}" Click="AddBankActivity_Click" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Bank body (collapsible) -->
+                                <Grid Grid.Row="1">
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBankExpanded}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="112" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Spacer 112px para alinhar canvas com os dias (sem label, sem borda) -->
+                                    <Border Grid.Column="0" />
+
+                                    <!-- Bank row canvases -->
+                                    <ItemsControl x:Name="BankRowsList" Grid.Column="1" ItemsSource="{Binding BankRows}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Background" Value="Transparent" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsDragTarget}" Value="True">
+                                                                    <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Grid.Style>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+
+                                                    <!-- Canvas -->
+                                                    <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Disabled"
+                                                                  VerticalScrollBarVisibility="Disabled"
+                                                                  ClipToBounds="True" Margin="6,0">
+                                                        <Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}"
+                                                                MouseLeftButtonDown="DayCanvas_MouseLeftButtonDown">
+                                                            <ItemsControl ItemsSource="{Binding Activities}"
+                                                                          Canvas.Left="0" Canvas.Top="0"
+                                                                          Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <Canvas />
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemContainerStyle>
+                                                                    <Style TargetType="ContentPresenter">
+                                                                        <Setter Property="Canvas.Left" Value="{Binding CanvasLeft}" />
+                                                                        <Setter Property="Canvas.Top" Value="4" />
+                                                                    </Style>
+                                                                </ItemsControl.ItemContainerStyle>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Grid Width="{Binding BlockWidth}" Height="{Binding BlockHeight}"
+                                                                              MouseLeftButtonDown="ActivityBlock_MouseDown"
+                                                                              MouseMove="ActivityBlock_MouseMove"
+                                                                              MouseLeftButtonUp="ActivityBlock_MouseUp">
+                                                                            <Grid.Style>
+                                                                                <Style TargetType="Grid">
+                                                                                    <Setter Property="Opacity" Value="1" />
+                                                                                    <Style.Triggers>
+                                                                                        <DataTrigger Binding="{Binding IsRefeicao}" Value="True">
+                                                                                            <Setter Property="Opacity" Value="0.65" />
+                                                                                        </DataTrigger>
+                                                                                        <DataTrigger Binding="{Binding IsDimmed}" Value="True">
+                                                                                            <Setter Property="Opacity" Value="0.25" />
+                                                                                        </DataTrigger>
+                                                                                    </Style.Triggers>
+                                                                                </Style>
+                                                                            </Grid.Style>
+                                                                            <Border>
+                                                                                <Border.Style>
+                                                                                    <Style TargetType="Border">
+                                                                                        <Setter Property="CornerRadius" Value="5" />
+                                                                                        <Setter Property="VerticalAlignment" Value="Stretch" />
+                                                                                        <Setter Property="Background" Value="{Binding DisplayColor, Converter={StaticResource StringToBrush}}" />
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding IsPernoite}" Value="True">
+                                                                                                <Setter Property="CornerRadius" Value="20" />
+                                                                                                <Setter Property="VerticalAlignment" Value="Center" />
+                                                                                            </DataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </Border.Style>
+                                                                                <StackPanel VerticalAlignment="Center">
+                                                                                    <StackPanel.Style>
+                                                                                        <Style TargetType="StackPanel">
+                                                                                            <Setter Property="Margin" Value="5,2" />
+                                                                                            <Style.Triggers>
+                                                                                                <DataTrigger Binding="{Binding IsPernoite}" Value="True">
+                                                                                                    <Setter Property="Margin" Value="10,5" />
+                                                                                                </DataTrigger>
+                                                                                            </Style.Triggers>
+                                                                                        </Style>
+                                                                                    </StackPanel.Style>
+                                                                                    <Grid>
+                                                                                        <Grid.ColumnDefinitions>
+                                                                                            <ColumnDefinition Width="Auto" />
+                                                                                            <ColumnDefinition Width="*" />
+                                                                                        </Grid.ColumnDefinitions>
+                                                                                        <TextBlock Grid.Column="0" Text="{Binding DisplayIcon}"
+                                                                                                   FontFamily="Segoe UI Emoji"
+                                                                                                   FontSize="{Binding IconFontSize}" Margin="0,0,3,0" VerticalAlignment="Top"
+                                                                                                   Foreground="{Binding DisplayTextColor, Converter={StaticResource StringToBrush}}" />
+                                                                                        <TextBlock Grid.Column="1" Text="{Binding DisplayTitle}"
+                                                                                                   FontSize="{Binding FontSize}" FontWeight="SemiBold"
+                                                                                                   Foreground="{Binding DisplayTextColor, Converter={StaticResource StringToBrush}}"
+                                                                                                   VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                                                                                    </Grid>
+                                                                                    <TextBlock Text="{Binding DisplayDetails}"
+                                                                                               FontSize="{Binding DetailsFontSize}" HorizontalAlignment="Center"
+                                                                                               Foreground="{Binding DisplayTextColor, Converter={StaticResource StringToBrush}}"
+                                                                                               Opacity="0.78" TextTrimming="CharacterEllipsis">
+                                                                                        <TextBlock.Style>
+                                                                                            <Style TargetType="TextBlock">
+                                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                                                <Style.Triggers>
+                                                                                                    <DataTrigger Binding="{Binding DisplayHasDetails}" Value="True">
+                                                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                                                    </DataTrigger>
+                                                                                                </Style.Triggers>
+                                                                                            </Style>
+                                                                                        </TextBlock.Style>
+                                                                                    </TextBlock>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                            <Border CornerRadius="6" BorderThickness="2" Background="Transparent">
+                                                                                <Border.Style>
+                                                                                    <Style TargetType="Border">
+                                                                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                                                                        <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                                <Setter Property="BorderBrush" Value="#2563EB" />
+                                                                                            </DataTrigger>
+                                                                                        </Style.Triggers>
+                                                                                    </Style>
+                                                                                </Border.Style>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                        </Canvas>
+                                                    </ScrollViewer>
+
+                                                    <!-- Inline edit form (Row 1) -->
+                                                    <Border Grid.Row="1" Tag="ItineraryEditForm" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0" Padding="14,12">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding HasEditingBlock}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto" />
+                                                                <RowDefinition Height="Auto" />
+                                                                <RowDefinition Height="Auto" />
+                                                            </Grid.RowDefinitions>
+
+                                                            <StackPanel Grid.Row="0" Margin="0,0,10,8">
+                                                                <TextBlock Text="Título" Style="{StaticResource Caption}" />
+                                                                <TextBox Text="{Binding EditingActivity.EditTitle, UpdateSourceTrigger=PropertyChanged}" Height="32" />
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,10,8">
+                                                                <TextBlock Text="Duração (blocos)" Style="{StaticResource Caption}" />
+                                                                <TextBox Text="{Binding EditingActivity.EditDurationSlots, UpdateSourceTrigger=PropertyChanged}" Height="32" Width="110" />
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,10,8">
+                                                                <TextBlock Text="Tipo" Style="{StaticResource Caption}" />
+                                                                <ComboBox ItemsSource="{x:Static local:ItineraryActivityViewModel.TypeOptions}"
+                                                                          SelectedItem="{Binding EditingActivity.EditType, UpdateSourceTrigger=PropertyChanged}"
+                                                                          Height="32" Width="110"
+                                                                          DropDownOpened="EditTypeCombo_DropDownOpened"
+                                                                          DropDownClosed="EditTypeCombo_DropDownClosed" />
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Row="0" Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="0,0,0,8">
+                                                                <Button Style="{StaticResource CardActionButton}" ToolTip="Aceitar (Enter)" Click="AcceptEdit_Click" Margin="0,0,2,0">
+                                                                    <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+                                                                </Button>
+                                                                <Button Style="{StaticResource CardActionButton}" ToolTip="Rejeitar (Esc)" Click="RejectEdit_Click" Margin="0,0,2,0">
+                                                                    <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+                                                                </Button>
+                                                                <Button Style="{StaticResource CardActionButton}" ToolTip="Excluir atividade" Click="DeleteEditActivity_Click">
+                                                                    <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="11" Opacity="0.72" />
+                                                                </Button>
+                                                            </StackPanel>
+
+                                                            <StackPanel Grid.Row="1" Margin="0,0,10,8">
+                                                                <TextBlock Text="Detalhes" Style="{StaticResource Caption}" />
+                                                                <TextBox Text="{Binding EditingActivity.EditDetails, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Height="64" TextWrapping="Wrap"
+                                                                         VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                                                                         PreviewKeyDown="MultilineEditField_PreviewKeyDown" />
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8">
+                                                                <TextBlock Text="Dados adicionais" Style="{StaticResource Caption}" />
+                                                                <TextBox Text="{Binding EditingActivity.EditAdditionalData, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Height="64" TextWrapping="Wrap"
+                                                                         VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                                                                         PreviewKeyDown="MultilineEditField_PreviewKeyDown" />
+                                                            </StackPanel>
+
+                                                            <DockPanel Grid.Row="2" Grid.ColumnSpan="4">
+                                                                <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                        Style="{StaticResource SecondaryButton}" Click="CopyEditActivity_Click">
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                                                        <TextBlock Text="Copiar Atividade" VerticalAlignment="Center" />
+                                                                    </StackPanel>
+                                                                </Button>
+                                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                    <TextBlock Text="Ícone" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                                                    <WrapPanel VerticalAlignment="Center">
+                                                                        <Button Tag="" Style="{StaticResource IconPickerButton}" ToolTip="Nenhum" Click="EditActivityIcon_Click">
+                                                                            <TextBlock Text="✕" FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                                        </Button>
+                                                                        <Button Tag="✈" Style="{StaticResource IconPickerButton}" ToolTip="Avião" Click="EditActivityIcon_Click"><TextBlock Text="✈" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="🚗" Style="{StaticResource IconPickerButton}" ToolTip="Carro" Click="EditActivityIcon_Click"><TextBlock Text="🚗" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="🚌" Style="{StaticResource IconPickerButton}" ToolTip="Ônibus" Click="EditActivityIcon_Click"><TextBlock Text="🚌" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="🚢" Style="{StaticResource IconPickerButton}" ToolTip="Barco" Click="EditActivityIcon_Click"><TextBlock Text="🚢" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="🚶" Style="{StaticResource IconPickerButton}" ToolTip="Caminhada" Click="EditActivityIcon_Click"><TextBlock Text="🚶" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="🍴" Style="{StaticResource IconPickerButton}" ToolTip="Restaurante" Click="EditActivityIcon_Click"><TextBlock Text="🍴" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="🛏" Style="{StaticResource IconPickerButton}" ToolTip="Hospedagem" Click="EditActivityIcon_Click"><TextBlock Text="🛏" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="📷" Style="{StaticResource IconPickerButton}" ToolTip="Câmera" Click="EditActivityIcon_Click"><TextBlock Text="📷" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="📍" Style="{StaticResource IconPickerButton}" ToolTip="Ponto no mapa" Click="EditActivityIcon_Click"><TextBlock Text="📍" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="🎫" Style="{StaticResource IconPickerButton}" ToolTip="Ingresso" Click="EditActivityIcon_Click"><TextBlock Text="🎫" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="⛺" Style="{StaticResource IconPickerButton}" ToolTip="Acampamento" Click="EditActivityIcon_Click"><TextBlock Text="⛺" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="🥤" Style="{StaticResource IconPickerButton}" ToolTip="Lanche" Click="EditActivityIcon_Click"><TextBlock Text="🥤" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="🛒" Style="{StaticResource IconPickerButton}" ToolTip="Compras" Click="EditActivityIcon_Click"><TextBlock Text="🛒" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                        <Button Tag="💩" Style="{StaticResource IconPickerButton}" ToolTip="Cocô" Click="EditActivityIcon_Click"><TextBlock Text="💩" FontFamily="Segoe UI Emoji" FontSize="17" /></Button>
+                                                                    </WrapPanel>
+                                                                    <TextBlock Text="Cor" Style="{StaticResource Caption}" VerticalAlignment="Center" Margin="16,0,8,0" />
+                                                                    <Button Width="34" Height="34" MinHeight="34" VerticalAlignment="Center"
+                                                                            Background="{Binding EditingActivity.EditColor, Converter={StaticResource StringToBrush}}"
+                                                                            BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1"
+                                                                            Style="{StaticResource ButtonBase}"
+                                                                            Click="EditActivityColor_Click"
+                                                                            ToolTip="Escolher cor" />
+                                                                </StackPanel>
+                                                            </DockPanel>
+                                                        </Grid>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </Grid>
+                        </Border>
 
                     </StackPanel>
                 </ScrollViewer>

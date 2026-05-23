@@ -46,6 +46,8 @@ public partial class MainWindow : Window
     private ItineraryActivityViewModel? _resizingActivity;
     private ItineraryDayViewModel? _activitySourceDay;
     private ItineraryDayViewModel? _activityDragTargetDay;
+    private BankRowViewModel? _activitySourceBankRow;
+    private BankRowViewModel? _activityDragTargetBankRow;
     private System.Windows.Point _activityDragOriginPoint;
     private int _activityOriginSlot;
     private int _activityOriginDuration;
@@ -2402,6 +2404,29 @@ public partial class MainWindow : Window
         SaveItineraryInternal("Atividade removida.");
     }
 
+    private void ToggleBank_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.IsBankExpanded = !_viewModel.IsBankExpanded;
+    }
+
+    private void AddBankRow_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.AddBankRow();
+        SaveItineraryInternal($"Linha adicionada ao banco.");
+    }
+
+    private void RemoveBankRow_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.RemoveBankRow();
+        SaveItineraryInternal($"Linha removida do banco.");
+    }
+
+    private void AddBankActivity_Click(object sender, RoutedEventArgs e)
+    {
+        _viewModel.AddBankActivity();
+        SaveItineraryInternal("Nova atividade adicionada ao banco.");
+    }
+
     // ── Inline edit handlers ────────────────────────────────────────────────
 
     private void DayDatePicker_CalendarOpened(object sender, RoutedEventArgs e)
@@ -2421,6 +2446,7 @@ public partial class MainWindow : Window
         {
             var wasEditing = day.IsEditingDay;
             foreach (var d in _viewModel.Itinerary) { d.RejectEdit(); d.RejectDayEdit(); }
+            foreach (var r in _viewModel.BankRows) r.RejectEdit();
             _viewModel.ClearAllActivityDims();
             _viewModel.ClearAllDayDims();
             if (!wasEditing)
@@ -2453,58 +2479,80 @@ public partial class MainWindow : Window
 
     private void AcceptEdit_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
-        {
+        if (sender is not FrameworkElement fe) return;
+        if (fe.DataContext is ItineraryDayViewModel day)
             day.AcceptEdit();
-            _viewModel.ClearAllActivityDims();
-            _viewModel.ClearAllDayDims();
-            SaveItineraryInternal("Atividade atualizada.");
-        }
+        else if (fe.DataContext is BankRowViewModel bankRow)
+            bankRow.AcceptEdit();
+        else return;
+        _viewModel.ClearAllActivityDims();
+        _viewModel.ClearAllDayDims();
+        SaveItineraryInternal("Atividade atualizada.");
     }
 
     private void RejectEdit_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day)
-        {
+        if (sender is not FrameworkElement fe) return;
+        if (fe.DataContext is ItineraryDayViewModel day)
             day.RejectEdit();
-            _viewModel.ClearAllActivityDims();
-            _viewModel.ClearAllDayDims();
-        }
+        else if (fe.DataContext is BankRowViewModel bankRow)
+            bankRow.RejectEdit();
+        else return;
+        _viewModel.ClearAllActivityDims();
+        _viewModel.ClearAllDayDims();
     }
 
     private void CopyEditActivity_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
+        if (sender is not FrameworkElement fe) return;
+        ItineraryActivityViewModel? target = null;
+        if (fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
         {
-            var target = day.EditingActivity;
+            target = day.EditingActivity;
             day.AcceptEdit();
-            _viewModel.ClearAllActivityDims();
-            _viewModel.ClearAllDayDims();
-            _viewModel.SelectedActivity = target;
-            _viewModel.CopySelectedActivity();
-            SaveItineraryInternal("Atividade copiada.");
         }
+        else if (fe.DataContext is BankRowViewModel bankRow && bankRow.EditingActivity is not null)
+        {
+            target = bankRow.EditingActivity;
+            bankRow.AcceptEdit();
+        }
+        if (target is null) return;
+        _viewModel.ClearAllActivityDims();
+        _viewModel.ClearAllDayDims();
+        _viewModel.SelectedActivity = target;
+        _viewModel.CopySelectedActivity();
+        SaveItineraryInternal("Atividade copiada.");
     }
 
     private void DeleteEditActivity_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
+        if (sender is not FrameworkElement fe) return;
+        ItineraryActivityViewModel? target = null;
+        if (fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
         {
-            var target = day.EditingActivity;
+            target = day.EditingActivity;
             day.RejectEdit();
-            _viewModel.ClearAllActivityDims();
-            _viewModel.ClearAllDayDims();
-            _viewModel.SelectedActivity = target;
-            _viewModel.RemoveSelectedActivity();
-            SaveItineraryInternal("Atividade removida.");
         }
+        else if (fe.DataContext is BankRowViewModel bankRow && bankRow.EditingActivity is not null)
+        {
+            target = bankRow.EditingActivity;
+            bankRow.RejectEdit();
+        }
+        if (target is null) return;
+        _viewModel.ClearAllActivityDims();
+        _viewModel.ClearAllDayDims();
+        _viewModel.SelectedActivity = target;
+        _viewModel.RemoveSelectedActivity();
+        SaveItineraryInternal("Atividade removida.");
     }
 
     private void EditActivityIcon_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is System.Windows.Controls.Button btn && btn.Tag is string icon
-            && btn.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
+        if (sender is not System.Windows.Controls.Button btn || btn.Tag is not string icon) return;
+        if (btn.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
             day.EditingActivity.EditIcon = icon;
+        else if (btn.DataContext is BankRowViewModel bankRow && bankRow.EditingActivity is not null)
+            bankRow.EditingActivity.EditIcon = icon;
     }
 
     private static readonly int[] _activityPaletteOle =
@@ -2525,18 +2573,21 @@ public partial class MainWindow : Window
 
     private void EditActivityColor_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
-        {
-            var dlg = new System.Windows.Forms.ColorDialog { FullOpen = true, CustomColors = _activityPaletteOle };
-            var hex = (day.EditingActivity.EditColor ?? "#DBEAFE").TrimStart('#');
-            if (hex.Length == 6
-                && int.TryParse(hex[0..2], System.Globalization.NumberStyles.HexNumber, null, out int r)
-                && int.TryParse(hex[2..4], System.Globalization.NumberStyles.HexNumber, null, out int g)
-                && int.TryParse(hex[4..6], System.Globalization.NumberStyles.HexNumber, null, out int b))
-                dlg.Color = System.Drawing.Color.FromArgb(r, g, b);
-            if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                day.EditingActivity.EditColor = $"#{dlg.Color.R:X2}{dlg.Color.G:X2}{dlg.Color.B:X2}";
-        }
+        if (sender is not FrameworkElement fe) return;
+        ItineraryActivityViewModel? editingActivity = null;
+        if (fe.DataContext is ItineraryDayViewModel day) editingActivity = day.EditingActivity;
+        else if (fe.DataContext is BankRowViewModel bankRow) editingActivity = bankRow.EditingActivity;
+        if (editingActivity is null) return;
+
+        var dlg = new System.Windows.Forms.ColorDialog { FullOpen = true, CustomColors = _activityPaletteOle };
+        var hex = (editingActivity.EditColor ?? "#DBEAFE").TrimStart('#');
+        if (hex.Length == 6
+            && int.TryParse(hex[0..2], System.Globalization.NumberStyles.HexNumber, null, out int r)
+            && int.TryParse(hex[2..4], System.Globalization.NumberStyles.HexNumber, null, out int g)
+            && int.TryParse(hex[4..6], System.Globalization.NumberStyles.HexNumber, null, out int b))
+            dlg.Color = System.Drawing.Color.FromArgb(r, g, b);
+        if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            editingActivity.EditColor = $"#{dlg.Color.R:X2}{dlg.Color.G:X2}{dlg.Color.B:X2}";
     }
 
     private void ItineraryPanel_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -2556,6 +2607,14 @@ public partial class MainWindow : Window
         {
             _viewModel.ItineraryFontSize += step;
             SaveItineraryInternal($"Tamanho da fonte: {_viewModel.ItineraryFontSize}px");
+            e.Handled = true;
+        }
+        else
+        {
+            // Os ScrollViewers internos dos canvases consomem o evento antes de chegar ao externo;
+            // intercepta aqui no tunnel (PreviewMouseWheel) e rola diretamente o ScrollViewer externo.
+            ItineraryScrollViewer.ScrollToVerticalOffset(
+                ItineraryScrollViewer.VerticalOffset - e.Delta * 0.4);
             e.Handled = true;
         }
     }
@@ -2620,6 +2679,27 @@ public partial class MainWindow : Window
             }
             return;
         }
+
+        // Check bank rows for editing state
+        foreach (var row in _viewModel.BankRows)
+        {
+            if (!row.HasEditingBlock) continue;
+            if (e.Key == System.Windows.Input.Key.Enter
+                && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) == 0)
+            {
+                row.AcceptEdit();
+                _viewModel.ClearAllActivityDims();
+                SaveItineraryInternal("Atividade atualizada.");
+                e.Handled = true;
+            }
+            else if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                row.RejectEdit();
+                _viewModel.ClearAllActivityDims();
+                e.Handled = true;
+            }
+            return;
+        }
     }
 
     private void SaveItinerary_Click(object sender, RoutedEventArgs e)
@@ -2667,20 +2747,28 @@ public partial class MainWindow : Window
         if (e.ClickCount == 2)
         {
             var day = _viewModel.FindDayForActivity(activity);
-            if (day is not null)
+            var bankRow = day is null ? _viewModel.FindBankRowForActivity(activity) : null;
+            if (day is not null || bankRow is not null)
             {
                 var wasEditing = activity.IsEditing;
                 foreach (var d in _viewModel.Itinerary) d.RejectEdit();
+                foreach (var r in _viewModel.BankRows) r.RejectEdit();
                 _viewModel.ClearAllActivityDims();
                 _viewModel.ClearAllDayDims();
                 if (wasEditing) { e.Handled = true; return; }
-                day.BeginEdit(activity);
-                _viewModel.SetDayFocus(day);
-                // Borrar blocos de TODOS os outros dias
-                foreach (var d in _viewModel.Itinerary)
-                    if (d != day)
-                        foreach (var a in d.Activities)
-                            a.IsDimmed = true;
+                if (day is not null)
+                {
+                    day.BeginEdit(activity);
+                    _viewModel.SetDayFocus(day);
+                    foreach (var d in _viewModel.Itinerary)
+                        if (d != day)
+                            foreach (var a in d.Activities)
+                                a.IsDimmed = true;
+                }
+                else
+                {
+                    bankRow!.BeginEdit(activity);
+                }
                 e.Handled = true;
                 return;
             }
@@ -2694,7 +2782,9 @@ public partial class MainWindow : Window
         _draggingActivity = isResize ? null : activity;
         _resizingActivity = isResize ? activity : null;
         _activitySourceDay = _viewModel.FindDayForActivity(activity);
+        _activitySourceBankRow = _activitySourceDay is null ? _viewModel.FindBankRowForActivity(activity) : null;
         _activityDragTargetDay = null;
+        _activityDragTargetBankRow = null;
         _activityDragOriginPoint = e.GetPosition(null);
         _activityOriginSlot = activity.StartSlot;
         _activityOriginDuration = activity.DurationSlots;
@@ -2733,15 +2823,25 @@ public partial class MainWindow : Window
             var newSlot = Math.Clamp(_activityOriginSlot + slotDelta, 0, slotsPerDay - _draggingActivity.DurationSlots);
             _draggingActivity.StartSlot = newSlot;
 
-            // Cross-day highlight
+            // Cross-day / bank highlight
             var posInList = e.GetPosition(ItineraryDaysList);
             var targetDay = FindDayAtY(posInList.Y);
+            var posInBank = e.GetPosition(BankRowsList);
+            var targetBankRow = FindBankRowAtY(posInBank.Y);
+
             if (targetDay != _activityDragTargetDay)
             {
                 if (_activityDragTargetDay != null) _activityDragTargetDay.IsDragTarget = false;
                 _activityDragTargetDay = targetDay;
                 if (_activityDragTargetDay != null && _activityDragTargetDay != _activitySourceDay)
                     _activityDragTargetDay.IsDragTarget = true;
+            }
+            if (targetBankRow != _activityDragTargetBankRow)
+            {
+                if (_activityDragTargetBankRow != null) _activityDragTargetBankRow.IsDragTarget = false;
+                _activityDragTargetBankRow = targetBankRow;
+                if (_activityDragTargetBankRow != null && _activityDragTargetBankRow != _activitySourceBankRow)
+                    _activityDragTargetBankRow.IsDragTarget = true;
             }
         }
         else if (_resizingActivity is not null)
@@ -2759,30 +2859,67 @@ public partial class MainWindow : Window
         var activity = _draggingActivity;
         var sourceDay = _activitySourceDay;
         var targetDay = _activityDragTargetDay;
+        var sourceBankRow = _activitySourceBankRow;
+        var targetBankRow = _activityDragTargetBankRow;
 
         if (_activityDragTargetDay != null) _activityDragTargetDay.IsDragTarget = false;
+        if (_activityDragTargetBankRow != null) _activityDragTargetBankRow.IsDragTarget = false;
         _draggingActivity = null;
         _resizingActivity = null;
         _activityDragTargetDay = null;
         _activitySourceDay = null;
+        _activityDragTargetBankRow = null;
+        _activitySourceBankRow = null;
         _activityDragMoved = false;
 
         ((FrameworkElement)sender).ReleaseMouseCapture();
 
-        // Cross-day move
-        if (moved && activity is not null && targetDay is not null && targetDay != sourceDay && sourceDay is not null)
+        if (moved && activity is not null)
         {
-            var posInList = e.GetPosition(ItineraryDaysList);
-            var newSlot = Math.Clamp(
-                (int)((posInList.X - 112) / _viewModel.ItinerarySlotWidth),
-                0, _viewModel.ItinerarySlotsPerDay - activity.DurationSlots);
-            activity.StartSlot = newSlot;
-            sourceDay.Activities.Remove(activity);
-            targetDay.Activities.Add(activity);
+            if (targetBankRow is not null && sourceDay is not null)
+            {
+                // Day → Bank
+                sourceDay.Activities.Remove(activity);
+                targetBankRow.Activities.Add(activity);
+                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
+            }
+            else if (targetDay is not null && sourceBankRow is not null)
+            {
+                // Bank → Day
+                var posInList = e.GetPosition(ItineraryDaysList);
+                var newSlot = Math.Clamp(
+                    (int)((posInList.X - 112) / _viewModel.ItinerarySlotWidth),
+                    0, _viewModel.ItinerarySlotsPerDay - activity.DurationSlots);
+                activity.StartSlot = newSlot;
+                sourceBankRow.Activities.Remove(activity);
+                targetDay.Activities.Add(activity);
+                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
+            }
+            else if (targetBankRow is not null && sourceBankRow is not null && targetBankRow != sourceBankRow)
+            {
+                // Bank → different bank row
+                sourceBankRow.Activities.Remove(activity);
+                targetBankRow.Activities.Add(activity);
+                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
+            }
+            else if (targetDay is not null && sourceDay is not null && targetDay != sourceDay)
+            {
+                // Day → different day
+                var posInList = e.GetPosition(ItineraryDaysList);
+                var newSlot = Math.Clamp(
+                    (int)((posInList.X - 112) / _viewModel.ItinerarySlotWidth),
+                    0, _viewModel.ItinerarySlotsPerDay - activity.DurationSlots);
+                activity.StartSlot = newSlot;
+                sourceDay.Activities.Remove(activity);
+                targetDay.Activities.Add(activity);
+                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
+            }
+            else
+            {
+                // Same container move (slot/resize change)
+                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
+            }
         }
-
-        if (moved)
-            SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
 
         e.Handled = true;
     }
@@ -2795,6 +2932,18 @@ public partial class MainWindow : Window
             var topLeft = container.TranslatePoint(new System.Windows.Point(0, 0), ItineraryDaysList);
             if (y >= topLeft.Y && y < topLeft.Y + container.ActualHeight)
                 return ItineraryDaysList.Items[i] as ItineraryDayViewModel;
+        }
+        return null;
+    }
+
+    private BankRowViewModel? FindBankRowAtY(double y)
+    {
+        for (int i = 0; i < BankRowsList.Items.Count; i++)
+        {
+            if (BankRowsList.ItemContainerGenerator.ContainerFromIndex(i) is not FrameworkElement container) continue;
+            var topLeft = container.TranslatePoint(new System.Windows.Point(0, 0), BankRowsList);
+            if (y >= topLeft.Y && y < topLeft.Y + container.ActualHeight)
+                return BankRowsList.Items[i] as BankRowViewModel;
         }
         return null;
     }

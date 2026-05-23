@@ -35,6 +35,7 @@ public sealed class AppViewModel : NotifyObject
     private string _taskFilter = "all";
     private bool _isCurrentTripFavorite;
     private bool _isSidebarExpanded = true;
+    private bool _isBankExpanded = true;
     private bool _isLoadingTasks;
     private bool _isLoadingTips;
     private bool _isLoadingAttachments;
@@ -44,6 +45,7 @@ public sealed class AppViewModel : NotifyObject
     public ObservableCollection<string> TripIds { get; } = [];
     public ObservableCollection<TripSelectionItem> TripSelectionItems { get; } = [];
     public ObservableCollection<ItineraryDayViewModel> Itinerary { get; } = [];
+    public ObservableCollection<BankRowViewModel> BankRows { get; } = [];
     public ObservableCollection<TaskEditorViewModel> AllTasks { get; } = [];
     public ObservableCollection<TaskEditorViewModel> Tasks { get; } = [];
     public ObservableCollection<LinkEditorViewModel> Tips { get; } = [];
@@ -156,6 +158,12 @@ public sealed class AppViewModel : NotifyObject
         set => SetField(ref _isSidebarExpanded, value);
     }
 
+    public bool IsBankExpanded
+    {
+        get => _isBankExpanded;
+        set => SetField(ref _isBankExpanded, value);
+    }
+
     public bool IsCurrentTripFavorite
     {
         get => _isCurrentTripFavorite;
@@ -236,7 +244,9 @@ public sealed class AppViewModel : NotifyObject
             _itinerarySlotWidth = clamped;
             ItineraryActivityViewModel.Configure(clamped);
             ItineraryDayViewModel.Configure(ItinerarySlotsPerDay, clamped);
+            BankRowViewModel.Configure(ItinerarySlotsPerDay, clamped);
             foreach (var day in Itinerary) day.NotifyLayoutChanged();
+            foreach (var row in BankRows) row.NotifyLayoutChanged();
             OnPropertyChanged(nameof(ItinerarySlotWidth));
         }
     }
@@ -254,7 +264,9 @@ public sealed class AppViewModel : NotifyObject
             _trip.ItineraryBlockHeight = clamped;
             ItineraryDayViewModel.ConfigureBlockHeight(clamped);
             ItineraryActivityViewModel.ConfigureBlockHeight(clamped);
+            BankRowViewModel.ConfigureBlockHeight(clamped);
             foreach (var day in Itinerary) day.NotifyLayoutChanged();
+            foreach (var row in BankRows) row.NotifyLayoutChanged();
             OnPropertyChanged(nameof(ItineraryBlockHeight));
         }
     }
@@ -324,10 +336,22 @@ public sealed class AppViewModel : NotifyObject
         var fontSize = trip?.ItineraryFontSize ?? 11;
         ItineraryDayViewModel.Configure(slotsPerDay, _itinerarySlotWidth);
         ItineraryDayViewModel.ConfigureBlockHeight(blockHeight);
+        BankRowViewModel.Configure(slotsPerDay, _itinerarySlotWidth);
+        BankRowViewModel.ConfigureBlockHeight(blockHeight);
         ItineraryActivityViewModel.Configure(_itinerarySlotWidth);
         ItineraryActivityViewModel.ConfigureBlockHeight(blockHeight);
         ItineraryActivityViewModel.ConfigureFontSize(fontSize);
         Itinerary.ReplaceWith(trip?.Itinerary.Select(ItineraryDayViewModel.FromDay) ?? []);
+
+        var bankRowCount = trip?.BankRows ?? 2;
+        BankRows.Clear();
+        for (int i = 0; i < Math.Max(1, bankRowCount); i++)
+        {
+            var row = new BankRowViewModel { RowIndex = i };
+            foreach (var a in (trip?.BankActivities ?? []).Where(a => a.BankRow == i))
+                row.Activities.Add(ItineraryActivityViewModel.FromActivity(a));
+            BankRows.Add(row);
+        }
         AllTasks.ReplaceWith(trip?.Tasks.Select(TaskEditorViewModel.FromTask) ?? []);
         Tips.ReplaceWith(trip?.Links.Select(LinkEditorViewModel.FromLink) ?? []);
         Attachments.ReplaceWith(trip?.Attachments.Select(AttachmentEditorViewModel.FromAttachment) ?? []);
@@ -622,12 +646,30 @@ public sealed class AppViewModel : NotifyObject
                 return;
             }
         }
+        foreach (var row in BankRows)
+        {
+            if (row.Activities.Remove(SelectedActivity))
+            {
+                SelectedActivity = null;
+                ItineraryChanged?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+        }
     }
 
     public void ApplyItineraryToTrip()
     {
         if (_trip is null) return;
         _trip.Itinerary = Itinerary.Select(d => d.ToDay()).ToList();
+        _trip.BankRows = BankRows.Count;
+        _trip.BankActivities = BankRows
+            .SelectMany(row => row.Activities.Select(a =>
+            {
+                var act = a.ToActivity();
+                act.BankRow = row.RowIndex;
+                return act;
+            }))
+            .ToList();
         RefreshSummary();
     }
 
@@ -638,6 +680,9 @@ public sealed class AppViewModel : NotifyObject
     {
         foreach (var day in Itinerary)
             foreach (var a in day.Activities)
+                a.IsDimmed = false;
+        foreach (var row in BankRows)
+            foreach (var a in row.Activities)
                 a.IsDimmed = false;
     }
 
@@ -653,12 +698,53 @@ public sealed class AppViewModel : NotifyObject
             day.IsDimmed = false;
     }
 
+    public BankRowViewModel? FindBankRowForActivity(ItineraryActivityViewModel activity)
+        => BankRows.FirstOrDefault(r => r.Activities.Contains(activity));
+
+    public void AddBankRow()
+    {
+        var row = new BankRowViewModel { RowIndex = BankRows.Count };
+        BankRows.Add(row);
+        if (_trip is not null) _trip.BankRows = BankRows.Count;
+        ItineraryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void RemoveBankRow()
+    {
+        if (BankRows.Count <= 1) return;
+        var last = BankRows[^1];
+        var prev = BankRows[^2];
+        foreach (var a in last.Activities.ToList())
+            prev.Activities.Add(a);
+        BankRows.RemoveAt(BankRows.Count - 1);
+        if (_trip is not null) _trip.BankRows = BankRows.Count;
+        ItineraryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void AddBankActivity(BankRowViewModel? targetRow = null)
+    {
+        var row = targetRow ?? (BankRows.Count > 0 ? BankRows[0] : null);
+        if (row is null) return;
+        var vm = new ItineraryActivityViewModel
+        {
+            Id = $"act-{Guid.NewGuid():N}",
+            Title = "Nova atividade",
+            Color = "#DBEAFE",
+            StartSlot = 0,
+            DurationSlots = 2
+        };
+        row.Activities.Add(vm);
+        SelectedActivity = vm;
+        ItineraryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public void CopySelectedActivity()
     {
         if (SelectedActivity is null) return;
         var source = SelectedActivity;
         var day = FindDayForActivity(source);
-        if (day is null) return;
+        var bankRow = day is null ? FindBankRowForActivity(source) : null;
+        if (day is null && bankRow is null) return;
 
         var copy = new ItineraryActivityViewModel
         {
@@ -672,7 +758,8 @@ public sealed class AppViewModel : NotifyObject
             DurationSlots = source.DurationSlots,
             StartSlot = Math.Clamp(source.StartSlot + source.DurationSlots, 0, ItinerarySlotsPerDay - source.DurationSlots)
         };
-        day.Activities.Add(copy);
+        if (day is not null) day.Activities.Add(copy);
+        else bankRow!.Activities.Add(copy);
         SelectedActivity = copy;
         ItineraryChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -1475,6 +1562,66 @@ public sealed class ItineraryDayViewModel : NotifyObject
         Date = Date,
         Activities = Activities.Select(a => a.ToActivity()).ToList()
     };
+}
+
+public sealed class BankRowViewModel : NotifyObject
+{
+    private static int _slotsPerDay = 16;
+    private static double _slotWidth = 44;
+    private static int _blockHeight = 44;
+
+    public static void Configure(int slotsPerDay, double slotWidth) { _slotsPerDay = slotsPerDay; _slotWidth = slotWidth; }
+    public static void ConfigureBlockHeight(int height) => _blockHeight = height;
+
+    private bool _isDragTarget;
+    private ItineraryActivityViewModel? _editingActivity;
+
+    public int RowIndex { get; set; }
+    public ObservableCollection<ItineraryActivityViewModel> Activities { get; } = [];
+
+    public bool IsDragTarget { get => _isDragTarget; set => SetField(ref _isDragTarget, value); }
+    public ItineraryActivityViewModel? EditingActivity
+    {
+        get => _editingActivity;
+        private set { if (SetField(ref _editingActivity, value)) OnPropertyChanged(nameof(HasEditingBlock)); }
+    }
+    public bool HasEditingBlock => _editingActivity is not null;
+
+    public double CanvasWidth => _slotsPerDay * _slotWidth;
+    public int CanvasHeight => _blockHeight + 8;
+
+    public void BeginEdit(ItineraryActivityViewModel activity)
+    {
+        ClearEditState();
+        activity.BeginEdit();
+        EditingActivity = activity;
+        foreach (var a in Activities) a.IsDimmed = a != activity;
+    }
+
+    public void AcceptEdit()
+    {
+        _editingActivity?.AcceptEdit();
+        ClearEditState();
+    }
+
+    public void RejectEdit()
+    {
+        _editingActivity?.RejectEdit();
+        ClearEditState();
+    }
+
+    private void ClearEditState()
+    {
+        foreach (var a in Activities) a.IsDimmed = false;
+        EditingActivity = null;
+    }
+
+    public void NotifyLayoutChanged()
+    {
+        OnPropertyChanged(nameof(CanvasWidth));
+        OnPropertyChanged(nameof(CanvasHeight));
+        foreach (var a in Activities) a.NotifyLayoutChanged();
+    }
 }
 
 public sealed class ItineraryActivityViewModel : NotifyObject

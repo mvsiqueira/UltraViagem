@@ -14,6 +14,8 @@ public sealed class Trip
     public int ItinerarySlotsPerDay { get; set; } = 16;
     public int ItineraryBlockHeight { get; set; } = 44;
     public int ItineraryFontSize { get; set; } = 11;
+    public int BankRows { get; set; } = 2;
+    public List<ItineraryActivity> BankActivities { get; set; } = [];
     public List<ItineraryDay> Itinerary { get; set; } = [];
     public List<TaskItem> Tasks { get; set; } = [];
     public List<PlaceItem> Places { get; set; } = [];
@@ -41,6 +43,7 @@ public sealed class ItineraryActivity
     public string Icon { get; set; } = "";
     public int StartSlot { get; set; } = 0;
     public int DurationSlots { get; set; } = 2;
+    public int BankRow { get; set; } = 0;
     public string? Details { get; set; }
     public string? AdditionalData { get; set; }
 }

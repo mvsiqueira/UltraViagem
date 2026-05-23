@@ -190,10 +190,11 @@ O roteiro (itinerário) é uma linha do tempo visual baseada em blocos por dia. 
 
 ### Dias
 
-- Cada dia tem um título livre e uma data opcional.
+- Cada dia tem um título livre, uma data opcional e um resumo de texto livre.
 - O botão `+ Dia` adiciona um novo dia ao final.
-- Cada dia exibe um botão de exclusão; a exclusão pede confirmação.
-- Clicar duas vezes no painel do nome do dia entra em modo de edição: campos `Nome` e `Data` ficam editáveis diretamente. Enter confirma; Esc cancela; clicar fora cancela.
+- Clicar duas vezes no painel do nome do dia entra em modo de edição: campos `Nome`, `Data` e `Resumo` ficam editáveis. Enter confirma; Esc cancela. Um segundo duplo-clique cancela a edição.
+- O botão `🗑️ Excluir Dia` aparece na própria forma de edição; a exclusão pede confirmação.
+- O dia em edição recebe borda de destaque (AccentBrush) e os demais dias ficam esmaecidos (opacidade 0,35).
 
 ### Atividades
 
@@ -223,8 +224,22 @@ As atividades são blocos coloridos absolutos sobre o canvas. A cor de fundo é 
 
 - **Mover**: clicar no centro do bloco e arrastar altera o `StartSlot`; o bloco encaixa no slot mais próximo durante o arraste.
 - **Redimensionar**: clicar e arrastar na borda direita do bloco (área de ~10 px) altera o `DurationSlots`.
+- **Mover entre dias**: arrastar um bloco sobre outro dia (destaque em azul) o transfere para aquele dia com recálculo do slot de destino.
+- **Mover entre banco e dia**: arrastar um bloco do banco para um dia (ou vice-versa) o transfere entre os contextos.
 - Os valores são clamped para não ultrapassar os limites do dia.
 - Ao soltar o botão do mouse, o roteiro é salvo automaticamente.
+
+### Banco de atividades
+
+O banco é uma seção colapsável exibida abaixo de todos os dias. Ele armazena atividades extras que ainda não foram encaixadas em um dia da programação (reserva para uso posterior ou substituições).
+
+- O banco tem uma ou mais **linhas** configuráveis via botões `−` e `+` no cabeçalho.
+- Cada linha usa o mesmo canvas de slots que os dias do roteiro.
+- Um único rótulo **"Banco"** aparece na coluna esquerda, abrangendo todas as linhas.
+- O botão `+ Atividade` no cabeçalho cria uma nova atividade na primeira linha do banco.
+- As atividades do banco têm os mesmos campos que as atividades dos dias (título, tipo, ícone, cor, detalhes, etc.) e o mesmo editor inline.
+- Para **mover** uma atividade entre banco e dia (ou vice-versa), basta arrasta-la; não há botão de transferência.
+- A quantidade de linhas e as atividades do banco são persistidas em `trip.json` (`bankRows`, `bankActivities`).
 
 ### Seleção e editor inline
 

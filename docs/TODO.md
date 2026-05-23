@@ -4,8 +4,10 @@
 
 - Implementar tela completa de roteiro. Inclui as funcionalidades:
 
-    - banco de atividades
-    - versões de roteiro
+    - Versões de roteiro
+    - Grid opcional
+
+
 - Implementar o card de roteiro na tela principal.
 - Criar exportação para PDF.
 
@@ -13,7 +15,7 @@
 
 - Importação XLSX da planilha de referência.
 - Definir estratégia de migração de schema para `trip.json`.
-- Importar arquivos da pasta ao abrir viagem
+- Importar/Remover arquivos da pasta ao abrir viagem
 
 ## Prioridade Baixa
 - Publicação empacotada do app Windows.
