@@ -216,7 +216,7 @@ public static class TripPdfExporter
             for (var i = 0; i < trip.Expenses.Count; i++)
             {
                 var exp = trip.Expenses[i];
-                var bg = i % 2 == 0 ? Colors.White : RowAlt;
+                var bg = i % 2 == 0 ? "#FFFFFF" : RowAlt;
                 var color = exp.IsActive ? TextDefault : TextMuted;
 
                 table.Cell().Background(bg).Padding(4).Text(exp.Title).FontSize(9).FontColor(color);
