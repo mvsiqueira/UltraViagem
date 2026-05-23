@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -63,13 +64,63 @@ public sealed class TripRepository
     public Trip? LoadTrip(string tripId)
     {
         var path = Path.Combine(RootPath, tripId, TripFileName);
-        if (!File.Exists(path))
+        if (!File.Exists(path)) return null;
+
+        try
         {
+            var json = File.ReadAllText(path);
+            var trip = JsonSerializer.Deserialize<Trip>(json, _jsonOptions);
+            return trip is null ? null : ValidateAndRepair(trip, path);
+        }
+        catch (JsonException ex)
+        {
+            Debug.WriteLine($"[TripRepository] JSON inválido em '{path}': {ex.Message}");
             return null;
         }
+    }
 
-        var json = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<Trip>(json, _jsonOptions);
+    /// <summary>
+    /// Garante que o trip desserializado está em estado consistente.
+    /// Corrige problemas silenciosamente em vez de propagar exceções.
+    /// </summary>
+    private static Trip ValidateAndRepair(Trip trip, string sourcePath)
+    {
+        // Garante que todas as coleções existem
+        trip.ItineraryVersions ??= [];
+        trip.Tasks                ??= [];
+        trip.Places               ??= [];
+        trip.Links                ??= [];
+        trip.Expenses             ??= [];
+        trip.CurrencyRates        ??= [];
+        trip.Attachments          ??= [];
+
+        // Garante integridade interna de cada versão do itinerário
+        foreach (var version in trip.ItineraryVersions)
+        {
+            version.Itinerary      ??= [];
+            version.BankActivities ??= [];
+            foreach (var day in version.Itinerary)
+                day.Activities ??= [];
+        }
+
+        // Corrige ActiveVersionId se aponta para uma versão que não existe
+        if (trip.ItineraryVersions.Count > 0 &&
+            !trip.ItineraryVersions.Any(v => v.Id == trip.ActiveVersionId))
+        {
+            var fixed_id = trip.ItineraryVersions[0].Id;
+            Debug.WriteLine($"[TripRepository] ActiveVersionId '{trip.ActiveVersionId}' não encontrado em '{sourcePath}' — corrigido para '{fixed_id}'.");
+            trip.ActiveVersionId = fixed_id;
+        }
+
+        // Remove entradas sem identificador (corrupção parcial)
+        var removedAttachments = trip.Attachments.RemoveAll(a => string.IsNullOrWhiteSpace(a.File) || string.IsNullOrWhiteSpace(a.Id));
+        var removedTasks       = trip.Tasks.RemoveAll(t => string.IsNullOrWhiteSpace(t.Id));
+        var removedExpenses    = trip.Expenses.RemoveAll(e => string.IsNullOrWhiteSpace(e.Id));
+
+        if (removedAttachments + removedTasks + removedExpenses > 0)
+            Debug.WriteLine($"[TripRepository] Removidos em '{sourcePath}': {removedAttachments} anexo(s), {removedTasks} tarefa(s), {removedExpenses} gasto(s) com dados inválidos.");
+
+        return trip;
     }
 
     public void SaveTrip(Trip trip)

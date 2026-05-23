@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Sobre o UltraViagem"
         Width="500"
-        Height="360"
+        Height="400"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="{StaticResource PageBackground}">
@@ -47,8 +47,12 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="Autor" Style="{StaticResource Caption}" Margin="0,0,0,10" />
-                    <TextBlock Grid.Column="1" Text="Marcus Siqueira via ChatGPT Codex" Margin="0,0,0,10" />
+                    <TextBlock Text="Autores" Style="{StaticResource Caption}" Margin="0,0,0,10" />
+                    <TextBlock Grid.Column="1" Margin="0,0,0,10">
+                        <Run Text="Marcus Siqueira" /><LineBreak />
+                        <Run Text="ChatGPT &quot;Raj&quot; Codex" /><LineBreak />
+                        <Run Text="Claude &quot;Claudinho&quot; Code" />
+                    </TextBlock>
 
                     <TextBlock Grid.Row="1" Text="Build" Style="{StaticResource Caption}" />
                     <TextBlock Grid.Row="1" Grid.Column="1" x:Name="BuildDateText" />
