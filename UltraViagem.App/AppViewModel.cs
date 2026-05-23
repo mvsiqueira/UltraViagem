@@ -36,6 +36,7 @@ public sealed class AppViewModel : NotifyObject
     private bool _isCurrentTripFavorite;
     private bool _isSidebarExpanded = true;
     private bool _isBankExpanded = true;
+    private bool _showItineraryGrid;
     private bool _isLoadingTasks;
     private bool _isLoadingTips;
     private bool _isLoadingAttachments;
@@ -162,6 +163,16 @@ public sealed class AppViewModel : NotifyObject
     {
         get => _isBankExpanded;
         set => SetField(ref _isBankExpanded, value);
+    }
+
+    public bool ShowItineraryGrid
+    {
+        get => _showItineraryGrid;
+        set
+        {
+            if (SetField(ref _showItineraryGrid, value) && _trip is not null)
+                _trip.ShowItineraryGrid = value;
+        }
     }
 
     public bool IsCurrentTripFavorite
@@ -342,6 +353,9 @@ public sealed class AppViewModel : NotifyObject
         ItineraryActivityViewModel.ConfigureBlockHeight(blockHeight);
         ItineraryActivityViewModel.ConfigureFontSize(fontSize);
         Itinerary.ReplaceWith(trip?.Itinerary.Select(ItineraryDayViewModel.FromDay) ?? []);
+
+        _showItineraryGrid = trip?.ShowItineraryGrid ?? false;
+        OnPropertyChanged(nameof(ShowItineraryGrid));
 
         var bankRowCount = trip?.BankRows ?? 2;
         BankRows.Clear();
@@ -1526,6 +1540,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public double EveningLabelX => EveningStartX + 4;
     public string DateLabel => Date?.ToString("ddd dd/MM", CultureInfo.GetCultureInfo("pt-BR")) ?? "";
     public string ActivitiesLabel => Activities.Count == 0 ? "Sem atividades" : $"{Activities.Count} atividade{(Activities.Count == 1 ? "" : "s")}";
+    public IEnumerable<double> SlotLinePositions => Enumerable.Range(1, _slotsPerDay - 1).Select(i => i * _slotWidth);
 
     public void NotifyLayoutChanged()
     {
@@ -1537,6 +1552,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
         OnPropertyChanged(nameof(EveningWidth));
         OnPropertyChanged(nameof(AfternoonLabelX));
         OnPropertyChanged(nameof(EveningLabelX));
+        OnPropertyChanged(nameof(SlotLinePositions));
         foreach (var a in Activities) a.NotifyLayoutChanged();
     }
 
@@ -1616,10 +1632,13 @@ public sealed class BankRowViewModel : NotifyObject
         EditingActivity = null;
     }
 
+    public IEnumerable<double> SlotLinePositions => Enumerable.Range(1, _slotsPerDay - 1).Select(i => i * _slotWidth);
+
     public void NotifyLayoutChanged()
     {
         OnPropertyChanged(nameof(CanvasWidth));
         OnPropertyChanged(nameof(CanvasHeight));
+        OnPropertyChanged(nameof(SlotLinePositions));
         foreach (var a in Activities) a.NotifyLayoutChanged();
     }
 }

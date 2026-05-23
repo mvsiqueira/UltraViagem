@@ -186,7 +186,7 @@ A edição do mapa, rotas, camadas e pontos é feita no próprio Google My Maps.
 
 ## Roteiro
 
-O roteiro (itinerário) é uma linha do tempo visual baseada em blocos por dia. Cada viagem tem um número configurável de blocos por dia (`ItinerarySlotsPerDay`, padrão 16), editável nos Dados da Viagem.
+O roteiro (itinerário) é uma linha do tempo visual baseada em blocos por dia. Cada viagem tem um número configurável de blocos por dia (`ItinerarySlotsPerDay`, padrão 16), editável nos Dados da Viagem. O campo `ShowItineraryGrid` (padrão `false`) ativa linhas verticais divisórias de slot no canvas de cada dia e do banco; pode ser ativado ou desativado em Dados da Viagem.
 
 ### Dias
 

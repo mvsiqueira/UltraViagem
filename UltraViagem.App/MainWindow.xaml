@@ -912,6 +912,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.ColumnSpan="2">
@@ -949,7 +950,13 @@
                                 <TextBox x:Name="TripDetailsRateDecimalDigitsBox" Height="34" Margin="0,4,0,0" />
                             </StackPanel>
 
-                            <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Margin="0,14,0,14">
+                            <!-- Grid do roteiro -->
+                            <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,14">
+                                <CheckBox x:Name="TripDetailsGridCheckBox" VerticalAlignment="Center" />
+                                <TextBlock Text="Exibir grid no roteiro" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Margin="0,14,0,14">
                                 <TextBlock Text="Pasta da viagem" Style="{StaticResource Caption}" />
                                 <DockPanel Margin="0,4,0,0">
                                     <Button DockPanel.Dock="Right"
@@ -966,7 +973,7 @@
                                 </DockPanel>
                             </StackPanel>
 
-                            <TextBlock Grid.Row="5"
+                            <TextBlock Grid.Row="6"
                                        Grid.ColumnSpan="2"
                                        x:Name="TripDetailsErrorText"
                                        Foreground="#B42318"
@@ -1384,7 +1391,7 @@
                                         </Border>
                                     </UniformGrid>
 
-                                    <Border Grid.Row="1" Background="{StaticResource InputBackground}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="7" Padding="18" Margin="0,0,18,0">
+                                    <Border Grid.Row="1" Background="{StaticResource PanelBackground}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="7" Padding="18" Margin="0,0,18,0">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto" />
@@ -1438,7 +1445,7 @@
                                         <ItemsControl ItemsSource="{Binding CurrencyRates}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Background="{StaticResource InputBackground}"
+                                                    <Border Background="{StaticResource PanelBackground}"
                                                             BorderBrush="{StaticResource BorderBrushSoft}"
                                                             BorderThickness="1"
                                                             CornerRadius="7"
@@ -2307,6 +2314,27 @@
                                                           ClipToBounds="True"
                                                           Margin="6,0">
                                                 <Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}">
+                                                    <!-- Grid lines -->
+                                                    <ItemsControl ItemsSource="{Binding SlotLinePositions}"
+                                                                  Canvas.Left="0" Canvas.Top="0"
+                                                                  Visibility="{Binding DataContext.ShowItineraryGrid, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate><Canvas /></ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemContainerStyle>
+                                                            <Style TargetType="ContentPresenter">
+                                                                <Setter Property="Canvas.Left" Value="{Binding}" />
+                                                                <Setter Property="Canvas.Top" Value="0" />
+                                                            </Style>
+                                                        </ItemsControl.ItemContainerStyle>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Line X1="0" Y1="0" X2="0"
+                                                                      Y2="{Binding DataContext.CanvasHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                                      Stroke="#44000000" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
                                                     <!-- Activities -->
                                                     <ItemsControl ItemsSource="{Binding Activities}"
                                                                   Canvas.Left="0" Canvas.Top="0"
@@ -2548,52 +2576,41 @@
                                                     </Style>
                                                 </Border.Style>
                                                 <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                    </Grid.RowDefinitions>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="180" />
                                                         <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
 
-                                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,0">
+                                                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
                                                         <TextBlock Text="Nome do dia" Style="{StaticResource Caption}" />
                                                         <TextBox Text="{Binding EditDayTitle, UpdateSourceTrigger=PropertyChanged}" Height="32" Margin="0,4,0,0" />
                                                     </StackPanel>
 
-                                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,10,0">
+                                                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
                                                         <TextBlock Text="Data" Style="{StaticResource Caption}" />
                                                         <DatePicker SelectedDate="{Binding EditDayDateDt}"
                                                                     CalendarOpened="DayDatePicker_CalendarOpened"
                                                                     Margin="0,4,0,0" />
                                                     </StackPanel>
 
-                                                    <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                                    <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                                                        <TextBlock Text="Resumo" Style="{StaticResource Caption}" />
+                                                        <TextBox Text="{Binding EditDaySummary, UpdateSourceTrigger=PropertyChanged}" Height="32" Margin="0,4,0,0" />
+                                                    </StackPanel>
+
+                                                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom">
                                                         <Button Style="{StaticResource CardActionButton}" ToolTip="Aceitar (Enter)" Click="AcceptDayEdit_Click" Margin="0,0,2,0">
                                                             <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
                                                         </Button>
-                                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Rejeitar (Esc)" Click="RejectDayEdit_Click">
+                                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Rejeitar (Esc)" Click="RejectDayEdit_Click" Margin="0,0,2,0">
                                                             <TextBlock Text="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
                                                         </Button>
+                                                        <Button Style="{StaticResource CardActionButton}" ToolTip="Excluir dia" Click="RemoveItineraryDay_Click">
+                                                            <TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+                                                        </Button>
                                                     </StackPanel>
-
-                                                    <Grid Grid.Row="1" Grid.ColumnSpan="3" Margin="0,10,0,0">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" />
-                                                            <ColumnDefinition Width="Auto" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                                            <TextBlock Text="Resumo" Style="{StaticResource Caption}" />
-                                                            <TextBox Text="{Binding EditDaySummary, UpdateSourceTrigger=PropertyChanged}"
-                                                                     Height="32" Margin="0,4,0,0" />
-                                                        </StackPanel>
-                                                        <Button Grid.Column="1" Content="🗑️ Excluir Dia"
-                                                                Style="{StaticResource DangerButton}"
-                                                                VerticalAlignment="Bottom"
-                                                                Click="RemoveItineraryDay_Click" />
-                                                    </Grid>
                                                 </Grid>
                                             </Border>
                                         </Grid>
@@ -2671,8 +2688,8 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
-                                    <!-- Spacer 112px para alinhar canvas com os dias (sem label, sem borda) -->
-                                    <Border Grid.Column="0" />
+                                    <!-- Spacer 112px para alinhar canvas com os dias -->
+                                    <Border Grid.Column="0" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0" />
 
                                     <!-- Bank row canvases -->
                                     <ItemsControl x:Name="BankRowsList" Grid.Column="1" ItemsSource="{Binding BankRows}">
@@ -2700,6 +2717,27 @@
                                                                   ClipToBounds="True" Margin="6,0">
                                                         <Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}"
                                                                 MouseLeftButtonDown="DayCanvas_MouseLeftButtonDown">
+                                                            <!-- Grid lines -->
+                                                            <ItemsControl ItemsSource="{Binding SlotLinePositions}"
+                                                                          Canvas.Left="0" Canvas.Top="0"
+                                                                          Visibility="{Binding DataContext.ShowItineraryGrid, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisibility}}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate><Canvas /></ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemContainerStyle>
+                                                                    <Style TargetType="ContentPresenter">
+                                                                        <Setter Property="Canvas.Left" Value="{Binding}" />
+                                                                        <Setter Property="Canvas.Top" Value="0" />
+                                                                    </Style>
+                                                                </ItemsControl.ItemContainerStyle>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <Line X1="0" Y1="0" X2="0"
+                                                                              Y2="{Binding DataContext.CanvasHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}"
+                                                                              Stroke="#44000000" StrokeThickness="1" StrokeDashArray="3,4" />
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
                                                             <ItemsControl ItemsSource="{Binding Activities}"
                                                                           Canvas.Left="0" Canvas.Top="0"
                                                                           Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}">

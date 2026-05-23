@@ -44,14 +44,18 @@ public partial class MainWindow : Window
     // Itinerary drag state
     private ItineraryActivityViewModel? _draggingActivity;
     private ItineraryActivityViewModel? _resizingActivity;
+    private bool _resizingLeft;
     private ItineraryDayViewModel? _activitySourceDay;
     private ItineraryDayViewModel? _activityDragTargetDay;
     private BankRowViewModel? _activitySourceBankRow;
     private BankRowViewModel? _activityDragTargetBankRow;
     private System.Windows.Point _activityDragOriginPoint;
+    private double _activityDragGrabOffset; // pixels from block left edge where grab occurred
     private int _activityOriginSlot;
     private int _activityOriginDuration;
     private bool _activityDragMoved;
+    private ItineraryDayViewModel? _activityCurrentDay;     // container visual atual durante drag
+    private BankRowViewModel? _activityCurrentBankRow;
 
     private static readonly HashSet<string> _windowsReservedNames = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -377,6 +381,7 @@ public partial class MainWindow : Window
         }
 
         ApplyDraftToTrip(draft, _viewModel.CurrentTrip);
+        _viewModel.CurrentTrip.ShowItineraryGrid = TripDetailsGridCheckBox.IsChecked == true;
         _repository.SaveTrip(_viewModel.CurrentTrip);
         LoadTrip(_viewModel.CurrentTrip.Id);
         PopulateTripDetailsPanel();
@@ -2700,6 +2705,24 @@ public partial class MainWindow : Window
             }
             return;
         }
+
+        // DEL: exclui atividade selecionada (nenhuma edição ativa)
+        if (e.Key == System.Windows.Input.Key.Delete && _viewModel.SelectedActivity is not null)
+        {
+            var title = _viewModel.SelectedActivity.Title;
+            var confirm = System.Windows.MessageBox.Show(
+                $"Excluir a atividade \"{title}\"?",
+                "Excluir atividade",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question,
+                MessageBoxResult.No);
+            if (confirm == MessageBoxResult.Yes)
+            {
+                _viewModel.RemoveSelectedActivity();
+                SaveItineraryInternal("Atividade excluída.");
+            }
+            e.Handled = true;
+        }
     }
 
     private void SaveItinerary_Click(object sender, RoutedEventArgs e)
@@ -2777,18 +2800,24 @@ public partial class MainWindow : Window
         _viewModel.SelectedActivity = activity;
 
         var pos = e.GetPosition(grid);
-        var isResize = pos.X >= grid.ActualWidth - 10;
+        var isResizeRight = pos.X >= grid.ActualWidth - 10;
+        var isResizeLeft  = pos.X <= 10;
+        var isResize = isResizeRight || isResizeLeft;
 
         _draggingActivity = isResize ? null : activity;
         _resizingActivity = isResize ? activity : null;
+        _resizingLeft = isResizeLeft;
         _activitySourceDay = _viewModel.FindDayForActivity(activity);
         _activitySourceBankRow = _activitySourceDay is null ? _viewModel.FindBankRowForActivity(activity) : null;
         _activityDragTargetDay = null;
         _activityDragTargetBankRow = null;
         _activityDragOriginPoint = e.GetPosition(null);
+        _activityDragGrabOffset = pos.X; // onde dentro do bloco o usuário segurou
         _activityOriginSlot = activity.StartSlot;
         _activityOriginDuration = activity.DurationSlots;
         _activityDragMoved = false;
+        _activityCurrentDay = _activitySourceDay;
+        _activityCurrentBankRow = _activitySourceBankRow;
 
         grid.CaptureMouse();
         e.Handled = true;
@@ -2798,11 +2827,13 @@ public partial class MainWindow : Window
     {
         if (_draggingActivity is null && _resizingActivity is null)
         {
-            // Update cursor hint near right edge
+            // Update cursor hint near edges
             if (sender is FrameworkElement grid)
             {
                 var pos = e.GetPosition(grid);
-                grid.Cursor = pos.X >= grid.ActualWidth - 10 ? System.Windows.Input.Cursors.SizeWE : System.Windows.Input.Cursors.Arrow;
+                grid.Cursor = (pos.X >= grid.ActualWidth - 10 || pos.X <= 10)
+                    ? System.Windows.Input.Cursors.SizeWE
+                    : System.Windows.Input.Cursors.Arrow;
             }
             return;
         }
@@ -2820,15 +2851,12 @@ public partial class MainWindow : Window
 
         if (_draggingActivity is not null)
         {
-            var newSlot = Math.Clamp(_activityOriginSlot + slotDelta, 0, slotsPerDay - _draggingActivity.DurationSlots);
-            _draggingActivity.StartSlot = newSlot;
-
-            // Cross-day / bank highlight
             var posInList = e.GetPosition(ItineraryDaysList);
             var targetDay = FindDayAtY(posInList.Y);
             var posInBank = e.GetPosition(BankRowsList);
             var targetBankRow = FindBankRowAtY(posInBank.Y);
 
+            // Atualiza destaques de drop
             if (targetDay != _activityDragTargetDay)
             {
                 if (_activityDragTargetDay != null) _activityDragTargetDay.IsDragTarget = false;
@@ -2843,11 +2871,72 @@ public partial class MainWindow : Window
                 if (_activityDragTargetBankRow != null && _activityDragTargetBankRow != _activitySourceBankRow)
                     _activityDragTargetBankRow.IsDragTarget = true;
             }
+
+            // Preview em tempo real: entra em novo dia ou nova linha de banco?
+            var enteringDay = targetDay is not null && targetDay != _activityCurrentDay ? targetDay : null;
+            var enteringBank = enteringDay is null && targetBankRow is not null && targetBankRow != _activityCurrentBankRow ? targetBankRow : null;
+
+            if (enteringDay is not null)
+            {
+                // Move activity para o novo dia imediatamente
+                _activityCurrentDay?.Activities.Remove(_draggingActivity);
+                _activityCurrentBankRow?.Activities.Remove(_draggingActivity);
+
+                var newSlot = Math.Clamp(
+                    (int)Math.Round((posInList.X - 112 - _activityDragGrabOffset) / slotWidth),
+                    0, slotsPerDay - _draggingActivity.DurationSlots);
+                _draggingActivity.StartSlot = newSlot;
+                enteringDay.Activities.Add(_draggingActivity);
+
+                // Reinicia referência relativa para drags dentro do novo dia
+                _activityOriginSlot = newSlot;
+                _activityDragOriginPoint = currentPos;
+
+                _activityCurrentDay = enteringDay;
+                _activityCurrentBankRow = null;
+            }
+            else if (enteringBank is not null)
+            {
+                // Move activity para a nova linha de banco imediatamente
+                _activityCurrentDay?.Activities.Remove(_draggingActivity);
+                _activityCurrentBankRow?.Activities.Remove(_draggingActivity);
+
+                var newSlot = Math.Clamp(
+                    (int)Math.Round((posInBank.X - _activityDragGrabOffset) / slotWidth),
+                    0, slotsPerDay - _draggingActivity.DurationSlots);
+                _draggingActivity.StartSlot = newSlot;
+                enteringBank.Activities.Add(_draggingActivity);
+
+                // Reinicia referência relativa
+                _activityOriginSlot = newSlot;
+                _activityDragOriginPoint = currentPos;
+
+                _activityCurrentDay = null;
+                _activityCurrentBankRow = enteringBank;
+            }
+            else
+            {
+                // Mesmo container: atualiza slot por delta relativo (comportamento original)
+                var newSlot = Math.Clamp(_activityOriginSlot + slotDelta, 0, slotsPerDay - _draggingActivity.DurationSlots);
+                _draggingActivity.StartSlot = newSlot;
+            }
         }
         else if (_resizingActivity is not null)
         {
-            var newDuration = Math.Clamp(_activityOriginDuration + slotDelta, 1, slotsPerDay - _resizingActivity.StartSlot);
-            _resizingActivity.DurationSlots = newDuration;
+            if (_resizingLeft)
+            {
+                // Borda esquerda: a borda direita fica fixa, StartSlot e DurationSlots mudam juntos
+                var rightEdge = _activityOriginSlot + _activityOriginDuration;
+                var newStart = Math.Clamp(_activityOriginSlot + slotDelta, 0, rightEdge - 1);
+                _resizingActivity.StartSlot = newStart;
+                _resizingActivity.DurationSlots = rightEdge - newStart;
+            }
+            else
+            {
+                // Borda direita: StartSlot fixo, apenas DurationSlots muda
+                var newDuration = Math.Clamp(_activityOriginDuration + slotDelta, 1, slotsPerDay - _resizingActivity.StartSlot);
+                _resizingActivity.DurationSlots = newDuration;
+            }
         }
 
         e.Handled = true;
@@ -2856,11 +2945,6 @@ public partial class MainWindow : Window
     private void ActivityBlock_MouseUp(object sender, MouseButtonEventArgs e)
     {
         var moved = _activityDragMoved;
-        var activity = _draggingActivity;
-        var sourceDay = _activitySourceDay;
-        var targetDay = _activityDragTargetDay;
-        var sourceBankRow = _activitySourceBankRow;
-        var targetBankRow = _activityDragTargetBankRow;
 
         if (_activityDragTargetDay != null) _activityDragTargetDay.IsDragTarget = false;
         if (_activityDragTargetBankRow != null) _activityDragTargetBankRow.IsDragTarget = false;
@@ -2870,56 +2954,16 @@ public partial class MainWindow : Window
         _activitySourceDay = null;
         _activityDragTargetBankRow = null;
         _activitySourceBankRow = null;
+        _activityCurrentDay = null;
+        _activityCurrentBankRow = null;
         _activityDragMoved = false;
 
         ((FrameworkElement)sender).ReleaseMouseCapture();
 
-        if (moved && activity is not null)
-        {
-            if (targetBankRow is not null && sourceDay is not null)
-            {
-                // Day → Bank
-                sourceDay.Activities.Remove(activity);
-                targetBankRow.Activities.Add(activity);
-                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
-            }
-            else if (targetDay is not null && sourceBankRow is not null)
-            {
-                // Bank → Day
-                var posInList = e.GetPosition(ItineraryDaysList);
-                var newSlot = Math.Clamp(
-                    (int)((posInList.X - 112) / _viewModel.ItinerarySlotWidth),
-                    0, _viewModel.ItinerarySlotsPerDay - activity.DurationSlots);
-                activity.StartSlot = newSlot;
-                sourceBankRow.Activities.Remove(activity);
-                targetDay.Activities.Add(activity);
-                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
-            }
-            else if (targetBankRow is not null && sourceBankRow is not null && targetBankRow != sourceBankRow)
-            {
-                // Bank → different bank row
-                sourceBankRow.Activities.Remove(activity);
-                targetBankRow.Activities.Add(activity);
-                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
-            }
-            else if (targetDay is not null && sourceDay is not null && targetDay != sourceDay)
-            {
-                // Day → different day
-                var posInList = e.GetPosition(ItineraryDaysList);
-                var newSlot = Math.Clamp(
-                    (int)((posInList.X - 112) / _viewModel.ItinerarySlotWidth),
-                    0, _viewModel.ItinerarySlotsPerDay - activity.DurationSlots);
-                activity.StartSlot = newSlot;
-                sourceDay.Activities.Remove(activity);
-                targetDay.Activities.Add(activity);
-                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
-            }
-            else
-            {
-                // Same container move (slot/resize change)
-                SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
-            }
-        }
+        // A movimentação cross-container já ocorreu em tempo real no MouseMove;
+        // basta salvar se houve drag ou resize.
+        if (moved)
+            SaveItineraryInternal($"Roteiro atualizado às {DateTime.Now:HH:mm}.");
 
         e.Handled = true;
     }
@@ -3360,6 +3404,7 @@ public partial class MainWindow : Window
         TripDetailsCurrencyBox.Text = draft.BaseCurrency;
         TripDetailsRateDecimalDigitsBox.Text = (_viewModel.CurrentTrip?.RateDecimalDigits ?? 2).ToString(CultureInfo.InvariantCulture);
         TripDetailsSlotsPerDayBox.Text = (_viewModel.CurrentTrip?.ItinerarySlotsPerDay ?? 16).ToString(CultureInfo.InvariantCulture);
+        TripDetailsGridCheckBox.IsChecked = _viewModel.CurrentTrip?.ShowItineraryGrid ?? false;
         TripDetailsPathBox.Text = _viewModel.TripPath;
         TripDetailsErrorText.Visibility = Visibility.Collapsed;
     }

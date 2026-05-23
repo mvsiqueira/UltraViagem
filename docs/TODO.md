@@ -3,11 +3,9 @@
 ## Prioridade Alta
 
 - Implementar tela completa de roteiro. Inclui as funcionalidades:
-
+  
     - Versões de roteiro
-    - Grid opcional
-
-
+      
 - Implementar o card de roteiro na tela principal.
 - Criar exportação para PDF.
 
