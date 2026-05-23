@@ -1367,7 +1367,7 @@ public partial class MainWindow : Window
 
     private void SaveMap_Click(object sender, RoutedEventArgs e)
     {
-        SaveMapInternal($"Mapa salvo em {DateTime.Now:HH:mm}.");
+        SaveMapInternal($"Mapa salvo em {DateTime.Now:HH:mm}.", forceReload: true);
     }
 
     private void MapUrlBox_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
@@ -1994,7 +1994,7 @@ public partial class MainWindow : Window
         });
     }
 
-    private void RefreshMapBrowsers()
+    private void RefreshMapBrowsers(bool forceReload = false)
     {
         var url = _viewModel.MyMapsUrl;
         var embedUrl = BuildMyMapsEmbedUrl(url);
@@ -2009,8 +2009,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        NavigateMapBrowser(OverviewMapBrowser, embedUrl);
-        NavigateMapBrowser(MainMapBrowser, embedUrl);
+        NavigateMapBrowser(OverviewMapBrowser, embedUrl, forceReload);
+        NavigateMapBrowser(MainMapBrowser, embedUrl, forceReload);
     }
 
     private static string? BuildMyMapsEmbedUrl(string url)
@@ -2038,9 +2038,9 @@ public partial class MainWindow : Window
         return $"https://www.google.com/maps/d/embed?mid={Uri.EscapeDataString(mid)}";
     }
 
-    private static void NavigateMapBrowser(Microsoft.Web.WebView2.Wpf.WebView2 browser, string embedUrl)
+    private static void NavigateMapBrowser(Microsoft.Web.WebView2.Wpf.WebView2 browser, string embedUrl, bool forceReload = false)
     {
-        if (string.Equals(browser.Tag as string, embedUrl, StringComparison.Ordinal))
+        if (!forceReload && string.Equals(browser.Tag as string, embedUrl, StringComparison.Ordinal))
         {
             return;
         }
@@ -3227,7 +3227,7 @@ public partial class MainWindow : Window
         _isSavingTips = false;
     }
 
-    private void SaveMapInternal(string message)
+    private void SaveMapInternal(string message, bool forceReload = false)
     {
         if (_repository is null || _viewModel.CurrentTrip is null)
         {
@@ -3257,7 +3257,7 @@ public partial class MainWindow : Window
 
         MapUrlError.Visibility = Visibility.Collapsed;
         _repository.SaveTrip(_viewModel.CurrentTrip);
-        RefreshMapBrowsers();
+        RefreshMapBrowsers(forceReload);
         _viewModel.StatusMessage = message;
     }
 
