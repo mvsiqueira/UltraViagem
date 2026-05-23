@@ -520,6 +520,13 @@ public partial class MainWindow : Window
         ShowItinerary();
     }
 
+    private void ReloadCoverImage_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is ItineraryDayViewModel day)
+            _ = day.ReloadCoverImageAsync();
+        e.Handled = true; // impede o card click de propagar
+    }
+
     // Largura de um item de card: círculo(28) + margem-esq(8) + card(210) + margem-dir(12) = 258
     private const double OverviewCardStep = 258;
 

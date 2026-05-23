@@ -452,6 +452,17 @@ public sealed class AppViewModel : NotifyObject
         _isLoadingAttachments = false;
         _isLoadingExpenses = false;
         RefreshSummary();
+
+        StartLoadingCoverImages();
+    }
+
+    /// <summary>Inicia o carregamento assíncrono de imagens de capa para os cards do roteiro.</summary>
+    public void StartLoadingCoverImages()
+    {
+        if (string.IsNullOrEmpty(TripPath)) return;
+        var cacheDir = Path.Combine(TripPath, ".cache");
+        foreach (var day in Itinerary)
+            _ = day.LoadCoverImageAsync(cacheDir);
     }
 
     public void AddTask()
@@ -1659,8 +1670,13 @@ public sealed class ItineraryDayViewModel : NotifyObject
 
     public string Id { get => _id; set => SetField(ref _id, value); }
     public string Title { get => _title; set => SetField(ref _title, value); }
-    public string Summary { get => _summary; set { if (SetField(ref _summary, value)) OnPropertyChanged(nameof(HasSummary)); } }
+    public string Summary { get => _summary; set { if (SetField(ref _summary, value)) { OnPropertyChanged(nameof(HasSummary)); OnPropertyChanged(nameof(CardTitle)); } } }
     public bool HasSummary => !string.IsNullOrWhiteSpace(_summary);
+
+    /// <summary>Título exibido no card da visão geral: Summary se preenchido, senão nome do Pernoite.</summary>
+    public string CardTitle => !string.IsNullOrWhiteSpace(_summary)
+        ? _summary
+        : Activities.FirstOrDefault(a => string.Equals(a.Type, "Pernoite", StringComparison.OrdinalIgnoreCase))?.Title ?? "";
     public DateOnly? Date { get => _date; set { if (SetField(ref _date, value)) OnPropertyChanged(nameof(DateLabel)); } }
     public bool IsDragTarget { get => _isDragTarget; set => SetField(ref _isDragTarget, value); }
     public bool IsDimmed { get => _isDimmed; set => SetField(ref _isDimmed, value); }
@@ -1668,17 +1684,115 @@ public sealed class ItineraryDayViewModel : NotifyObject
     private int _number = 1;
     public int Number { get => _number; set => SetField(ref _number, value); }
 
+    private System.Windows.Media.ImageSource? _coverImage;
+    public System.Windows.Media.ImageSource? CoverImage { get => _coverImage; private set { if (SetField(ref _coverImage, value)) OnPropertyChanged(nameof(HasCoverImage)); } }
+    public bool HasCoverImage => _coverImage is not null;
+
+    private string? _coverCacheDir;
+    private string? _lastCoverQuery;
+    private int _imageOffset;
+
+    /// <summary>
+    /// Busca imagem no Wikimedia Commons e cacheia localmente.
+    /// Salva cacheDir e query para permitir rebusca automática quando CardTitle mudar.
+    /// </summary>
+    public async Task LoadCoverImageAsync(string cacheDir)
+    {
+        _coverCacheDir = cacheDir;
+        var query = !string.IsNullOrWhiteSpace(CardTitle) ? CardTitle : Title;
+        _lastCoverQuery = query;
+        if (string.IsNullOrWhiteSpace(query)) return;
+
+        await FetchAndApplyImageAsync(query, cacheDir, _imageOffset);
+    }
+
+    /// <summary>Força recarregamento com a próxima imagem disponível (incrementa offset).</summary>
+    public async Task ReloadCoverImageAsync()
+    {
+        if (string.IsNullOrEmpty(_coverCacheDir)) return;
+        _imageOffset++;
+        _lastCoverQuery = null;
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => CoverImage = null);
+        await LoadCoverImageAsync(_coverCacheDir);
+    }
+
+    /// <summary>Rebusca a imagem se CardTitle mudou de valor desde a última busca.</summary>
+    private async Task RefetchCoverImageAsync()
+    {
+        if (string.IsNullOrEmpty(_coverCacheDir)) return;
+
+        var query = !string.IsNullOrWhiteSpace(CardTitle) ? CardTitle : Title;
+        if (query == _lastCoverQuery) return;
+
+        // Apaga cache do query anterior para forçar nova busca
+        if (!string.IsNullOrEmpty(_lastCoverQuery))
+        {
+            var oldHash = Convert.ToHexString(
+                System.Security.Cryptography.MD5.HashData(
+                    System.Text.Encoding.UTF8.GetBytes(_lastCoverQuery.ToLowerInvariant())))[..10];
+            var oldPath = System.IO.Path.Combine(_coverCacheDir, $"day-{oldHash}.jpg");
+            try { if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath); } catch { }
+        }
+
+        _lastCoverQuery = query;
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() => CoverImage = null);
+        await FetchAndApplyImageAsync(query, _coverCacheDir, _imageOffset);
+    }
+
+    private async Task FetchAndApplyImageAsync(string query, string cacheDir, int offset = 0)
+    {
+        var path = await WikimediaImageService.FetchAndCacheAsync(query, cacheDir, offset);
+        if (path is null) return;
+
+        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            try
+            {
+                var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                bmp.BeginInit();
+                bmp.UriSource = new Uri(path);
+                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bmp.EndInit();
+                bmp.Freeze();
+                CoverImage = bmp;
+            }
+            catch { }
+        });
+    }
+
+    /// <summary>"Pernoite em {nome}" para exibição no card da visão geral, ou vazio se não houver Pernoite.</summary>
+    public string PernoiteLabel
+    {
+        get
+        {
+            var title = Activities
+                .FirstOrDefault(a => string.Equals(a.Type, "Pernoite", StringComparison.OrdinalIgnoreCase))
+                ?.Title;
+            return string.IsNullOrEmpty(title) ? "" : $"Pernoite em {title}";
+        }
+    }
+    public bool HasPernoite => !string.IsNullOrEmpty(PernoiteLabel);
+
     /// <summary>Título da primeira atividade do tipo Pernoite, ou o Summary/Title do dia como fallback.</summary>
     public string OvernightLabel => Activities
         .FirstOrDefault(a => string.Equals(a.Type, "Pernoite", StringComparison.OrdinalIgnoreCase))
         ?.Title
         ?? (string.IsNullOrWhiteSpace(Summary) ? "" : Summary);
 
-    /// <summary>Primeiras 4 atividades (excluindo Refeição, ordenadas por slot) para exibição no card da visão geral.</summary>
-    public IEnumerable<ItineraryActivityViewModel> TopActivities => Activities
-        .Where(a => !string.Equals(a.Type, "Refeição", StringComparison.OrdinalIgnoreCase))
-        .OrderBy(a => a.StartSlot)
-        .Take(4);
+    /// <summary>
+    /// Atividades para exibição no card da visão geral (sem limite de quantidade — o card clipa pelo espaço disponível).
+    /// Refeição é excluída. Pernoite é sempre incluído e ordenado por slot junto com as demais.
+    /// </summary>
+    public IEnumerable<ItineraryActivityViewModel> TopActivities
+    {
+        get
+        {
+            return Activities
+                .Where(a => !string.Equals(a.Type, "Refeição", StringComparison.OrdinalIgnoreCase)
+                         && !string.Equals(a.Type, "Pernoite", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(a => a.StartSlot);
+        }
+    }
 
     public bool IsEditingDay { get => _isEditingDay; private set { if (SetField(ref _isEditingDay, value)) OnPropertyChanged(nameof(IsInEditMode)); } }
     public string EditDayTitle { get => _editDayTitle; set => SetField(ref _editDayTitle, value); }
@@ -1751,6 +1865,11 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public ItineraryDayViewModel()
     {
         Activities.CollectionChanged += OnActivitiesCollectionChanged;
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(CardTitle))
+                _ = RefetchCoverImageAsync();
+        };
     }
 
     private void OnActivitiesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -1775,6 +1894,9 @@ public sealed class ItineraryDayViewModel : NotifyObject
     private void RefreshOverviewProps()
     {
         OnPropertyChanged(nameof(OvernightLabel));
+        OnPropertyChanged(nameof(PernoiteLabel));
+        OnPropertyChanged(nameof(HasPernoite));
+        OnPropertyChanged(nameof(CardTitle));
         OnPropertyChanged(nameof(TopActivities));
         OnPropertyChanged(nameof(ActivitiesLabel));
     }
@@ -1917,10 +2039,10 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     private int _editDurationSlots = 2;
 
     public string Id { get => _id; set => SetField(ref _id, value); }
-    public string Title { get => _title; set => SetField(ref _title, value); }
+    public string Title { get => _title; set { if (SetField(ref _title, value)) OnPropertyChanged(nameof(OverviewTitle)); } }
     public string Color { get => _color; set => SetField(ref _color, value); }
-    public string Icon { get => _icon; set => SetField(ref _icon, value); }
-    public string Type { get => _type; set => SetField(ref _type, value); }
+    public string Icon { get => _icon; set { if (SetField(ref _icon, value)) OnPropertyChanged(nameof(OverviewIcon)); } }
+    public string Type { get => _type; set { if (SetField(ref _type, value)) { OnPropertyChanged(nameof(OverviewIcon)); OnPropertyChanged(nameof(OverviewTitle)); } } }
     public int StartSlot { get => _startSlot; set => SetField(ref _startSlot, Math.Max(0, value)); }
     public int DurationSlots { get => _durationSlots; set => SetField(ref _durationSlots, Math.Max(1, value)); }
     public string? Details { get => _details; set => SetField(ref _details, value); }
@@ -1933,6 +2055,11 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     /// <summary>Ícone para exibição compacta: usa o emoji do campo Icon, ou um fallback por tipo.</summary>
     public string OverviewIcon => !string.IsNullOrEmpty(_icon) ? _icon
         : _type switch { "Refeição" => "🍴", "Pernoite" => "🛏", _ => "📍" };
+
+    /// <summary>Título formatado para o card da visão geral. Pernoite aparece como "Pernoite em {nome}".</summary>
+    public string OverviewTitle => string.Equals(_type, "Pernoite", StringComparison.OrdinalIgnoreCase)
+        ? $"Pernoite em {_title}"
+        : _title;
 
     /// <summary>Horário estimado derivado do slot (base 08:00, 16h/dia).</summary>
     public string TimeLabel

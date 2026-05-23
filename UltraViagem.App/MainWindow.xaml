@@ -492,9 +492,15 @@
                                                 <Border Style="{StaticResource Card}" Width="210" Height="240" Padding="14"
                                                         Margin="8,0,12,0" Cursor="Hand" ClipToBounds="True"
                                                         MouseLeftButtonDown="OverviewDayCard_Click">
-                                                    <StackPanel VerticalAlignment="Top">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="*" />
+                                                        </Grid.RowDefinitions>
                                                         <!-- Título + data -->
-                                                        <Grid Margin="0,0,0,10">
+                                                        <Grid Grid.Row="0" Margin="0,0,0,10">
                                                             <TextBlock Text="{Binding Title}" FontSize="15"
                                                                        FontWeight="SemiBold"
                                                                        TextTrimming="CharacterEllipsis" />
@@ -503,38 +509,88 @@
                                                                        HorizontalAlignment="Right"
                                                                        VerticalAlignment="Center" />
                                                         </Grid>
-                                                        <!-- Imagem placeholder + pernoite/resumo -->
-                                                        <Grid Margin="0,0,0,10">
+                                                        <!-- Imagem + resumo/pernoite -->
+                                                        <Grid Grid.Row="1" Margin="0,0,0,10">
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="68" />
                                                                 <ColumnDefinition Width="*" />
                                                             </Grid.ColumnDefinitions>
                                                             <Border Width="60" Height="60" CornerRadius="6"
-                                                                    Background="{StaticResource AccentSoftBrush}">
-                                                                <TextBlock Text="🗺" FontFamily="Segoe UI Emoji"
-                                                                           FontSize="26" HorizontalAlignment="Center"
-                                                                           VerticalAlignment="Center" />
+                                                                    Background="{StaticResource AccentSoftBrush}"
+                                                                    ClipToBounds="True">
+                                                                <Grid>
+                                                                    <TextBlock Text="🗺" FontFamily="Segoe UI Emoji"
+                                                                               FontSize="26" HorizontalAlignment="Center"
+                                                                               VerticalAlignment="Center">
+                                                                        <TextBlock.Style>
+                                                                            <Style TargetType="TextBlock">
+                                                                                <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding HasCoverImage}" Value="True">
+                                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                                    </DataTrigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </TextBlock.Style>
+                                                                    </TextBlock>
+                                                                    <Image Source="{Binding CoverImage}" Stretch="UniformToFill"
+                                                                           Visibility="{Binding HasCoverImage, Converter={StaticResource BoolToVisibility}}" />
+                                                                    <!-- Botão de reload: overlay invisível, aparece no hover -->
+                                                                    <Button Width="60" Height="60" Padding="0"
+                                                                            Click="ReloadCoverImage_Click"
+                                                                            Cursor="Hand" ToolTip="Recarregar imagem">
+                                                                        <Button.Style>
+                                                                            <Style TargetType="Button">
+                                                                                <Setter Property="Opacity" Value="0" />
+                                                                                <Setter Property="Background" Value="Transparent" />
+                                                                                <Setter Property="BorderThickness" Value="0" />
+                                                                                <Setter Property="Template">
+                                                                                    <Setter.Value>
+                                                                                        <ControlTemplate TargetType="Button">
+                                                                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                                            </Border>
+                                                                                        </ControlTemplate>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                                <Style.Triggers>
+                                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                                        <Setter Property="Opacity" Value="1" />
+                                                                                        <Setter Property="Background" Value="#AA000000" />
+                                                                                    </Trigger>
+                                                                                </Style.Triggers>
+                                                                            </Style>
+                                                                        </Button.Style>
+                                                                        <TextBlock Text="↻" Foreground="White"
+                                                                                   FontSize="20" FontWeight="SemiBold" />
+                                                                    </Button>
+                                                                </Grid>
                                                             </Border>
-                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center"
-                                                                        Margin="8,0,0,0">
-                                                                <TextBlock Text="{Binding OvernightLabel}"
+                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                                <TextBlock Text="{Binding CardTitle}"
                                                                            FontWeight="SemiBold" TextWrapping="Wrap"
                                                                            FontSize="12" MaxHeight="36"
                                                                            TextTrimming="CharacterEllipsis" />
-                                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                                                    <TextBlock Text="📍" FontFamily="Segoe UI Emoji"
-                                                                               FontSize="10" VerticalAlignment="Center"
+                                                                <Grid Margin="0,4,0,0"
+                                                                      Visibility="{Binding HasPernoite, Converter={StaticResource BoolToVisibility}}">
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto" />
+                                                                        <ColumnDefinition Width="*" />
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBlock Grid.Column="0" Text="🛏" FontFamily="Segoe UI Emoji"
+                                                                               FontSize="10" VerticalAlignment="Top"
+                                                                               Foreground="{StaticResource MutedTextBrush}"
                                                                                Margin="0,0,3,0" />
-                                                                    <TextBlock Text="{Binding ActivitiesLabel}"
-                                                                               Style="{StaticResource Caption}" />
-                                                                </StackPanel>
+                                                                    <TextBlock Grid.Column="1" Text="{Binding PernoiteLabel}"
+                                                                               Style="{StaticResource Caption}"
+                                                                               TextWrapping="Wrap" />
+                                                                </Grid>
                                                             </StackPanel>
                                                         </Grid>
                                                         <!-- Divisor -->
-                                                        <Border BorderBrush="{StaticResource BorderBrushSoft}"
+                                                        <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrushSoft}"
                                                                 BorderThickness="0,1,0,0" Margin="0,0,0,8" />
-                                                        <!-- Top atividades: ícone + título -->
-                                                        <ItemsControl ItemsSource="{Binding TopActivities}">
+                                                        <!-- Atividades: preenche espaço restante e clipa o excesso -->
+                                                        <ItemsControl Grid.Row="3" ItemsSource="{Binding TopActivities}" ClipToBounds="True">
                                                             <ItemsControl.ItemTemplate>
                                                                 <DataTemplate>
                                                                     <Grid Margin="0,0,0,5">
@@ -548,7 +604,7 @@
                                                                                    FontSize="11"
                                                                                    VerticalAlignment="Center" />
                                                                         <TextBlock Grid.Column="1"
-                                                                                   Text="{Binding Title}"
+                                                                                   Text="{Binding OverviewTitle}"
                                                                                    FontSize="11"
                                                                                    TextTrimming="CharacterEllipsis"
                                                                                    VerticalAlignment="Center" />
@@ -556,7 +612,7 @@
                                                                 </DataTemplate>
                                                             </ItemsControl.ItemTemplate>
                                                         </ItemsControl>
-                                                    </StackPanel>
+                                                    </Grid>
                                                 </Border>
                                             </StackPanel>
                                         </DataTemplate>
