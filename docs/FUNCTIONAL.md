@@ -82,7 +82,7 @@ Na visão geral, todos os cabeçalhos de card são clicáveis (cursor de mão, e
 O card de roteiro exibe um scroll horizontal com um card fixo de 210×240 px por dia do itinerário ativo. O cabeçalho da seção é clicável e navega para o painel de roteiro. Cada card de dia mostra:
 
 - **Círculo numerado** (número do dia, cor de acento) e **título** do dia na primeira linha.
-- **Imagem de capa** (60×60 px): buscada automaticamente no Wikimedia Commons/Wikipedia com base no `CardTitle` do dia (resumo ou nome do pernoite). Cacheada localmente em `.cache/day-{hash}-{offset}.jpg`. Ao passar o mouse, um botão ↻ discreto permite recarregar (cada recarga busca um resultado diferente via `sroffset`). Enquanto sem imagem, exibe um emoji de câmera.
+- **Imagem de capa** (60×60 px): buscada automaticamente no Wikimedia Commons/Wikipedia com base no `CardTitle` do dia (resumo ou nome do pernoite). Cacheada localmente em `.cache/day-{hash}-{offset}.jpg`. Ao passar o mouse, um botão ↻ discreto permite recarregar (cada recarga busca um resultado diferente via `sroffset`). Enquanto sem imagem, exibe um emoji de câmera. As imagens são recarregadas automaticamente ao trocar de versão do roteiro. Quando o `CardTitle` muda, a imagem é rebuscada em background sem apagar a anterior até a nova estar pronta.
 - **CardTitle**: resumo do dia se preenchido; caso contrário, título da atividade `Pernoite`.
 - **PernoiteLabel**: 🛏 + "Pernoite em {nome}" — exibido quando existe atividade do tipo `Pernoite`; o texto quebra se necessário.
 - **Lista de atividades** dinâmica que preenche o espaço restante do card (clipada automaticamente). Exibe atividades ordenadas por slot, excluindo tipos `Refeição` e `Pernoite`. Cada item mostra `OverviewIcon` e título.
@@ -201,7 +201,10 @@ Na tela de mapa:
 Na visão geral:
 
 - o card de mapa exibe o mesmo mapa embutido em formato compacto via WebView2;
-- o cabeçalho do card é clicável e abre a tela completa de mapa.
+- o cabeçalho do card é clicável e abre a tela completa de mapa;
+- o header nativo do Google My Maps é ocultado via injeção de CSS após carregamento.
+
+O botão **Salvar URL** sempre força o recarregamento do mapa (navega para `about:blank` e depois para a URL), garantindo que o estado de zoom do Google My Maps seja reiniciado mesmo que a URL não tenha mudado.
 
 A edição do mapa, rotas, camadas e pontos é feita no próprio Google My Maps. O app não edita o conteúdo do mapa nem exporta KML.
 
@@ -299,6 +302,66 @@ Os botões `−` e `+` no cabeçalho do painel alteram a largura em pixels de ca
 
 - O botão `Salvar Roteiro` salva explicitamente.
 - O roteiro também é salvo automaticamente ao soltar o mouse após mover ou redimensionar uma atividade.
+
+## Exportação PDF
+
+O botão **Exportar PDF** na Visão Geral abre um diálogo de salvar. Após confirmação, gera um PDF com todas as seções da viagem e abre automaticamente no visualizador padrão do sistema.
+
+O PDF é gerado via **QuestPDF** (Community License) e contém as seguintes seções, nesta ordem:
+
+### Roteiro
+
+Lista os dias da versão ativa com data, resumo e atividades ordenadas por slot. Cada dia exibe tipo e título de cada atividade.
+
+### Roteiro Detalhado
+
+Página **landscape (A4)**. Uma página por versão de roteiro.
+
+- Layout em **Gantt horizontal**: cada linha representa um dia, o eixo horizontal representa os slots de tempo.
+- O rótulo do dia (título + data) aparece numa célula teal à esquerda.
+- Cada atividade ocupa largura proporcional à sua duração em slots.
+- A cor do texto do bloco é calculada automaticamente (preto ou branco) para contraste com a cor de fundo da atividade.
+- Título e campo Detalhes são exibidos no bloco (se preenchidos), centralizados.
+- Slots vazios aparecem em cinza claro.
+
+### Dicas
+
+Lista todas as dicas com título e URL/texto. Links (`http://`/`https://`) aparecem em azul; textos simples aparecem em cinza.
+
+### Gastos
+
+Tabela resumida com Item, Fornecedor e Total na moeda base.
+
+### Orçamento Detalhado
+
+Página **landscape (A4)**. Tabela completa com uma linha por gasto:
+
+| Coluna | Conteúdo |
+|--------|----------|
+| # | Índice |
+| Item | Título, notas (sub-texto) e link de reserva (azul) |
+| Tipo | Categoria |
+| Fornecedor | Empresa |
+| Moeda | Código ISO |
+| Preço unit. | `price + taxes` na moeda do item |
+| Pes.×Qtd | Multiplicadores |
+| Câmbio | Taxa para a moeda base (`—` se mesma moeda) |
+| Total (base) | Subtotal convertido |
+| Pago (base) | Valor já pago |
+
+Linha de totais no rodapé (Total base e Total pago). Itens inativos aparecem em cinza com prefixo `[inativo]`.
+
+### Tarefas
+
+Lista todas as tarefas na mesma ordem do app. Checkboxes estilizadas:
+- **Concluída**: caixa teal com "✓" e título riscado em cinza.
+- **Pendente**: caixa com borda cinza.
+
+Notas aparecem como sub-texto abaixo do título.
+
+---
+
+Todas as seções seguem o mesmo cabeçalho: título da viagem (teal) + nome da seção (cinza) + linha separadora teal. Rodapé com numeração de páginas.
 
 ## Orçamento
 
