@@ -2767,16 +2767,16 @@ public partial class MainWindow : Window
 
     private void VersionTabRenameBox_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        if ((bool)e.NewValue && sender is TextBox tb)
+        if ((bool)e.NewValue && sender is System.Windows.Controls.TextBox tb)
         {
             tb.Focus();
             tb.SelectAll();
         }
     }
 
-    private void VersionTabRename_PreviewKeyDown(object sender, KeyEventArgs e)
+    private void VersionTabRename_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (sender is not TextBox { DataContext: ItineraryVersionTabViewModel tab }) return;
+        if (sender is not System.Windows.Controls.TextBox { DataContext: ItineraryVersionTabViewModel tab }) return;
         if (e.Key == Key.Enter)
         {
             CommitVersionRename(tab);
@@ -2791,7 +2791,7 @@ public partial class MainWindow : Window
 
     private void VersionTabRename_LostFocus(object sender, RoutedEventArgs e)
     {
-        if (sender is TextBox { DataContext: ItineraryVersionTabViewModel tab } && tab.IsRenaming)
+        if (sender is System.Windows.Controls.TextBox { DataContext: ItineraryVersionTabViewModel tab } && tab.IsRenaming)
             CommitVersionRename(tab);
     }
 
