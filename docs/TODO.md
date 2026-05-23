@@ -3,7 +3,6 @@
 ## Prioridade Média
 
 - Importação de pasta.
-- Importação XLSX da planilha de referência.
 - PDF: melhorar layout do Roteiro Detalhado quando há muitos dias (texto cortado em blocos estreitos).
 
 ## Prioridade Baixa
