@@ -497,19 +497,42 @@ public partial class MainWindow : Window
         ShowOverview();
     }
 
-    private void ShowTasks_Click(object sender, RoutedEventArgs e)
+    private void ShowTasks_Click(object sender, RoutedEventArgs e)        => ShowTasks();
+    private void ShowTasks_Header_Click(object sender, MouseButtonEventArgs e)  => ShowTasks();
+
+    private void ShowBudget_Click(object sender, RoutedEventArgs e)        => ShowBudget();
+    private void ShowBudget_Header_Click(object sender, MouseButtonEventArgs e) => ShowBudget();
+
+    private void ShowItinerary_Click(object sender, RoutedEventArgs e)         => ShowItinerary();
+    private void ShowItinerary_Header_Click(object sender, MouseButtonEventArgs e) => ShowItinerary();
+
+    private void OverviewItinerary_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        ShowTasks();
+        if (sender is ScrollViewer sv && e.Delta != 0)
+        {
+            sv.ScrollToHorizontalOffset(sv.HorizontalOffset - e.Delta);
+            e.Handled = true;
+        }
     }
 
-    private void ShowBudget_Click(object sender, RoutedEventArgs e)
-    {
-        ShowBudget();
-    }
-
-    private void ShowItinerary_Click(object sender, RoutedEventArgs e)
+    private void OverviewDayCard_Click(object sender, MouseButtonEventArgs e)
     {
         ShowItinerary();
+    }
+
+    // Largura de um item de card: círculo(28) + margem-esq(8) + card(210) + margem-dir(12) = 258
+    private const double OverviewCardStep = 258;
+
+    private void OverviewPrev_Click(object sender, RoutedEventArgs e)
+    {
+        OverviewItineraryScroll.ScrollToHorizontalOffset(
+            Math.Max(0, OverviewItineraryScroll.HorizontalOffset - OverviewCardStep));
+    }
+
+    private void OverviewNext_Click(object sender, RoutedEventArgs e)
+    {
+        OverviewItineraryScroll.ScrollToHorizontalOffset(
+            OverviewItineraryScroll.HorizontalOffset + OverviewCardStep);
     }
 
     private void ExpenseGroupsList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -1302,10 +1325,8 @@ public partial class MainWindow : Window
         return Math.Max(_viewModel.Tips.Count - 1, 0);
     }
 
-    private void ShowTips_Click(object sender, RoutedEventArgs e)
-    {
-        ShowTips();
-    }
+    private void ShowTips_Click(object sender, RoutedEventArgs e)       => ShowTips();
+    private void ShowTips_Header_Click(object sender, MouseButtonEventArgs e) => ShowTips();
 
     private void AddTip_Click(object sender, RoutedEventArgs e)
     {
@@ -1329,15 +1350,11 @@ public partial class MainWindow : Window
         SaveTipsInternal($"Dicas salvas em {DateTime.Now:HH:mm}.");
     }
 
-    private void ShowFiles_Click(object sender, RoutedEventArgs e)
-    {
-        ShowFiles();
-    }
+    private void ShowFiles_Click(object sender, RoutedEventArgs e)        => ShowFiles();
+    private void ShowFiles_Header_Click(object sender, MouseButtonEventArgs e) => ShowFiles();
 
-    private void ShowMap_Click(object sender, RoutedEventArgs e)
-    {
-        ShowMap();
-    }
+    private void ShowMap_Click(object sender, RoutedEventArgs e)          => ShowMap();
+    private void ShowMap_Header_Click(object sender, MouseButtonEventArgs e)   => ShowMap();
 
     private void OpenMyMaps_Click(object sender, RoutedEventArgs e)
     {

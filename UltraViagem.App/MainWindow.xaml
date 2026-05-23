@@ -14,6 +14,15 @@
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource PageBackground}">
     <Window.Resources>
+        <Style x:Key="ClickableCardHeader" TargetType="Border">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="Transparent" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
         <local:AttachmentIconConverter x:Key="AttachmentIconConverter" />
         <local:AttachmentMetadataConverter x:Key="AttachmentMetadataConverter" />
         <Style x:Key="ColorSwatchButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
@@ -436,68 +445,124 @@
                             </StackPanel>
                             <TextBlock Text="{Binding TripSubtitle}" Foreground="{StaticResource MutedTextBrush}" FontSize="14" Margin="0,4,0,0" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Style="{StaticResource SecondaryButton}" Content="‹" FontSize="24" Width="42" Margin="0,0,8,0" IsEnabled="False" />
-                            <Button Style="{StaticResource SecondaryButton}" Content="›" FontSize="24" Width="42" IsEnabled="False" />
-                        </StackPanel>
                     </Grid>
 
                     <Border Grid.Row="1" Margin="0,0,0,26">
                         <StackPanel>
-                            <TextBlock FontSize="16" Margin="2,0,0,12">
-                                <Run Text="Roteiro" FontWeight="SemiBold" />
-                                <Run Text=" — Visão geral do dia a dia" Foreground="{StaticResource MutedTextBrush}" />
-                            </TextBlock>
-                            <ItemsControl ItemsSource="{Binding Itinerary}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,0,24,0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="28" />
-                                                <ColumnDefinition Width="270" />
-                                            </Grid.ColumnDefinitions>
-                                            <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource AccentBrush}" VerticalAlignment="Center">
-                                                <TextBlock Text="•" Foreground="White" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-6,0,0" />
-                                            </Border>
-                                            <Border Grid.Column="1" Style="{StaticResource Card}" Width="270" MinHeight="218" Padding="14">
-                                                <StackPanel>
-                                                    <Grid>
-                                                        <TextBlock Text="{Binding Title}" FontSize="17" FontWeight="SemiBold" />
-                                                        <TextBlock Text="{Binding DateLabel}" Style="{StaticResource Caption}" HorizontalAlignment="Right" />
-                                                    </Grid>
-                                                    <Grid Margin="0,12,0,10">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="74" />
-                                                            <ColumnDefinition Width="*" />
-                                                        </Grid.ColumnDefinitions>
-                                                        <Border Width="64" Height="64" CornerRadius="7" Background="{StaticResource AccentSoftBrush}">
-                                                            <TextBlock Text="▧" Foreground="{StaticResource AccentBrush}" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                        </Border>
-                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                            <TextBlock Text="{Binding OvernightLabel}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                                            <TextBlock Text="{Binding ActivitiesLabel}" Style="{StaticResource Caption}" Margin="0,4,0,0" />
-                                                        </StackPanel>
-                                                    </Grid>
-                                                    <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,1,0,0" Margin="0,2,0,10" />
-                                                    <ItemsControl ItemsSource="{Binding Activities}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <TextBlock Text="{Binding Title}" TextWrapping="Wrap" Margin="0,0,0,4" Foreground="#3E4946" FontSize="11" TextTrimming="CharacterEllipsis" />
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                    <TextBlock Text="Ver detalhes  ›" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" Margin="0,8,0,0" />
-                                                </StackPanel>
-                                            </Border>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <!-- Cabeçalho da seção -->
+                            <Border Cursor="Hand" Margin="0,0,0,12" Padding="2,6" MouseLeftButtonDown="ShowItinerary_Header_Click">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock FontSize="16">
+                                    <Run Text="Roteiro" FontWeight="SemiBold" />
+                                    <Run Text=" — Visão geral do dia a dia" Foreground="{StaticResource MutedTextBrush}" />
+                                </TextBlock>
+                            </Border>
+                            <!-- Cards horizontais com scroll -->
+                            <ScrollViewer x:Name="OverviewItineraryScroll"
+                                          HorizontalScrollBarVisibility="Auto"
+                                          VerticalScrollBarVisibility="Disabled"
+                                          PreviewMouseWheel="OverviewItinerary_PreviewMouseWheel">
+                                <ItemsControl ItemsSource="{Binding Itinerary}" Padding="2,4,2,8">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Top" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <!-- Círculo numerado -->
+                                                <Border Width="28" Height="28" CornerRadius="14"
+                                                        Background="{StaticResource AccentBrush}"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Number}" Foreground="White"
+                                                               FontSize="12" FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <!-- Card do dia -->
+                                                <Border Style="{StaticResource Card}" Width="210" Height="240" Padding="14"
+                                                        Margin="8,0,12,0" Cursor="Hand" ClipToBounds="True"
+                                                        MouseLeftButtonDown="OverviewDayCard_Click">
+                                                    <StackPanel VerticalAlignment="Top">
+                                                        <!-- Título + data -->
+                                                        <Grid Margin="0,0,0,10">
+                                                            <TextBlock Text="{Binding Title}" FontSize="15"
+                                                                       FontWeight="SemiBold"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                            <TextBlock Text="{Binding DateLabel}"
+                                                                       Style="{StaticResource Caption}"
+                                                                       HorizontalAlignment="Right"
+                                                                       VerticalAlignment="Center" />
+                                                        </Grid>
+                                                        <!-- Imagem placeholder + pernoite/resumo -->
+                                                        <Grid Margin="0,0,0,10">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="68" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Border Width="60" Height="60" CornerRadius="6"
+                                                                    Background="{StaticResource AccentSoftBrush}">
+                                                                <TextBlock Text="🗺" FontFamily="Segoe UI Emoji"
+                                                                           FontSize="26" HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center" />
+                                                            </Border>
+                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center"
+                                                                        Margin="8,0,0,0">
+                                                                <TextBlock Text="{Binding OvernightLabel}"
+                                                                           FontWeight="SemiBold" TextWrapping="Wrap"
+                                                                           FontSize="12" MaxHeight="36"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                                    <TextBlock Text="📍" FontFamily="Segoe UI Emoji"
+                                                                               FontSize="10" VerticalAlignment="Center"
+                                                                               Margin="0,0,3,0" />
+                                                                    <TextBlock Text="{Binding ActivitiesLabel}"
+                                                                               Style="{StaticResource Caption}" />
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        <!-- Divisor -->
+                                                        <Border BorderBrush="{StaticResource BorderBrushSoft}"
+                                                                BorderThickness="0,1,0,0" Margin="0,0,0,8" />
+                                                        <!-- Top atividades: ícone + título -->
+                                                        <ItemsControl ItemsSource="{Binding TopActivities}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Grid Margin="0,0,0,5">
+                                                                        <Grid.ColumnDefinitions>
+                                                                            <ColumnDefinition Width="20" />
+                                                                            <ColumnDefinition Width="*" />
+                                                                        </Grid.ColumnDefinitions>
+                                                                        <TextBlock Grid.Column="0"
+                                                                                   Text="{Binding OverviewIcon}"
+                                                                                   FontFamily="Segoe UI Emoji"
+                                                                                   FontSize="11"
+                                                                                   VerticalAlignment="Center" />
+                                                                        <TextBlock Grid.Column="1"
+                                                                                   Text="{Binding Title}"
+                                                                                   FontSize="11"
+                                                                                   TextTrimming="CharacterEllipsis"
+                                                                                   VerticalAlignment="Center" />
+                                                                    </Grid>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
                         </StackPanel>
                     </Border>
 
@@ -516,14 +581,11 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48">
-                                    <Grid VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xE73A;" Style="{StaticResource SectionIcon}" />
-                                            <TextBlock Text="Tarefas" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <Button Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="ShowTasks_Click" ToolTip="Abrir tarefas" />
-                                    </Grid>
+                                <Border Grid.Row="0" Style="{StaticResource ClickableCardHeader}" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48" MouseLeftButtonDown="ShowTasks_Header_Click">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE73A;" Style="{StaticResource SectionIcon}" />
+                                        <TextBlock Text="Tarefas" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </Border>
 
                                 <ItemsControl Grid.Row="1" ItemsSource="{Binding Tasks}">
@@ -575,19 +637,16 @@
 
                         <Border Grid.Column="1" Style="{StaticResource Card}" Margin="0,0,12,0">
                             <StackPanel>
-                                <Border BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48">
-                                    <Grid VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Viewbox Width="24" Height="24" Margin="0,1,9,0" VerticalAlignment="Center">
-                                                <Grid Width="24" Height="24">
-                                                    <Border Width="20" Height="14" CornerRadius="1.8" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.45" />
-                                                    <TextBlock Text="$" Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
-                                                </Grid>
-                                            </Viewbox>
-                                            <TextBlock Text="Gastos" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <Button Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="ShowBudget_Click" ToolTip="Abrir gastos" />
-                                    </Grid>
+                                <Border Style="{StaticResource ClickableCardHeader}" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48" MouseLeftButtonDown="ShowBudget_Header_Click">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Viewbox Width="24" Height="24" Margin="0,1,9,0" VerticalAlignment="Center">
+                                            <Grid Width="24" Height="24">
+                                                <Border Width="20" Height="14" CornerRadius="1.8" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.45" />
+                                                <TextBlock Text="$" Foreground="{StaticResource AccentBrush}" FontFamily="Segoe UI" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+                                            </Grid>
+                                        </Viewbox>
+                                        <TextBlock Text="Gastos" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </Border>
                                 <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="7" Padding="12,10" Margin="0,0,0,16">
                                     <UniformGrid Columns="3">
@@ -671,14 +730,11 @@
 
                         <Border Grid.Column="2" Style="{StaticResource Card}" Margin="0,0,12,0">
                             <StackPanel>
-                                <Border BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48">
-                                    <Grid VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xE707;" Style="{StaticResource SectionIcon}" />
-                                            <TextBlock Text="Mapa" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <Button Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="ShowMap_Click" ToolTip="Abrir mapa" />
-                                    </Grid>
+                                <Border Style="{StaticResource ClickableCardHeader}" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48" MouseLeftButtonDown="ShowMap_Header_Click">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE707;" Style="{StaticResource SectionIcon}" />
+                                        <TextBlock Text="Mapa" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </Border>
                                 <Border Height="250" Background="#DDE8DF" CornerRadius="8" Margin="0,0,0,12" ClipToBounds="True"
                                         Visibility="{Binding HasMyMapsUrl, Converter={StaticResource BoolToVisibility}}">
@@ -731,14 +787,11 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48">
-                                    <Grid VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xE8BD;" Style="{StaticResource SectionIcon}" />
-                                            <TextBlock Text="Dicas" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <Button Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="ShowTips_Click" ToolTip="Abrir dicas" />
-                                    </Grid>
+                                <Border Grid.Row="0" Style="{StaticResource ClickableCardHeader}" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48" MouseLeftButtonDown="ShowTips_Header_Click">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE8BD;" Style="{StaticResource SectionIcon}" />
+                                        <TextBlock Text="Dicas" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </Border>
 
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,8,0" PreviewMouseWheel="OverviewCard_PreviewMouseWheel">
@@ -804,14 +857,11 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48">
-                                    <Grid VerticalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xE8B7;" Style="{StaticResource SectionIcon}" />
-                                            <TextBlock Text="Arquivos" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <Button Content="›" Style="{StaticResource ArrowButton}" HorizontalAlignment="Right" VerticalAlignment="Center" Click="ShowFiles_Click" ToolTip="Abrir arquivos" />
-                                    </Grid>
+                                <Border Grid.Row="0" Style="{StaticResource ClickableCardHeader}" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrushSoft}" Margin="-18,-18,-18,8" Padding="18,0,18,0" MinHeight="48" MouseLeftButtonDown="ShowFiles_Header_Click">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="&#xE8B7;" Style="{StaticResource SectionIcon}" />
+                                        <TextBlock Text="Arquivos" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </Border>
 
                                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,0,8,0" PreviewMouseWheel="OverviewCard_PreviewMouseWheel">

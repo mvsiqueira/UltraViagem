@@ -360,6 +360,7 @@ public sealed class AppViewModel : NotifyObject
         ItineraryActivityViewModel.Configure(_itinerarySlotWidth);
         ItineraryActivityViewModel.ConfigureBlockHeight(blockHeight);
         ItineraryActivityViewModel.ConfigureFontSize(fontSize);
+        ItineraryActivityViewModel.ConfigureSlotsPerDay(slotsPerDay);
         _showItineraryGrid = trip?.ShowItineraryGrid ?? false;
         OnPropertyChanged(nameof(ShowItineraryGrid));
 
@@ -393,6 +394,7 @@ public sealed class AppViewModel : NotifyObject
         OnPropertyChanged(nameof(ActiveVersionId));
 
         Itinerary.ReplaceWith((activeVersion?.Itinerary ?? []).Select(ItineraryDayViewModel.FromDay));
+        RefreshDayNumbers();
 
         var bankRowCount = activeVersion?.BankRows ?? 2;
         BankRows.Clear();
@@ -657,6 +659,7 @@ public sealed class AppViewModel : NotifyObject
             Date = _trip?.StartDate?.AddDays(Itinerary.Count)
         };
         Itinerary.Add(vm);
+        RefreshDayNumbers();
         RefreshSummary();
         ItineraryChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -666,6 +669,7 @@ public sealed class AppViewModel : NotifyObject
         if (SelectedActivity is not null && day.Activities.Contains(SelectedActivity))
             SelectedActivity = null;
         Itinerary.Remove(day);
+        RefreshDayNumbers();
         RefreshSummary();
         ItineraryChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -792,6 +796,7 @@ public sealed class AppViewModel : NotifyObject
         foreach (var row in BankRows) row.RejectEdit();
 
         Itinerary.ReplaceWith(version.Itinerary.Select(ItineraryDayViewModel.FromDay));
+        RefreshDayNumbers();
 
         // Sync legacy fields so DaysCount etc. are correct immediately
         _trip.Itinerary = version.Itinerary;
@@ -1109,6 +1114,12 @@ public sealed class AppViewModel : NotifyObject
     public void RefreshTripDetails()
     {
         RefreshSummary();
+    }
+
+    private void RefreshDayNumbers()
+    {
+        for (var i = 0; i < Itinerary.Count; i++)
+            Itinerary[i].Number = i + 1;
     }
 
     private void ApplyTaskFilter()
@@ -1654,6 +1665,21 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public bool IsDragTarget { get => _isDragTarget; set => SetField(ref _isDragTarget, value); }
     public bool IsDimmed { get => _isDimmed; set => SetField(ref _isDimmed, value); }
 
+    private int _number = 1;
+    public int Number { get => _number; set => SetField(ref _number, value); }
+
+    /// <summary>Título da primeira atividade do tipo Pernoite, ou o Summary/Title do dia como fallback.</summary>
+    public string OvernightLabel => Activities
+        .FirstOrDefault(a => string.Equals(a.Type, "Pernoite", StringComparison.OrdinalIgnoreCase))
+        ?.Title
+        ?? (string.IsNullOrWhiteSpace(Summary) ? "" : Summary);
+
+    /// <summary>Primeiras 4 atividades (excluindo Refeição, ordenadas por slot) para exibição no card da visão geral.</summary>
+    public IEnumerable<ItineraryActivityViewModel> TopActivities => Activities
+        .Where(a => !string.Equals(a.Type, "Refeição", StringComparison.OrdinalIgnoreCase))
+        .OrderBy(a => a.StartSlot)
+        .Take(4);
+
     public bool IsEditingDay { get => _isEditingDay; private set { if (SetField(ref _isEditingDay, value)) OnPropertyChanged(nameof(IsInEditMode)); } }
     public string EditDayTitle { get => _editDayTitle; set => SetField(ref _editDayTitle, value); }
     public string EditDaySummary { get => _editDaySummary; set => SetField(ref _editDaySummary, value); }
@@ -1721,6 +1747,37 @@ public sealed class ItineraryDayViewModel : NotifyObject
     }
 
     public ObservableCollection<ItineraryActivityViewModel> Activities { get; } = [];
+
+    public ItineraryDayViewModel()
+    {
+        Activities.CollectionChanged += OnActivitiesCollectionChanged;
+    }
+
+    private void OnActivitiesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems != null)
+            foreach (ItineraryActivityViewModel a in e.NewItems)
+                a.PropertyChanged += OnActivityPropertyChanged;
+        if (e.OldItems != null)
+            foreach (ItineraryActivityViewModel a in e.OldItems)
+                a.PropertyChanged -= OnActivityPropertyChanged;
+        RefreshOverviewProps();
+    }
+
+    private void OnActivityPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ItineraryActivityViewModel.Title)
+                           or nameof(ItineraryActivityViewModel.Type)
+                           or nameof(ItineraryActivityViewModel.StartSlot))
+            RefreshOverviewProps();
+    }
+
+    private void RefreshOverviewProps()
+    {
+        OnPropertyChanged(nameof(OvernightLabel));
+        OnPropertyChanged(nameof(TopActivities));
+        OnPropertyChanged(nameof(ActivitiesLabel));
+    }
 
     public double CanvasWidth => _slotsPerDay * _slotWidth;
     public int CanvasHeight => _blockHeight + 8;
@@ -1840,12 +1897,14 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     private static double _slotWidth = 44;
     private static int _blockHeight = 44;
     private static int _fontSize = 11;
+    private static int _slotsPerDay = 16;
 
     public static IReadOnlyList<string> TypeOptions { get; } = ["Atividade", "Refeição", "Pernoite"];
 
     public static void Configure(double slotWidth) => _slotWidth = slotWidth;
     public static void ConfigureBlockHeight(int height) => _blockHeight = height;
     public static void ConfigureFontSize(int size) => _fontSize = size;
+    public static void ConfigureSlotsPerDay(int slots) => _slotsPerDay = Math.Max(1, slots);
 
     private string _id = "", _title = "", _color = "#DBEAFE", _icon = "", _type = "Atividade";
     private int _startSlot, _durationSlots = 2;
@@ -1870,6 +1929,24 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     public bool IsEditing { get => _isEditing; set => SetField(ref _isEditing, value); }
     public bool IsDimmed { get => _isDimmed; set => SetField(ref _isDimmed, value); }
     public bool HasDetails => !string.IsNullOrWhiteSpace(_details);
+
+    /// <summary>Ícone para exibição compacta: usa o emoji do campo Icon, ou um fallback por tipo.</summary>
+    public string OverviewIcon => !string.IsNullOrEmpty(_icon) ? _icon
+        : _type switch { "Refeição" => "🍴", "Pernoite" => "🛏", _ => "📍" };
+
+    /// <summary>Horário estimado derivado do slot (base 08:00, 16h/dia).</summary>
+    public string TimeLabel
+    {
+        get
+        {
+            const int startHour = 8;
+            const int hoursSpan = 16; // 08:00–24:00
+            var minutesPerSlot = hoursSpan * 60.0 / _slotsPerDay;
+            var totalMin = (int)(startHour * 60 + _startSlot * minutesPerSlot);
+            totalMin = Math.Clamp(totalMin, 0, 23 * 60 + 59);
+            return $"{totalMin / 60:D2}:{totalMin % 60:D2}";
+        }
+    }
 
     public string EditTitle { get => _editTitle; set => SetField(ref _editTitle, value); }
     public string EditIcon { get => _editIcon; set => SetField(ref _editIcon, value); }
@@ -1916,7 +1993,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     protected override void OnPropertyChanged(string propertyName)
     {
         base.OnPropertyChanged(propertyName);
-        if (propertyName is nameof(StartSlot))    base.OnPropertyChanged(nameof(CanvasLeft));
+        if (propertyName is nameof(StartSlot))    { base.OnPropertyChanged(nameof(CanvasLeft)); base.OnPropertyChanged(nameof(TimeLabel)); }
         if (propertyName is nameof(DurationSlots)) base.OnPropertyChanged(nameof(BlockWidth));
         if (propertyName is nameof(Color))        { base.OnPropertyChanged(nameof(TextColor)); base.OnPropertyChanged(nameof(DisplayColor)); base.OnPropertyChanged(nameof(DisplayTextColor)); }
         if (propertyName is nameof(Title))        base.OnPropertyChanged(nameof(DisplayTitle));
