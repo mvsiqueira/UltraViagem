@@ -2,6 +2,9 @@ bin/
 obj/
 build-check/
 publish-new/
+# Binário single-file é grande demais para o GitHub (>100 MB)
+publish/UltraViagem.exe
+publish/UltraViagem.exe.WebView2/
 *.user
 *.suo
 *.tmp

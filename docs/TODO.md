@@ -1,9 +1,5 @@
 # Todo / Roadmap
 
-## Prioridade Alta
-
-- Publicação empacotada do app Windows.
-
 ## Prioridade Média
 
 - Importação de pasta.
@@ -13,6 +9,7 @@
 ## Prioridade Baixa
 
 - App Android/Web
+  
    - Separar regras de domínio em biblioteca compartilhável.
    - Definir contrato estável do `trip.json`.
    - Avaliar MAUI, Avalonia, React Native ou web app local-first.
@@ -23,10 +20,3 @@
 - `MainWindow.xaml.cs` concentra navegação e comandos demais.
 - `AppViewModel.cs` concentra muitas coleções e conversões.
 - Falta suite de testes para serialização e regras de persistência.
-
-## Entregue
-
-- ✅ Exportação PDF completa (QuestPDF): Roteiro, Roteiro Detalhado landscape, Dicas, Gastos, Orçamento Detalhado landscape, Tarefas.
-- ✅ Fix: imagens do roteiro recarregadas ao trocar versão (`SwitchToVersion`).
-- ✅ Fix: mapa sempre recarregado ao salvar URL.
-- ✅ Ocultar header nativo do Google My Maps via CSS injection.
