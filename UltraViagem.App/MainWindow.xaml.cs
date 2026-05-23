@@ -1360,6 +1360,36 @@ public partial class MainWindow : Window
     private void ShowMap_Click(object sender, RoutedEventArgs e)          => ShowMap();
     private void ShowMap_Header_Click(object sender, MouseButtonEventArgs e)   => ShowMap();
 
+    private void ExportPdf_Click(object sender, RoutedEventArgs e)
+    {
+        var trip = _viewModel.CurrentTrip;
+        if (trip is null) return;
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Exportar PDF",
+            Filter = "PDF|*.pdf",
+            FileName = $"{trip.Id}.pdf"
+        };
+
+        if (dialog.ShowDialog(this) != true) return;
+
+        try
+        {
+            TripPdfExporter.Export(trip, dialog.FileName);
+            _viewModel.StatusMessage = "PDF exportado com sucesso.";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = dialog.FileName,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao exportar PDF:\n{ex.Message}", "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void OpenMyMaps_Click(object sender, RoutedEventArgs e)
     {
         OpenUrl(_viewModel.MyMapsUrl, "Nenhum link do Google My Maps cadastrado.");
