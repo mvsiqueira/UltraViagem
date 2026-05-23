@@ -2045,8 +2045,16 @@ public partial class MainWindow : Window
             return;
         }
 
+        // Tag armazena a URL limpa para comparações futuras (sem cache-buster)
         browser.Tag = embedUrl;
-        browser.Source = new Uri(embedUrl);
+
+        // Acrescenta timestamp para forçar requisição fresh ao servidor do Google,
+        // contornando o cache HTTP do WebView2
+        var navigateUrl = forceReload
+            ? embedUrl + "&_=" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            : embedUrl;
+
+        browser.Source = new Uri(navigateUrl);
     }
 
     private static string? GetQueryParameter(string query, string name)
