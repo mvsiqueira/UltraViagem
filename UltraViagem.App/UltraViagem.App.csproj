@@ -27,4 +27,14 @@
     <Product>UltraViagem</Product>
   </PropertyGroup>
 
+  <!-- Remove artifacts desnecessários do publish: runtimes de outras plataformas, pdbs e xmls -->
+  <Target Name="CleanupPublishArtifacts" AfterTargets="Publish">
+    <RemoveDir Directories="$(PublishDir)runtimes\linux-x64;$(PublishDir)runtimes\linux-arm64;$(PublishDir)runtimes\linux-musl-x64;$(PublishDir)runtimes\osx-x64;$(PublishDir)runtimes\osx-arm64;$(PublishDir)runtimes\win-x86;$(PublishDir)runtimes\win-arm64" />
+    <ItemGroup>
+      <_PublishFilesToDelete Include="$(PublishDir)*.pdb" />
+      <_PublishFilesToDelete Include="$(PublishDir)*.xml" />
+    </ItemGroup>
+    <Delete Files="@(_PublishFilesToDelete)" />
+  </Target>
+
 </Project>

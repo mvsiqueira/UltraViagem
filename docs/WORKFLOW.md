@@ -27,9 +27,9 @@ Comando padrao (single-file, self-contained, win-x64):
 dotnet publish .\UltraViagem.App\UltraViagem.App.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\publish
 ```
 
-O resultado e um unico `UltraViagem.exe` em `publish/`. Na primeira execucao, DLLs nativas (WebView2, QuestPDF) sao extraidas automaticamente para `%TEMP%` pelo runtime do .NET.
+O resultado fica em `publish/` com o executavel e dependencias para win-x64. O target `CleanupPublishArtifacts` no `.csproj` remove automaticamente runtimes de outras plataformas, `.pdb` e `.xml` apos o publish.
 
-> **Nota:** `publish/UltraViagem.exe` nao e commitado no repositorio (excede 100 MB, limite do GitHub). O executavel fica apenas localmente apos o publish.
+> **Nota:** `publish/` nao e commitado no repositorio (pasta ignorada via `.gitignore`). Os binarios ficam apenas localmente apos o publish.
 
 ## Commit
 
