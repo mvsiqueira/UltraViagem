@@ -795,7 +795,8 @@
                                     </StackPanel>
                                 </Border>
                                 <wv2:WebView2 x:Name="OverviewMapBrowser" Height="250" Margin="0,0,0,12"
-                                              Visibility="{Binding HasMyMapsUrl, Converter={StaticResource BoolToVisibility}}" />
+                                              Visibility="{Binding HasMyMapsUrl, Converter={StaticResource BoolToVisibility}}"
+                                              NavigationCompleted="OverviewMapBrowser_NavigationCompleted" />
                                 <Button Content="Abrir no navegador" Style="{StaticResource SecondaryButton}" Click="OpenMyMaps_Click"
                                         Visibility="{Binding HasMyMapsUrl, Converter={StaticResource BoolToVisibility}}" />
                                 <TextBlock x:Name="OverviewMapPlaceholder"

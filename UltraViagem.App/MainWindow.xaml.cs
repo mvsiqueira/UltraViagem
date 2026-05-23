@@ -1365,6 +1365,38 @@ public partial class MainWindow : Window
         OpenUrl(_viewModel.MyMapsUrl, "Nenhum link do Google My Maps cadastrado.");
     }
 
+    private async void OverviewMapBrowser_NavigationCompleted(object sender,
+        Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs e)
+    {
+        if (!e.IsSuccess || OverviewMapBrowser.CoreWebView2 is null) return;
+
+        // Injeta CSS + MutationObserver para esconder o header do Google My Maps.
+        // O MutationObserver é necessário porque o header carrega dinamicamente
+        // após o NavigationCompleted e precisa ser ocultado quando aparecer.
+        await OverviewMapBrowser.CoreWebView2.ExecuteScriptAsync(@"
+            (function() {
+                const SELECTORS = [
+                    '.mapTitle',
+                    'div[role=""banner""]',
+                    '.widget-titlecard',
+                    '.titlecard',
+                    'div[jsaction*=""titlecard""]'
+                ];
+                function hideHeader() {
+                    SELECTORS.forEach(sel => {
+                        document.querySelectorAll(sel).forEach(el => {
+                            el.style.setProperty('display', 'none', 'important');
+                        });
+                    });
+                }
+                hideHeader();
+                new MutationObserver(hideHeader).observe(
+                    document.documentElement, { childList: true, subtree: true }
+                );
+            })();
+        ");
+    }
+
     private void SaveMap_Click(object sender, RoutedEventArgs e)
     {
         SaveMapInternal($"Mapa salvo em {DateTime.Now:HH:mm}.", forceReload: true);
