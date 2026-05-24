@@ -2869,6 +2869,13 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 return;
             }
+            else if (e.Key == System.Windows.Input.Key.D && _viewModel.SelectedActivity is not null)
+            {
+                _viewModel.CopySelectedActivity();
+                SaveItineraryInternal("Atividade duplicada.");
+                e.Handled = true;
+                return;
+            }
         }
         skipStyle:
 
