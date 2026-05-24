@@ -6,7 +6,7 @@ manualmente via Claude. Este documento registra os dados e regras utilizados.
 ## Fluxo de Importação
 
 1. Informar ao Claude o caminho da planilha e da pasta de arquivos.
-2. Claude lê a planilha, mapeia os dados e cria o `trip.json`.
+2. Claude lê a planilha com `openpyxl`, mapeia os dados e cria o `trip.json`.
 3. Claude copia a pasta inteira (incluindo todos os arquivos) para o repositório.
 
 ## Regras de Mapeamento
@@ -34,7 +34,7 @@ manualmente via Claude. Este documento registra os dados e regras utilizados.
 
 #### Duração das atividades (`durationSlots`)
 - Usar `openpyxl` para ler as **merged cell ranges** da aba de roteiro.
-- `durationSlots` = número de colunas que a célula mescla (max_col - min_col + 1).
+- `durationSlots` = número de colunas que a célula mescla (`max_col - min_col + 1`).
 - Atividades sem merge = `durationSlots: 1`.
 - `startSlot` = posição da coluna de início menos a coluna da primeira atividade (base 0).
 - Exemplo: Complexo de Couros ocupa E4:I4 (5 colunas, começa em E=slot 0) → `startSlot: 0, durationSlots: 5`.
@@ -44,22 +44,35 @@ manualmente via Claude. Este documento registra os dados e regras utilizados.
 - `summary` ← coluna **"título"** da planilha (ex: `"IDA"`, `"Complexo de Couros"`).
 
 #### Atividades
-Mapear cada célula preenchida para uma `ItineraryActivity`, distribuindo os slots
-de forma que não haja sobreposição:
+Mapear cada célula preenchida para uma `ItineraryActivity`. O slot de cada atividade
+é determinado pela sua coluna na planilha (base 0 a partir da primeira coluna de atividade).
 
-| Posição na planilha | Slot sugerido (base 8) | Tipo padrão |
+Referência para a planilha Chapada dos Veadeiros (cols E–M, 9 slots):
+
+| Coluna | Slot | Período típico |
 |---|---|---|
-| Manhã 1–3 | 0–2 | Trilha / Passeio / Transporte |
-| Almoço / meio-dia | 3 | Refeição |
-| Tarde 1–2 | 4–5 | Passeio / Transporte |
-| Noite / jantar | 6 | Refeição |
-| Pernoite | 7 | Hospedagem |
+| E | 0 | Manhã 1 |
+| F | 1 | Manhã 2 |
+| G | 2 | Manhã 3 |
+| H | 3 | Manhã 4 / Almoço |
+| I | 4 | Tarde 1 |
+| J | 5 | Tarde 2 |
+| K | 6 | Tarde 3 |
+| L | 7 | Noite / Jantar |
+| M | 8 | Pernoite |
+
+> **Nota:** o número e a posição das colunas variam por planilha. Sempre inspecionar
+> a estrutura real antes de mapear os slots.
+
+#### Bloco de Noite
+- Coluna L (slot 7, penúltimo): nome do restaurante/bar ou "iFood" — tipo Refeição ou Hospedagem.
+- Cor: extrair da célula via openpyxl.
 
 #### Bloco de Pernoite
-- Sempre criar um bloco no **último slot** com o nome do hotel/pousada e cidade.
-- Formato do título: `"Cidade — Nome da Pousada"` (ex: `"Cavalcante — Vila Nômade"`).
-- Cor: extrair da célula da coluna pernoite (M) via openpyxl.
-- Se não houver pousada identificada, usar apenas a cidade.
+- Coluna M (slot 8, último): nome da cidade e/ou pousada — tipo Hospedagem.
+- Formato do título: somente a **cidade** (ex: `"Alto Paraíso"`, `"Cavalcante"`).
+  O nome da pousada fica no bloco de noite ou nos gastos, não no pernoite.
+- Cor: extrair da célula da coluna pernoite via openpyxl.
 - Dia de retorno (sem pernoite): omitir o bloco.
 
 #### Cores das atividades
@@ -83,8 +96,36 @@ Exemplo — Chapada dos Veadeiros:
 | Cavalcante | `#DBEEF4` (azul claro) | `#93CDDD` (azul médio) |
 | São Jorge | `#F2DCDB` (salmão claro) | `#D99694` (salmão médio) |
 
-> **Nota:** Se a planilha usar cores por tipo de atividade em vez de por região, mapear
+> **Nota:** se a planilha usar cores por tipo de atividade em vez de por região, mapear
 > conforme a lógica encontrada. Inspecionar os fills com openpyxl antes de importar.
+
+### Banco de Atividades (`bankActivities` / `bankRows`)
+
+O banco contém atividades alternativas que não entraram no roteiro principal. Na
+planilha ficam em linhas **abaixo** das linhas do roteiro, separadas por uma linha
+em branco ou divisória.
+
+#### Como identificar o banco
+- Localizar as linhas após o último dia do roteiro que contenham células coloridas
+  com atividades (mesma estrutura visual das linhas do roteiro).
+- Ignorar linhas em branco ou de divisória.
+
+#### Mapeamento
+- `bankRows` = número de linhas de atividades no banco (atualizar no `itineraryVersion`).
+- `bankRow` = índice da linha no banco, base 0 (primeira linha do banco = 0).
+- `startSlot` e `durationSlots`: mesmas regras das atividades do roteiro (merged cells).
+- `color`: extrair da célula via openpyxl, mesma lógica das atividades do roteiro.
+- `type`: inferir pelo conteúdo e cor (Trilha, Passeio, Refeição, etc.).
+
+Exemplo — Chapada dos Veadeiros (5 linhas de banco):
+
+| bankRow | Atividades |
+|---|---|
+| 0 | Fazenda Loquinhas (slot 0, dur 4) · Complexo Cachoeira dos Cristais (slot 4, dur 4) |
+| 1 | Cachoeira do Label (slot 0, dur 4) |
+| 2 | PN Chapada — Trilha dos Cânions (slot 0, dur 6) |
+| 3 | Cachoeira do Cordovil (slot 0, dur 3) · Trilha do Mirante da Janela (slot 3, dur 3) · Morada do Sol (slot 6, dur 2) |
+| 4 | Complexo do Prata (slot 0, dur 3) · Cachoeira Candaru (slot 3, dur 2) · Trilha aquática (slot 5, dur 2) |
 
 ### Dicas (`links`)
 - Cada linha da aba Dicas → um `LinkItem` (`title` + `url`).
