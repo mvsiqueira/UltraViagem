@@ -3,11 +3,34 @@
 Como as planilhas de viagem não seguem um padrão fixo, a importação é feita
 manualmente via Claude. Este documento registra os dados e regras utilizados.
 
+## Repositório de Viagens
+
+- Caminho padrão: `G:\Meu Drive\Viagens\`
+- As pastas de viagem já estão no repositório com todos os arquivos no lugar certo.
+- Claude **não copia arquivos** — apenas cria ou atualiza o `trip.json` dentro da pasta.
+
+## Modos de Importação
+
+### Importação simples (`"importar"`)
+Cria o `trip.json` apenas com os dados básicos da viagem e a lista de anexos.
+Útil para registrar rapidamente uma viagem sem mapear todos os detalhes.
+
+Campos preenchidos:
+- `schemaVersion`, `id`, `title`, `startDate`, `endDate`, `people`, `baseCurrency`
+- `attachments`: todos os arquivos encontrados na pasta
+- Estrutura mínima do roteiro: `itineraryVersions` com versão vazia, `itinerarySlotsPerDay` padrão
+
+Campos **não** preenchidos (ficam vazios): itinerário, gastos, dicas, mapa.
+
+### Importação completa (`"importação completa"`)
+Importa todos os dados da planilha: roteiro com atividades e banco, gastos, dicas, mapa.
+Seguir todas as regras de mapeamento detalhadas nas seções abaixo.
+
 ## Fluxo de Importação
 
-1. Informar ao Claude o caminho da planilha e da pasta de arquivos.
-2. Claude lê a planilha com `openpyxl`, mapeia os dados e cria o `trip.json`.
-3. Claude copia a pasta inteira (incluindo todos os arquivos) para o repositório.
+1. Informar ao Claude o caminho da pasta (e da planilha, se for importação completa).
+2. Claude lista os arquivos da pasta para montar os `attachments`.
+3. Claude lê a planilha com `openpyxl` (se importação completa) e cria/atualiza o `trip.json`.
 
 ## Regras de Mapeamento
 
@@ -15,12 +38,8 @@ manualmente via Claude. Este documento registra os dados e regras utilizados.
 - Usar o **nome da pasta** como título, não o nome do arquivo xlsx.
 - Exemplo: pasta `2026-04 Chapada dos Veadeiros` → título `"2026-04 Chapada dos Veadeiros"`.
 
-### Repositório de Destino
-- Caminho padrão: `G:\Meu Drive\UltraViagens\`
-- Criar subpasta com o mesmo nome da pasta de origem.
-- Copiar **todos os arquivos** da pasta de origem (PDFs, XLSXs, etc.) junto com o `trip.json`.
-
-### Datas e Pessoas
+### Dados básicos
+- `title`: nome da pasta.
 - `startDate` / `endDate`: primeiro e último dia do roteiro.
 - `people`: inferido dos gastos (coluna Pessoas dos itens de passagem/ingresso).
 - `baseCurrency`: `"BRL"` por padrão, salvo indicação contrária.
