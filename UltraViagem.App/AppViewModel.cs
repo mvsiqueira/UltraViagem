@@ -31,6 +31,8 @@ public sealed class AppViewModel : NotifyObject
     private AttachmentEditorViewModel? _selectedAttachment;
     private ExpenseEditorViewModel? _selectedExpense;
     private ItineraryActivityViewModel? _selectedActivity;
+    private record ActivityStyle(string Color, string Icon, string Type);
+    private ActivityStyle? _styleClipboard;
     private string _statusMessage = "Pronto";
     private string _taskFilter = "all";
     private bool _isCurrentTripFavorite;
@@ -252,6 +254,7 @@ public sealed class AppViewModel : NotifyObject
     }
 
     public bool HasSelectedActivity => SelectedActivity is not null;
+    public bool HasStyleClipboard => _styleClipboard is not null;
 
     public double ItinerarySlotWidth
     {
@@ -957,6 +960,20 @@ public sealed class AppViewModel : NotifyObject
         else bankRow!.Activities.Add(copy);
         SelectedActivity = copy;
         ItineraryChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void CopyStyle(ItineraryActivityViewModel source)
+    {
+        _styleClipboard = new ActivityStyle(source.EditColor, source.EditIcon, source.EditType);
+        OnPropertyChanged(nameof(HasStyleClipboard));
+    }
+
+    public void PasteStyle(ItineraryActivityViewModel target)
+    {
+        if (_styleClipboard is null) return;
+        target.EditColor = _styleClipboard.Color;
+        target.EditIcon = _styleClipboard.Icon;
+        target.EditType = _styleClipboard.Type;
     }
 
     public void AddExpense()

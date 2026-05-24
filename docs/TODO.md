@@ -1,8 +1,11 @@
 # Todo / Roadmap
 
+## Prioridade Alta
+
+- Importação de viagens antigas.
+
 ## Prioridade Média
 
-- Importação de pasta.
 - PDF: melhorar layout do Roteiro Detalhado quando há muitos dias (texto cortado em blocos estreitos).
 
 ## Prioridade Baixa

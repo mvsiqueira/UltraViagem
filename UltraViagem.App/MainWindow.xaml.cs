@@ -2739,7 +2739,31 @@ public partial class MainWindow : Window
         _viewModel.ClearAllDayDims();
         _viewModel.SelectedActivity = target;
         _viewModel.CopySelectedActivity();
-        SaveItineraryInternal("Atividade copiada.");
+        SaveItineraryInternal("Atividade duplicada.");
+    }
+
+    private void CopyStyleActivity_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement fe) return;
+        ItineraryActivityViewModel? target = null;
+        if (fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
+            target = day.EditingActivity;
+        else if (fe.DataContext is BankRowViewModel bankRow && bankRow.EditingActivity is not null)
+            target = bankRow.EditingActivity;
+        if (target is null) return;
+        _viewModel.CopyStyle(target);
+    }
+
+    private void PasteStyleActivity_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement fe) return;
+        ItineraryActivityViewModel? target = null;
+        if (fe.DataContext is ItineraryDayViewModel day && day.EditingActivity is not null)
+            target = day.EditingActivity;
+        else if (fe.DataContext is BankRowViewModel bankRow && bankRow.EditingActivity is not null)
+            target = bankRow.EditingActivity;
+        if (target is null) return;
+        _viewModel.PasteStyle(target);
     }
 
     private void DeleteEditActivity_Click(object sender, RoutedEventArgs e)
@@ -2856,6 +2880,34 @@ public partial class MainWindow : Window
     private void ItineraryPanel_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (_typeComboOpen) return;
+
+        // Ctrl+C / Ctrl+V copiam/colam estilo quando o foco não está em um campo de texto
+        bool focusedOnText = System.Windows.Input.Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase;
+        if (!focusedOnText && System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control)
+        {
+            if (e.Key == System.Windows.Input.Key.C)
+            {
+                var editingAct = _viewModel.Itinerary.Select(d => d.EditingActivity).FirstOrDefault(a => a is not null)
+                    ?? _viewModel.BankRows.Select(r => r.EditingActivity).FirstOrDefault(a => a is not null);
+                if (editingAct is not null)
+                {
+                    _viewModel.CopyStyle(editingAct);
+                    e.Handled = true;
+                    return;
+                }
+            }
+            else if (e.Key == System.Windows.Input.Key.V && _viewModel.HasStyleClipboard)
+            {
+                var editingAct = _viewModel.Itinerary.Select(d => d.EditingActivity).FirstOrDefault(a => a is not null)
+                    ?? _viewModel.BankRows.Select(r => r.EditingActivity).FirstOrDefault(a => a is not null);
+                if (editingAct is not null)
+                {
+                    _viewModel.PasteStyle(editingAct);
+                    e.Handled = true;
+                    return;
+                }
+            }
+        }
 
         foreach (var day in _viewModel.Itinerary)
         {

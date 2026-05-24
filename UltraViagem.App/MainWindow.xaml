@@ -2711,13 +2711,30 @@
                                                                  PreviewKeyDown="MultilineEditField_PreviewKeyDown" />
                                                     </StackPanel>
 
-                                                    <!-- Row 2: Ícone + Cor (esquerda) | Copiar Atividade (direita) -->
+                                                    <!-- Row 2: Ícone + Cor (esquerda) | Copiar Estilo / Colar Estilo / Duplicar Atividade (direita) -->
                                                     <DockPanel Grid.Row="2" Grid.ColumnSpan="4">
                                                         <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
                                                                 Style="{StaticResource SecondaryButton}" Click="CopyEditActivity_Click">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                                                <TextBlock Text="Copiar Atividade" VerticalAlignment="Center" />
+                                                                <TextBlock Text="Duplicar Atividade" VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                Style="{StaticResource SecondaryButton}" Click="PasteStyleActivity_Click"
+                                                                IsEnabled="{Binding DataContext.HasStyleClipboard, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                ToolTip="Colar estilo copiado (Ctrl+V)">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="&#xE77F;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                                                <TextBlock Text="Colar Estilo" VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                        <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                Style="{StaticResource SecondaryButton}" Click="CopyStyleActivity_Click"
+                                                                ToolTip="Copiar estilo do bloco (Ctrl+C)">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="&#xEF90;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                                                <TextBlock Text="Copiar Estilo" VerticalAlignment="Center" />
                                                             </StackPanel>
                                                         </Button>
                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -3108,7 +3125,24 @@
                                                                         Style="{StaticResource SecondaryButton}" Click="CopyEditActivity_Click">
                                                                     <StackPanel Orientation="Horizontal">
                                                                         <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                                                        <TextBlock Text="Copiar Atividade" VerticalAlignment="Center" />
+                                                                        <TextBlock Text="Duplicar Atividade" VerticalAlignment="Center" />
+                                                                    </StackPanel>
+                                                                </Button>
+                                                                <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                        Style="{StaticResource SecondaryButton}" Click="PasteStyleActivity_Click"
+                                                                        IsEnabled="{Binding DataContext.HasStyleClipboard, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                        ToolTip="Colar estilo copiado (Ctrl+V)">
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="&#xE77F;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                                                        <TextBlock Text="Colar Estilo" VerticalAlignment="Center" />
+                                                                    </StackPanel>
+                                                                </Button>
+                                                                <Button DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                                                                        Style="{StaticResource SecondaryButton}" Click="CopyStyleActivity_Click"
+                                                                        ToolTip="Copiar estilo do bloco (Ctrl+C)">
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <TextBlock Text="&#xEF90;" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                                                        <TextBlock Text="Copiar Estilo" VerticalAlignment="Center" />
                                                                     </StackPanel>
                                                                 </Button>
                                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
