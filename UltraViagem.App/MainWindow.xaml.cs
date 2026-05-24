@@ -2887,27 +2887,36 @@ public partial class MainWindow : Window
         {
             if (e.Key == System.Windows.Input.Key.C)
             {
+                // Prioridade: bloco em edição (copia EditColor/EditIcon/EditType do formulário)
                 var editingAct = _viewModel.Itinerary.Select(d => d.EditingActivity).FirstOrDefault(a => a is not null)
                     ?? _viewModel.BankRows.Select(r => r.EditingActivity).FirstOrDefault(a => a is not null);
                 if (editingAct is not null)
-                {
                     _viewModel.CopyStyle(editingAct);
-                    e.Handled = true;
-                    return;
-                }
+                else if (_viewModel.SelectedActivity is not null)
+                    _viewModel.CopyStyleFromSelected();
+                else
+                    goto skipStyle;
+                e.Handled = true;
+                return;
             }
             else if (e.Key == System.Windows.Input.Key.V && _viewModel.HasStyleClipboard)
             {
                 var editingAct = _viewModel.Itinerary.Select(d => d.EditingActivity).FirstOrDefault(a => a is not null)
                     ?? _viewModel.BankRows.Select(r => r.EditingActivity).FirstOrDefault(a => a is not null);
                 if (editingAct is not null)
-                {
                     _viewModel.PasteStyle(editingAct);
-                    e.Handled = true;
-                    return;
+                else if (_viewModel.SelectedActivity is not null)
+                {
+                    _viewModel.PasteStyleToSelected();
+                    SaveItineraryInternal("Estilo colado.");
                 }
+                else
+                    goto skipStyle;
+                e.Handled = true;
+                return;
             }
         }
+        skipStyle:
 
         foreach (var day in _viewModel.Itinerary)
         {

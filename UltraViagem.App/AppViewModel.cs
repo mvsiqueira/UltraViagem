@@ -962,18 +962,38 @@ public sealed class AppViewModel : NotifyObject
         ItineraryChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    // Copia estilo do formulário de edição (usa Edit* em andamento)
     public void CopyStyle(ItineraryActivityViewModel source)
     {
         _styleClipboard = new ActivityStyle(source.EditColor, source.EditIcon, source.EditType);
         OnPropertyChanged(nameof(HasStyleClipboard));
     }
 
+    // Copia estilo de um bloco selecionado fora de edição (usa valores committed)
+    public void CopyStyleFromSelected()
+    {
+        if (SelectedActivity is null) return;
+        _styleClipboard = new ActivityStyle(SelectedActivity.Color, SelectedActivity.Icon, SelectedActivity.Type);
+        OnPropertyChanged(nameof(HasStyleClipboard));
+    }
+
+    // Cola estilo no formulário de edição (atualiza Edit* para refletir no form)
     public void PasteStyle(ItineraryActivityViewModel target)
     {
         if (_styleClipboard is null) return;
         target.EditColor = _styleClipboard.Color;
         target.EditIcon = _styleClipboard.Icon;
         target.EditType = _styleClipboard.Type;
+    }
+
+    // Cola estilo diretamente num bloco selecionado fora de edição (committed)
+    public void PasteStyleToSelected()
+    {
+        if (_styleClipboard is null || SelectedActivity is null) return;
+        SelectedActivity.Color = _styleClipboard.Color;
+        SelectedActivity.Icon = _styleClipboard.Icon;
+        SelectedActivity.Type = _styleClipboard.Type;
+        ItineraryChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void AddExpense()
