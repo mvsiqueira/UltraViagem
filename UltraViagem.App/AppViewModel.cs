@@ -33,6 +33,7 @@ public sealed class AppViewModel : NotifyObject
     private ItineraryActivityViewModel? _selectedActivity;
     private record ActivityStyle(string Color, string Icon, string Type);
     private ActivityStyle? _styleClipboard;
+    private string? _tripFolderPath;
     private string _statusMessage = "Pronto";
     private string _taskFilter = "all";
     private bool _isCurrentTripFavorite;
@@ -153,7 +154,7 @@ public sealed class AppViewModel : NotifyObject
         }
     }
 
-    public string TripPath => _trip is null ? RootPath : Path.Combine(RootPath, _trip.Id);
+    public string TripPath => _tripFolderPath ?? RootPath;
     public string TripTitle => _trip?.Title ?? "Nenhuma viagem";
     public string TripSubtitle => _trip is null ? "Selecione uma pasta com viagens." : BuildTripSubtitle(_trip);
     public bool IsSidebarExpanded
@@ -323,8 +324,9 @@ public sealed class AppViewModel : NotifyObject
         SelectedTripId = selectedTripId;
     }
 
-    public void LoadTrip(Trip? trip)
+    public void LoadTrip(Trip? trip, string? folderPath = null)
     {
+        _tripFolderPath = folderPath;
         _isLoadingTasks = true;
         _isLoadingTips = true;
         _isLoadingAttachments = true;

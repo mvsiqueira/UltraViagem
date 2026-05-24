@@ -256,7 +256,7 @@ public partial class MainWindow : Window
         var defaultVersion = new ItineraryVersion { Id = $"v-{Guid.NewGuid():N}", Name = "Versão 1" };
         var trip = new Trip { Id = id, ActiveVersionId = defaultVersion.Id, ItineraryVersions = [defaultVersion] };
         ApplyDraftToTrip(window.Draft, trip);
-        _repository.SaveTrip(trip);
+        _repository.SaveTrip(trip, Path.Combine(_repository.RootPath, id));
         AddRecentTrip(id);
         RefreshTrips(id);
         _viewModel.StatusMessage = $"Viagem {trip.Title} criada.";
@@ -292,8 +292,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var tripId = trip.Id;
-        var tripPath = Path.Combine(_repository.RootPath, tripId);
+        var folderName = _viewModel.SelectedTripId!;
+        var tripPath = _viewModel.TripPath;
 
         try
         {
@@ -311,8 +311,8 @@ public partial class MainWindow : Window
         }
 
         var config = _repository.LoadOrCreateConfig();
-        config.RecentTrips.Remove(tripId);
-        config.FavoriteTrips.Remove(tripId);
+        config.RecentTrips.Remove(folderName);
+        config.FavoriteTrips.Remove(folderName);
         _repository.SaveConfig(config);
 
         var nextTripId = _repository.GetTripIds().FirstOrDefault() ?? "";
@@ -345,12 +345,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        var sourceId = source.Id;
         var newId = CreateUniqueTripId(window.Draft.Title, window.Draft.StartDate);
 
         try
         {
-            _repository.CopyTripFolder(sourceId, newId);
+            _repository.CopyTripFolder(_viewModel.TripPath, newId);
         }
         catch (IOException ex)
         {
@@ -361,7 +360,7 @@ public partial class MainWindow : Window
         var copiedTrip = _repository.LoadTrip(newId) ?? new Trip { Id = newId };
         copiedTrip.Id = newId;
         ApplyDraftToTrip(window.Draft, copiedTrip);
-        _repository.SaveTrip(copiedTrip);
+        _repository.SaveTrip(copiedTrip, Path.Combine(_repository.RootPath, newId));
 
         AddRecentTrip(newId);
         RefreshTrips(newId);
@@ -383,61 +382,15 @@ public partial class MainWindow : Window
 
         ApplyDraftToTrip(draft, _viewModel.CurrentTrip);
         _viewModel.CurrentTrip.ShowItineraryGrid = TripDetailsGridCheckBox.IsChecked == true;
-        _repository.SaveTrip(_viewModel.CurrentTrip);
-        LoadTrip(_viewModel.CurrentTrip.Id);
+        _repository.SaveTrip(_viewModel.CurrentTrip, _viewModel.TripPath);
+        LoadTrip(_viewModel.SelectedTripId);
         PopulateTripDetailsPanel();
         ShowTripDetails();
         _viewModel.StatusMessage = $"Viagem {draft.Title} atualizada.";
     }
 
-    private void RenameTripFolder_Click(object sender, RoutedEventArgs e)
-    {
-        if (_repository is null || _viewModel.CurrentTrip is null)
-        {
-            return;
-        }
-
-        var oldId = _viewModel.CurrentTrip.Id;
-        var newId = ShowRenameDialog(oldId, "Renomear pasta da viagem", "Novo nome da pasta");
-        if (string.IsNullOrWhiteSpace(newId) || string.Equals(newId, oldId, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        newId = newId.Trim();
-        if (!ValidateTripFolderName(newId))
-        {
-            return;
-        }
-
-        var oldPath = Path.Combine(_repository.RootPath, oldId);
-        var newPath = Path.Combine(_repository.RootPath, newId);
-        if (Directory.Exists(newPath))
-        {
-            ShowTripDetailsError("Já existe uma pasta de viagem com esse nome.");
-            return;
-        }
-
-        try
-        {
-            Directory.Move(oldPath, newPath);
-            _viewModel.CurrentTrip.Id = newId;
-            _repository.SaveTrip(_viewModel.CurrentTrip);
-            ReplaceTripIdInConfig(oldId, newId);
-            RefreshTrips(newId);
-            PopulateTripDetailsPanel();
-            ShowTripDetails();
-            _viewModel.StatusMessage = $"Pasta da viagem renomeada para {newId}.";
-        }
-        catch (IOException ex)
-        {
-            ShowTripDetailsError($"Não foi possível renomear a pasta: {ex.Message}");
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            ShowTripDetailsError($"Sem permissão para renomear a pasta: {ex.Message}");
-        }
-    }
+    // RenameTripFolder removido: a pasta pode ser renomeada livremente no Explorer;
+    // o app resolve os arquivos pelo diretório do trip.json, não pelo trip.Id.
 
     private void ToggleCurrentTripFavorite_Click(object sender, RoutedEventArgs e)
     {
@@ -447,7 +400,7 @@ public partial class MainWindow : Window
         }
 
         var isFavorite = !_viewModel.IsCurrentTripFavorite;
-        SetFavorite(_viewModel.CurrentTrip.Id, isFavorite);
+        SetFavorite(_viewModel.SelectedTripId!, isFavorite);
         _viewModel.IsCurrentTripFavorite = isFavorite;
     }
 
@@ -2307,14 +2260,15 @@ public partial class MainWindow : Window
         if (_repository is null || string.IsNullOrWhiteSpace(tripId))
         {
             _isLoadingTrip = true;
-            _viewModel.LoadTrip(null);
+            _viewModel.LoadTrip(null, null);
             _isLoadingTrip = false;
             return;
         }
 
+        var folderPath = Path.Combine(_repository.RootPath, tripId);
         var trip = _repository.LoadTrip(tripId);
         _isLoadingTrip = true;
-        _viewModel.LoadTrip(trip);
+        _viewModel.LoadTrip(trip, folderPath);
         _isLoadingTrip = false;
 
         var config = _repository.LoadOrCreateConfig();
@@ -2322,7 +2276,7 @@ public partial class MainWindow : Window
         config.RecentTrips.Insert(0, tripId);
         _repository.SaveConfig(config);
         RefreshTripSelectionItems(config);
-        _viewModel.IsCurrentTripFavorite = trip is not null && config.FavoriteTrips.Contains(trip.Id);
+        _viewModel.IsCurrentTripFavorite = trip is not null && config.FavoriteTrips.Contains(tripId);
 
         _viewModel.StatusMessage = trip is null
             ? $"Não foi possível abrir {tripId}."
@@ -2551,7 +2505,7 @@ public partial class MainWindow : Window
 
         _isSavingTasks = true;
         _viewModel.ApplyTasksToTrip();
-        _repository.SaveTrip(_viewModel.CurrentTrip);
+        _repository.SaveTrip(_viewModel.CurrentTrip, _viewModel.TripPath);
         _viewModel.StatusMessage = message;
         _isSavingTasks = false;
     }
@@ -2565,7 +2519,7 @@ public partial class MainWindow : Window
         }
 
         _viewModel.ApplyItineraryToTrip();
-        _repository.SaveTrip(_viewModel.CurrentTrip);
+        _repository.SaveTrip(_viewModel.CurrentTrip, _viewModel.TripPath);
         _viewModel.StatusMessage = message;
     }
 
@@ -3372,7 +3326,7 @@ public partial class MainWindow : Window
         _expensesSaveTimer.Stop();
         _isSavingExpenses = true;
         _viewModel.ApplyExpensesToTrip();
-        _repository.SaveTrip(_viewModel.CurrentTrip);
+        _repository.SaveTrip(_viewModel.CurrentTrip, _viewModel.TripPath);
         _viewModel.StatusMessage = message;
         _isSavingExpenses = false;
     }
@@ -3387,7 +3341,7 @@ public partial class MainWindow : Window
 
         _isSavingTips = true;
         _viewModel.ApplyTipsToTrip();
-        _repository.SaveTrip(_viewModel.CurrentTrip);
+        _repository.SaveTrip(_viewModel.CurrentTrip, _viewModel.TripPath);
         _viewModel.StatusMessage = message;
         _isSavingTips = false;
     }
@@ -3421,7 +3375,7 @@ public partial class MainWindow : Window
         }
 
         MapUrlError.Visibility = Visibility.Collapsed;
-        _repository.SaveTrip(_viewModel.CurrentTrip);
+        _repository.SaveTrip(_viewModel.CurrentTrip, _viewModel.TripPath);
         RefreshMapBrowsers(forceReload);
         _viewModel.StatusMessage = message;
     }
@@ -3443,7 +3397,7 @@ public partial class MainWindow : Window
         }
 
         _viewModel.ApplyAttachmentsToTrip();
-        _repository.SaveTrip(_viewModel.CurrentTrip);
+        _repository.SaveTrip(_viewModel.CurrentTrip, _viewModel.TripPath);
         _viewModel.StatusMessage = message;
         _isSavingAttachments = false;
     }
@@ -3645,33 +3599,9 @@ public partial class MainWindow : Window
 
         _repository.SaveConfig(config);
         RefreshTripSelectionItems(config);
-        if (string.Equals(_viewModel.CurrentTrip?.Id, tripId, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(_viewModel.SelectedTripId, tripId, StringComparison.OrdinalIgnoreCase))
         {
             _viewModel.IsCurrentTripFavorite = isFavorite;
-        }
-    }
-
-    private void ReplaceTripIdInConfig(string oldId, string newId)
-    {
-        if (_repository is null)
-        {
-            return;
-        }
-
-        var config = _repository.LoadOrCreateConfig();
-        ReplaceAll(config.RecentTrips, oldId, newId);
-        ReplaceAll(config.FavoriteTrips, oldId, newId);
-        _repository.SaveConfig(config);
-    }
-
-    private static void ReplaceAll(List<string> values, string oldValue, string newValue)
-    {
-        for (var i = 0; i < values.Count; i++)
-        {
-            if (string.Equals(values[i], oldValue, StringComparison.OrdinalIgnoreCase))
-            {
-                values[i] = newValue;
-            }
         }
     }
 
@@ -3714,11 +3644,11 @@ public partial class MainWindow : Window
 
             var dateLabel = BuildSelectionDateLabel(trip);
             items.Add(new TripSelectionItem(
-                trip.Id,
+                tripId,
                 trip.Title,
                 year,
                 dateLabel,
-                config.FavoriteTrips.Contains(trip.Id)));
+                config.FavoriteTrips.Contains(tripId)));
         }
 
         return items;
@@ -3826,19 +3756,6 @@ public partial class MainWindow : Window
     {
         TripDetailsErrorText.Text = message;
         TripDetailsErrorText.Visibility = Visibility.Visible;
-    }
-
-    private bool ValidateTripFolderName(string folderName)
-    {
-        if (folderName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
-            folderName is "." or ".." ||
-            !string.Equals(folderName, Path.GetFileName(folderName), StringComparison.Ordinal))
-        {
-            ShowTripDetailsError("Informe apenas o nome da pasta, sem barras ou caracteres inválidos.");
-            return false;
-        }
-
-        return true;
     }
 
     private static void ApplyDraftToTrip(TripDetailsDraft draft, Trip trip)

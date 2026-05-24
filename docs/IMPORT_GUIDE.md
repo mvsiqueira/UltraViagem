@@ -39,7 +39,8 @@ Seguir todas as regras de mapeamento detalhadas nas seções abaixo.
 - Exemplo: pasta `2026-04 Chapada dos Veadeiros` → título `"2026-04 Chapada dos Veadeiros"`.
 
 ### Dados básicos
-- `id`: **igual ao nome da pasta** (o app usa `trip.Id` para montar o caminho dos arquivos).
+- `id`: qualquer identificador único (sugestão: slug da viagem, ex: `"chapada-2026"`). O app
+  resolve o caminho dos arquivos pelo diretório do `trip.json`, não pelo `id`.
 - `title`: nome da pasta.
 - `startDate` / `endDate`: primeiro e último dia do roteiro.
 - `people`: inferido dos gastos (coluna Pessoas dos itens de passagem/ingresso).

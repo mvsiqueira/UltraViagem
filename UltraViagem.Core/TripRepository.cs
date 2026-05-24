@@ -122,18 +122,17 @@ public sealed class TripRepository
         return trip;
     }
 
-    public void SaveTrip(Trip trip)
+    public void SaveTrip(Trip trip, string folderPath)
     {
-        var tripPath = Path.Combine(RootPath, trip.Id);
-        Directory.CreateDirectory(tripPath);
-        var path = Path.Combine(tripPath, TripFileName);
+        Directory.CreateDirectory(folderPath);
+        var path = Path.Combine(folderPath, TripFileName);
         File.WriteAllText(path, JsonSerializer.Serialize(trip, _jsonOptions));
     }
 
-    public void CopyTripFolder(string sourceTripId, string destTripId)
+    public void CopyTripFolder(string sourceFolderPath, string destFolderName)
     {
-        var sourceDir = Path.Combine(RootPath, sourceTripId);
-        var destDir = Path.Combine(RootPath, destTripId);
+        var sourceDir = sourceFolderPath;
+        var destDir = Path.Combine(RootPath, destFolderName);
         Directory.CreateDirectory(destDir);
         foreach (var file in Directory.EnumerateFiles(sourceDir))
         {

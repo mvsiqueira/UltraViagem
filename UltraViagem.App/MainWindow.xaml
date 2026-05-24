@@ -1060,19 +1060,13 @@
 
                             <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Margin="0,14,0,14">
                                 <TextBlock Text="Pasta da viagem" Style="{StaticResource Caption}" />
-                                <DockPanel Margin="0,4,0,0">
-                                    <Button DockPanel.Dock="Right"
-                                            Content="Renomear Pasta"
-                                            Style="{StaticResource SecondaryButton}"
-                                            Click="RenameTripFolder_Click"
-                                            Margin="10,0,0,0" />
-                                    <TextBox x:Name="TripDetailsPathBox"
-                                             IsReadOnly="True"
-                                             MinWidth="620"
-                                             Height="34"
-                                             TextWrapping="NoWrap"
-                                             ToolTip="{Binding TripPath}" />
-                                </DockPanel>
+                                <TextBox x:Name="TripDetailsPathBox"
+                                         Margin="0,4,0,0"
+                                         IsReadOnly="True"
+                                         MinWidth="620"
+                                         Height="34"
+                                         TextWrapping="NoWrap"
+                                         ToolTip="{Binding TripPath}" />
                             </StackPanel>
 
                             <TextBlock Grid.Row="6"
