@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<TabbedPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+            xmlns:pages="clr-namespace:UltraViagem.Android.Pages"
+            x:Class="UltraViagem.Android.Pages.TripPage"
+            BarBackgroundColor="{StaticResource Surface}"
+            SelectedTabColor="{StaticResource Accent}"
+            UnselectedTabColor="{StaticResource TextMuted}">
+
+    <pages:OverviewPage  Title="Visão Geral" />
+    <pages:ItineraryPage Title="Roteiro" />
+    <pages:ExpensesPage  Title="Gastos" />
+    <pages:LinksPage     Title="Dicas" />
+    <pages:TasksPage     Title="Tarefas" />
+
+</TabbedPage>

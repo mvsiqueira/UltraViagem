@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltraViagem.Android.Pages.OverviewPage"
+             Title="Visão Geral">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="0">
+
+            <!-- Título da viagem -->
+            <Label Text="{Binding Trip.Title}"
+                   FontSize="22" FontAttributes="Bold"
+                   TextColor="{StaticResource Accent}"
+                   Margin="0,8,0,4" />
+            <Label Text="{Binding DurationLabel}"
+                   Style="{StaticResource MutedLabel}"
+                   Margin="0,0,0,20" />
+
+            <!-- Cards info -->
+            <Label Text="Detalhes" Style="{StaticResource SectionHeader}" />
+
+            <Frame Style="{StaticResource CardFrame}">
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="12">
+
+                    <!-- Pessoas -->
+                    <VerticalStackLayout Grid.Row="0" Grid.Column="0">
+                        <Label Text="PESSOAS" Style="{StaticResource MutedLabel}" FontSize="10" CharacterSpacing="0.8" />
+                        <Label Text="{Binding Trip.People}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
+                    </VerticalStackLayout>
+
+                    <!-- Moeda -->
+                    <VerticalStackLayout Grid.Row="0" Grid.Column="1">
+                        <Label Text="MOEDA BASE" Style="{StaticResource MutedLabel}" FontSize="10" CharacterSpacing="0.8" />
+                        <Label Text="{Binding Trip.BaseCurrency}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
+                    </VerticalStackLayout>
+
+                    <!-- Orçamento total -->
+                    <VerticalStackLayout Grid.Row="1" Grid.Column="0">
+                        <Label Text="ORÇAMENTO" Style="{StaticResource MutedLabel}" FontSize="10" CharacterSpacing="0.8" />
+                        <Label Text="{Binding TotalLabel}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource Accent}" />
+                    </VerticalStackLayout>
+
+                    <!-- Pago -->
+                    <VerticalStackLayout Grid.Row="1" Grid.Column="1">
+                        <Label Text="PAGO" Style="{StaticResource MutedLabel}" FontSize="10" CharacterSpacing="0.8" />
+                        <Label Text="{Binding PaidLabel}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
+                    </VerticalStackLayout>
+
+                </Grid>
+            </Frame>
+
+            <!-- Mapa -->
+            <Button Text="Abrir no Google Maps"
+                    Style="{StaticResource AccentButton}"
+                    IsVisible="{Binding HasMapUrl}"
+                    Clicked="OnOpenMapClicked"
+                    Margin="0,8,0,0" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:UltraViagem.Android.ViewModels"
+             x:Class="UltraViagem.Android.Pages.TripsPage"
+             Title="UltraViagem">
+
+    <ContentPage.Content>
+        <Grid RowDefinitions="Auto,*,Auto" Padding="20">
+
+            <!-- Header -->
+            <VerticalStackLayout Grid.Row="0" Spacing="4" Margin="0,20,0,24">
+                <Label Text="UltraViagem"
+                       FontSize="28" FontAttributes="Bold"
+                       TextColor="{StaticResource Accent}" />
+                <Label Text="Suas viagens no bolso"
+                       Style="{StaticResource MutedLabel}" />
+            </VerticalStackLayout>
+
+            <!-- Lista de recentes -->
+            <ScrollView Grid.Row="1">
+                <VerticalStackLayout Spacing="0">
+
+                    <Label Text="Recentes" Style="{StaticResource SectionHeader}"
+                           IsVisible="{Binding Recents.Count, Converter={x:StaticResource CountToBool}}" />
+
+                    <CollectionView ItemsSource="{Binding Recents}"
+                                    SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Frame Style="{StaticResource CardFrame}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                            <Label Text="{Binding Title}"
+                                                   Style="{StaticResource TitleLabel}"
+                                                   LineBreakMode="TailTruncation" />
+                                            <Label Text="{Binding Path}"
+                                                   Style="{StaticResource MutedLabel}"
+                                                   FontSize="11"
+                                                   LineBreakMode="TailTruncation" />
+                                        </VerticalStackLayout>
+                                        <ImageButton Grid.Column="1"
+                                                     Source="close.png"
+                                                     BackgroundColor="Transparent"
+                                                     WidthRequest="32" HeightRequest="32"
+                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TripsViewModel}}, Path=RemoveRecentCommand}"
+                                                     CommandParameter="{Binding .}" />
+                                    </Grid>
+                                    <Frame.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TripsViewModel}}, Path=OpenRecentCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Frame.GestureRecognizers>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                        <CollectionView.EmptyView>
+                            <VerticalStackLayout HorizontalOptions="Center" Margin="0,40,0,0" Spacing="8">
+                                <Label Text="Nenhuma viagem recente"
+                                       Style="{StaticResource MutedLabel}"
+                                       HorizontalOptions="Center" />
+                                <Label Text="Toque em Abrir para selecionar um trip.json"
+                                       Style="{StaticResource MutedLabel}"
+                                       FontSize="12"
+                                       HorizontalOptions="Center"
+                                       HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- Botão abrir -->
+            <Button Grid.Row="2"
+                    Text="Abrir trip.json"
+                    Style="{StaticResource AccentButton}"
+                    Command="{Binding OpenCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={x:StaticResource InvertBool}}"
+                    Margin="0,12,0,20" />
+
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

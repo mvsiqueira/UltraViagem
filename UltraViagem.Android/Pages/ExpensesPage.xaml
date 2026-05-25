@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:core="clr-namespace:UltraViagem.Core;assembly=UltraViagem.Core"
+             xmlns:vm="clr-namespace:UltraViagem.Android.ViewModels"
+             x:Class="UltraViagem.Android.Pages.ExpensesPage"
+             Title="Gastos">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <CollectionView Grid.Row="0"
+                        ItemsSource="{Binding Trip.Expenses}"
+                        Margin="16,8">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="core:ExpenseItem">
+                    <Grid ColumnDefinitions="*,Auto"
+                          Padding="0,10"
+                          BindingContext="{Binding .}">
+                        <Grid.Triggers>
+                            <DataTrigger TargetType="Grid" Binding="{Binding IsActive}" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </DataTrigger>
+                        </Grid.Triggers>
+
+                        <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{Binding Title}"
+                                   FontSize="14"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   LineBreakMode="TailTruncation" />
+                            <Label FontSize="12" TextColor="{StaticResource TextMuted}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding Type}" />
+                                        <Span Text=" · " />
+                                        <Span Text="{Binding Currency}" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                        </VerticalStackLayout>
+
+                        <Label Grid.Column="1"
+                               FontSize="14" FontAttributes="Bold"
+                               TextColor="{StaticResource TextPrimary}"
+                               VerticalOptions="Center"
+                               Text="{Binding Subtotal, StringFormat='{0:N2}'}" />
+
+                        <!-- Separador -->
+                        <BoxView Grid.ColumnSpan="2" Grid.Row="1"
+                                 HeightRequest="1" Color="{StaticResource Border}"
+                                 VerticalOptions="End" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="Nenhum gasto registrado"
+                       Style="{StaticResource MutedLabel}"
+                       HorizontalOptions="Center" Margin="0,40,0,0" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <!-- Rodapé com total -->
+        <Frame Grid.Row="1"
+               Style="{StaticResource CardFrame}"
+               Margin="16,0,16,8"
+               CornerRadius="10">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" Text="Total estimado"
+                       FontAttributes="Bold" FontSize="14"
+                       TextColor="{StaticResource TextPrimary}" />
+                <Label Grid.Column="1" Text="{Binding TotalLabel}"
+                       FontAttributes="Bold" FontSize="14"
+                       TextColor="{StaticResource Accent}" />
+            </Grid>
+        </Frame>
+
+    </Grid>
+</ContentPage>
