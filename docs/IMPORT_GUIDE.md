@@ -26,11 +26,21 @@ Campos **não** preenchidos (ficam vazios): itinerário, gastos, dicas, mapa.
 Importa todos os dados da planilha: roteiro com atividades e banco, gastos, dicas, mapa.
 Seguir todas as regras de mapeamento detalhadas nas seções abaixo.
 
+## Biblioteca de leitura por formato
+
+| Formato | Biblioteca | Notas |
+|---------|-----------|-------|
+| `.xlsx` | `openpyxl` | Usa `import_utils.py` (`build_merge_map`, `make_activity_fn`). Suporta merged cells e cores via `cell.fill.fgColor`. |
+| `.xls`  | `xlrd 2.x` | Script standalone (sem `import_utils.py`). Cores via `xf_list` + `colour_map`. Merged cells via `ws.merged_cells` (lista de tuplas `(rlo, rhi, clo, chi)`, 0-indexed, limites superiores exclusivos). |
+
+Instalar xlrd se necessário: `pip install xlrd`.
+
 ## Fluxo de Importação
 
 1. Informar ao Claude o caminho da pasta (e da planilha, se for importação completa).
-2. Claude lista os arquivos da pasta para montar os `attachments`.
-3. Claude lê a planilha com `openpyxl` (se importação completa) e cria/atualiza o `trip.json`.
+2. Claude identifica o formato (`.xlsx` ou `.xls`) e escolhe a biblioteca correspondente.
+3. Claude lista os arquivos da pasta para montar os `attachments`.
+4. Claude lê a planilha e cria/atualiza o `trip.json`.
 
 ## Regras de Mapeamento
 
@@ -54,8 +64,10 @@ Seguir todas as regras de mapeamento detalhadas nas seções abaixo.
 - Exemplo: planilha com cols E–M (manhã E–H, tarde I–K, noite L, pernoite M) → 9 colunas → `itinerarySlotsPerDay: 9`.
 
 #### Duração das atividades (`durationSlots`)
-- Usar `openpyxl` para ler as **merged cell ranges** da aba de roteiro.
-- `durationSlots` = número de colunas que a célula mescla (`max_col - min_col + 1`).
+- **`.xlsx`**: usar `openpyxl` para ler as merged cell ranges (`build_merge_map` em `import_utils.py`).
+  `durationSlots` = `max_col - min_col + 1`.
+- **`.xls`**: merged cells disponíveis via `ws.merged_cells` (lista de tuplas `(rlo, rhi, clo, chi)`,
+  índices 0-based, limites superiores **exclusivos**). Construir um dicionário `(row, col) → (min_row, min_col, max_col)` antes de iterar.
 - Atividades sem merge = `durationSlots: 1`.
 - `startSlot` = posição da coluna de início menos a coluna da primeira atividade (base 0).
 - Exemplo: Complexo de Couros ocupa E4:I4 (5 colunas, começa em E=slot 0) → `startSlot: 0, durationSlots: 5`.
@@ -97,10 +109,24 @@ Referência para a planilha Chapada dos Veadeiros (cols E–M, 9 slots):
 - Dia de retorno (sem pernoite): omitir o bloco.
 
 #### Cores das atividades
-Usar as **cores reais das células** da planilha, extraídas via `openpyxl` (`cell.fill.fgColor`).
+Usar as **cores reais das células** da planilha.
+
+**`.xlsx` — openpyxl:**
+Extrair via `cell.fill.fgColor`. Atenção: células com `GradientFill` não têm `fgColor` —
+tratar com try/except retornando `#000000`. `cell_color()` em `import_utils.py` já faz esse tratamento.
 Cores de tema OOXML devem ser convertidas para hex usando HLS com a fórmula:
 - tint > 0: `L_new = L * (1 - tint) + tint`
 - tint < 0: `L_new = L * (1 + tint)`
+
+**`.xls` — xlrd:**
+Abrir com `formatting_info=True`. Extrair via:
+```python
+xf_idx = ws.cell_xf_index(row, col)   # 0-indexed
+xf = wb.xf_list[xf_idx]
+ci = xf.background.pattern_colour_index
+rgb = wb.colour_map.get(ci)            # tupla (R, G, B) ou None
+color = '#{:02X}{:02X}{:02X}'.format(*rgb) if rgb else '#000000'
+```
 
 As planilhas costumam usar **codificação geográfica** (cor por região/destino), não por tipo:
 
@@ -135,7 +161,7 @@ em branco ou divisória.
 - `bankRows` = número de linhas de atividades no banco (atualizar no `itineraryVersion`).
 - `bankRow` = índice da linha no banco, base 0 (primeira linha do banco = 0).
 - `startSlot` e `durationSlots`: mesmas regras das atividades do roteiro (merged cells).
-- `color`: extrair da célula via openpyxl, mesma lógica das atividades do roteiro.
+- `color`: extrair da célula via openpyxl (`.xlsx`) ou xlrd (`.xls`), mesma lógica das atividades do roteiro.
 - `type`: inferir pelo conteúdo e cor (Trilha, Passeio, Refeição, etc.).
 
 Exemplo — Chapada dos Veadeiros (5 linhas de banco):

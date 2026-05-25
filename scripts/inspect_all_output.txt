@@ -1,0 +1,1088 @@
+
+======================================================================
+### 2023-02 Buenos Aires ###
+======================================================================
+Abas: ['Roteiro', 'Dicas', 'Gastos']
+Dimensoes: A1:J10  max_row=10 max_col=10
+MERGES:
+  D1:J1        r1c4:r1c10  FFFFC000  'programação'
+  D2:E2        r2c4:r2c5  FFFFC000  'dia'
+  F2:H2        r2c6:r2c8  FFFFC000  'tarde'
+  D3:E3        r3c4:r3c5  theme0_t-0.25  'Vôo|Rio x Buenos Aires|08:05 - 11:35'
+  G3:H3        r3c7:r3c8  theme0_t0.00  'Recoleta|El Ateneo, sorveterias, lojas, Av. Santa Fé'
+  D4:E4        r4c4:r4c5  theme0_t0.00  'La  Boca|Caminito, Antigo Mercado de La Boca, La Bombon'
+  G4:H4        r4c7:r4c8  theme0_t0.00  'San Telmo|Feira (Plaza Dorrego), Mercado de San Telmo, '
+  D5:E5        r5c4:r5c5  theme0_t0.00  'Recoleta|Las Heras, Café La Biela, Cemitério, Empanadas'
+  G5:H5        r5c7:r5c8  theme0_t0.00  'Puerto Madero|Puente de la Mujer, Fragata Sarmiento'
+  D7:E7        r7c4:r7c5  theme0_t0.00  'Centro|Obelisco, Florida, Galerías Pacífico, Casa Rosad'
+  H7:I7        r7c8:r7c9  theme0_t-0.25  'Vôo |Buenos Aires (AEP) x Rio|17:30 - 20:25'
+  D10:H10      r10c4:r10c8  theme0_t0.00  'Colonia do Sacramento|Buquebus: 08:15 - 09:30 / 17:01 -'
+CELULAS:
+  [1,1]A1: 'ROTEIRO'  FFFFC000
+  [1,4]D1: 'programação'  FFFFC000
+  [2,1]A2: 'data'  FFFFC000
+  [2,2]B2: 'dia da semana'  FFFFC000
+  [2,3]C2: 'título'  FFFFC000
+  [2,4]D2: 'dia'  FFFFC000
+  [2,6]F2: 'tarde'  FFFFC000
+  [2,9]I2: 'noite'  FFFFC000
+  [2,10]J2: 'pernoite'  FFFFC000
+  [3,1]A3: '2023-02-19 00:00:00'  theme9_t0.60
+  [3,2]B3: '=A3'  theme9_t0.60
+  [3,3]C3: 'Ida'  theme9_t0.80
+  [3,4]D3: 'Vôo|Rio x Buenos Aires|08:05 - 11:35'  theme0_t-0.25
+  [3,6]F3: 'Almoço|La Parolaccia / El Club de la Milanesa'  theme0_t-0.05
+  [3,7]G3: 'Recoleta|El Ateneo, sorveterias, lojas, Av. Santa Fé'  theme0_t0.00
+  [3,10]J3: 'Buenos Aires'  FF0070C0
+  [4,1]A4: '=A3+1'  theme9_t0.60
+  [4,2]B4: '=A4'  theme9_t0.60
+  [4,3]C4: 'Buenos Aires 1'  theme9_t0.80
+  [4,4]D4: 'La  Boca|Caminito, Antigo Mercado de La Boca, La Bombonera'  theme0_t0.00
+  [4,6]F4: 'Almoço'  theme0_t-0.05
+  [4,7]G4: 'San Telmo|Feira (Plaza Dorrego), Mercado de San Telmo, Mafalda'  theme0_t0.00
+  [4,10]J4: 'Buenos Aires'  FF0070C0
+  [5,1]A5: '=A4+1'  theme9_t0.60
+  [5,2]B5: '=A5'  theme9_t0.60
+  [5,3]C5: 'Buenos Aires 2'  theme9_t0.80
+  [5,4]D5: 'Recoleta|Las Heras, Café La Biela, Cemitério, Empanadas El Sanjuanino, Floralis Genérica, Museo Participativo'  theme0_t0.00
+  [5,6]F5: 'Almoço|La Parolaccia'  theme0_t-0.05
+  [5,7]G5: 'Puerto Madero|Puente de la Mujer, Fragata Sarmiento'  theme0_t0.00
+  [5,10]J5: 'Buenos Aires'  FF0070C0
+  [6,1]A6: '=A5+1'  theme9_t0.60
+  [6,2]B6: '=A6'  theme9_t0.60
+  [6,3]C6: 'Parque'  theme9_t0.80
+  [6,6]F6: 'Almoço'  theme0_t-0.05
+  [6,10]J6: 'Buenos Aires'  FF0070C0
+  [7,1]A7: '=A6+1'  theme9_t0.60
+  [7,2]B7: '=A7'  theme9_t0.60
+  [7,3]C7: 'Volta'  theme9_t0.80
+  [7,4]D7: 'Centro|Obelisco, Florida, Galerías Pacífico, Casa Rosada'  theme0_t0.00
+  [7,6]F7: 'Almoço'  theme0_t-0.05
+  [7,8]H7: 'Vôo |Buenos Aires (AEP) x Rio|17:30 - 20:25'  theme0_t-0.25
+  [9,4]D9: 'Café Tortoni'  theme0_t0.00
+  [9,5]E9: 'Teatro Colón'  theme0_t0.00
+  [9,6]F9: 'MALBA'  theme0_t0.00
+  [9,7]G9: 'Palermo (Parques)|Jardin Japonês, El Rosedal'  theme0_t0.00
+  [9,8]H9: 'Palermo Soho'  theme0_t0.00
+  [10,4]D10: 'Colonia do Sacramento|Buquebus: 08:15 - 09:30 / 17:01 - 18:16|Colonia Express: 08:30 - 09:45 / 16:30 - 17:45'  theme0_t0.00
+DICAS:
+  'O que fazer em Buenos Aires'  ''
+  'Buenos Aires com crianças'  'https://viajandocompimpolhos.com/2018/02/22/o-que-fazer-em-b'
+  'Caminhada pela Recoleta'  'https://www.viajenaviagem.com/destino/buenos-aires/o-que-faz'
+  'Bate-e-voltas de Buenos Aires'  'https://aguiarbuenosaires.com/conhecer-proximo-a-buenos-aire'
+  'Colônia do Sacramento'  'https://aguiarbuenosaires.com/colonia-do-sacramento-de-buque'
+  'Ferry para Colônia do Sacramento'  'https://www.buquebus.com '
+  'Ferry para Colônia do Sacramento'  'https://coloniaexpress.com'
+  'Campanópolis'  'https://variasviagens.com/campanopolis-uma-aldeia-medieval-c'
+GASTOS (header + marcados):
+  row1: ['', 'Item', 'Tipo', 'Obs', '', '', '', '', 'Preço', 'Pessoas', 'Quant', 'Subtotal', 'Moeda', 'Subtotal R$', 'Pago', '']
+  row2: ['►', 'Vôo Rio x Buenos Aires x Rio', 'Transporte', '', 'GOL', 'TARIFA PLUS', 'COM BAGAGEM', '', '2379.36', '4.2', '1', '=(I2*J2*K2)', '1', '=L2*M2', '=I2*4', '']
+  row3: ['►', 'Traslado aeroporto', '', 'BUENOS AIRES', '', '', '', '', '', '1', '2', '=(I3*J3*K3)', '=Dólar*(1+IOF)', '=L3*M3', '', '']
+  row6: ['►', 'Le Batiment Apartmentos', 'Hotel', 'BUENOS AIRES', 'PELO BOOKING', '', '', '', '98.4', '1', '5', '=(I6*J6*K6)', '=Dólar*(1+IOF)', '=L6*M6', '', '']
+  row8: ['►', 'Ferry Colônia do Sacramento', 'Passeios', 'BUENOS AIRES', 'BUQUEBUS', '', '', '', '=6468+1054', '5', '2', '=(I8*J8*K8)', '=ARS*(1+IOF)', '=L8*M8', '', '']
+  row13: ['►', 'Almoços', 'Outros', '', '', '', '', '', '80', '5', '6', '=(I13*J13*K13)', '1', '=L13*M13', '', '']
+  row14: ['►', 'Jantares', '', '', '', '', '', '', '80', '5', '5', '=(I14*J14*K14)', '1', '=L14*M14', '', '']
+
+======================================================================
+### 2023-04 Chapada Diamantina ###
+======================================================================
+Abas: ['Roteiro', 'Dicas', 'Gastos']
+Dimensoes: A1:S12  max_row=12 max_col=19
+MERGES:
+  E1:L1        r1c5:r1c12  FFFFC000  'programação'
+  E2:G2        r2c5:r2c7  FFFFC000  'dia'
+  H2:J2        r2c8:r2c10  FFFFC000  'tarde'
+  E3:F3        r3c5:r3c6  theme0_t-0.25  'Vôo Rio x Salvador|09:05 - 11:10'
+  I3:J3        r3c9:r3c10  theme0_t-0.25  'Feira de Santana x Mucugê|15:00 - 19:40'
+  H4:I4        r4c8:r4c9  theme6_t0.80  'Pantanal de Marimbus|1h'
+  F5:I5        r5c6:r5c9  theme6_t0.80  'Trilha da Cachoeira do Buracão|CONTRATAR GUIA EM IBICOA'
+  I6:J6        r6c9:r6c10  theme6_t0.80  'Centrinho do Vale do Capão'
+  E7:I7        r7c5:r7c9  theme6_t0.80  'Cachoeira da Fumaça|CONTRATAR GUIA (R$200) 6h de trilha'
+  H8:I8        r8c8:r8c9  theme6_t0.80  'Fazenda Pratinha|Rio Pratinha, flutuação na Gruta da Pr'
+  E9:G9        r9c5:r9c7  theme6_t0.80  'Circuito do Serrano|CONTRATAR GUIA (R$200) Piscinas nat'
+  E10:F10      r10c5:r10c6  theme0_t-0.25  'Lençóis x Feira de Santana|09:00 - 13:15'
+  G10:H10      r10c7:r10c8  theme0_t-0.05  'Almoço'
+  J10:K10      r10c10:r10c11  theme0_t-0.25  'Vôo Salvador x Rio|18:40 - 23:10'
+  E12:I12      r12c5:r12c9  theme6_t0.80  'Trilha das Águas Claras'
+CELULAS:
+  [1,1]A1: 'ROTEIRO'  FFFFC000
+  [1,5]E1: 'programação'  FFFFC000
+  [2,1]A2: 'data'  FFFFC000
+  [2,2]B2: 'dia da semana'  FFFFC000
+  [2,3]C2: 'dia'  FFFFC000
+  [2,4]D2: 'título'  FFFFC000
+  [2,5]E2: 'dia'  FFFFC000
+  [2,8]H2: 'tarde'  FFFFC000
+  [2,11]K2: 'noite'  FFFFC000
+  [2,12]L2: 'pernoite'  FFFFC000
+  [3,1]A3: '2023-04-15 00:00:00'  theme9_t0.60
+  [3,2]B3: '=A3'  theme9_t0.60
+  [3,3]C3: 'Dia 1'  theme9_t0.60
+  [3,4]D3: 'IDA'  theme9_t0.40
+  [3,5]E3: 'Vôo Rio x Salvador|09:05 - 11:10'  theme0_t-0.25
+  [3,7]G3: 'Salvador x Feira de Santana|12:00 - 13:40'  theme0_t-0.25
+  [3,8]H3: 'Almoço'  theme0_t-0.05
+  [3,9]I3: 'Feira de Santana x Mucugê|15:00 - 19:40'  theme0_t-0.25
+  [3,12]L3: 'Mucugê'  theme6_t0.40
+  [4,1]A4: '=A3+1'  theme9_t0.60
+  [4,2]B4: '=A4'  theme9_t0.60
+  [4,3]C4: 'Dia 2'  theme9_t0.60
+  [4,4]D4: 'Mucugê 1'  theme9_t0.40
+  [4,5]E4: 'Poço Encantado|1h|luz entre 10h e 13h30'  theme6_t0.80
+  [4,6]F4: 'Poço Azul|1h|luz entre 12h30 e 14h'  theme6_t0.80
+  [4,7]G4: 'Almoço'  theme0_t-0.05
+  [4,8]H4: 'Pantanal de Marimbus|1h'  theme6_t0.80
+  [4,10]J4: 'Centrinho de Mucugê'  theme6_t0.80
+  [4,12]L4: 'Mucugê'  theme6_t0.40
+  [5,1]A5: '=A4+1'  theme9_t0.60
+  [5,2]B5: '=A5'  theme9_t0.60
+  [5,3]C5: 'Dia 3'  theme9_t0.60
+  [5,4]D5: 'Mucugê 2'  theme9_t0.40
+  [5,5]E5: 'Mucugê x Ibicoara|2h'  theme0_t-0.25
+  [5,6]F5: 'Trilha da Cachoeira do Buracão|CONTRATAR GUIA EM IBICOARA (R$200) 5h de passeio|Rio Espalhado, Cachoeiras do Buraquinho, da Orquídea e do Recanto Verde, Cachoeira do Buracão'  theme6_t0.80
+  [5,10]J5: 'Ibicoara x Mucugê|2h'  theme0_t-0.25
+  [5,12]L5: 'Mucugê'  theme6_t0.40
+  [6,1]A6: '=A5+1'  theme9_t0.60
+  [6,2]B6: '=A6'  theme9_t0.60
+  [6,3]C6: 'Dia 4'  theme9_t0.60
+  [6,4]D6: 'Vale do Capão 1'  theme9_t0.40
+  [6,5]E6: 'Cemitério Bizantino'  theme6_t0.80
+  [6,6]F6: 'Igatú (Cidade de Pedra)|30min'  theme6_t0.80
+  [6,7]G6: 'Almoço'  theme0_t-0.05
+  [6,8]H6: 'Mucugê x Vale do Capão|(2h30)'  theme0_t-0.25
+  [6,9]I6: 'Centrinho do Vale do Capão'  theme6_t0.80
+  [6,12]L6: 'Vale do Capão'  theme6_t0.40
+  [7,1]A7: '=A6+1'  theme9_t0.60
+  [7,2]B7: '=A7'  theme9_t0.60
+  [7,3]C7: 'Dia 5'  theme9_t0.60
+  [7,4]D7: 'Vale do Capão 2'  theme9_t0.40
+  [7,5]E7: 'Cachoeira da Fumaça|CONTRATAR GUIA (R$200) 6h de trilha - 12km'  theme6_t0.80
+  [7,10]J7: 'Cachoeira do Riachinho'  theme6_t0.80
+  [7,12]L7: 'Vale do Capão'  theme6_t0.40
+  [8,1]A8: '=A7+1'  theme9_t0.60
+  [8,2]B8: '=A8'  theme9_t0.60
+  [8,3]C8: 'Dia 6'  theme9_t0.60
+  [8,4]D8: 'Lençóis 1'  theme9_t0.40
+  [8,5]E8: ' Vale do Capão x Lençóis|(1h30)'  theme0_t-0.25
+  [8,6]F8: 'Gruta da Lapa Doce|1h15 do Vale do Capão '  theme6_t0.80
+  [8,7]G8: 'Almoço'  theme0_t-0.05
+  [8,8]H8: 'Fazenda Pratinha|Rio Pratinha, flutuação na Gruta da Prata, Gruta Azul (azul às 15h), tirolesa, SUP|15min ida + 1h volta'  theme6_t0.80
+  [8,10]J8: 'Morro do Pai Inácio|limite subida 17h|30min (ida) + 45min (volta)'  theme6_t0.80
+  [8,12]L8: 'Lençóis'  theme6_t0.40
+  [9,1]A9: '=A8+1'  theme9_t0.60
+  [9,2]B9: '=A9'  theme9_t0.60
+  [9,3]C9: 'Dia 7'  theme9_t0.60
+  [9,4]D9: 'Lençóis 2'  theme9_t0.40
+  [9,5]E9: 'Circuito do Serrano|CONTRATAR GUIA (R$200) Piscinas naturais, Salão de Areias Coloridas, Poço Halley, Cachoeirinha, Cachoeira da Primavera, Mirante de Lençóis |15min - 4 horas de passeio'  theme6_t0.80
+  [9,8]H9: 'Almoço'  theme0_t-0.05
+  [9,9]I9: 'Centrinho de Lençóis'  theme6_t0.80
+  [9,10]J9: 'Mirante do Camelo|45min (ida) + 45min (volta)'  theme6_t0.80
+  [9,12]L9: 'Lençóis'  theme6_t0.40
+  [10,1]A10: '=A9+1'  theme9_t0.60
+  [10,2]B10: '=A10'  theme9_t0.60
+  [10,3]C10: 'Dia 8'  theme9_t0.60
+  [10,4]D10: 'VOLTA'  theme9_t0.40
+  [10,5]E10: 'Lençóis x Feira de Santana|09:00 - 13:15'  theme0_t-0.25
+  [10,7]G10: 'Almoço'  theme0_t-0.05
+  [10,9]I10: 'Feira de Santana x Salvador|15:00 - 16:40'  theme0_t-0.25
+  [10,10]J10: 'Vôo Salvador x Rio|18:40 - 23:10'  theme0_t-0.25
+  [12,4]D12: 'Vale do Capão'  theme9_t0.40
+  [12,5]E12: 'Trilha das Águas Claras'  theme6_t0.80
+DICAS:
+  'Chapada Diamantina: 12 passeios par'  'https://www.viajanet.com.br/blog/o-que-fazer-na-chapada-diam'
+  'Chapada Diamantina: 25 dicas para a'  'https://www.melhoresdestinos.com.br/chapada-diamantina-dicas'
+  'Poço Encantado'  'https://guia.melhoresdestinos.com.br/poco-encantado-221-6134'
+  'Poço Azul'  'https://guia.melhoresdestinos.com.br/poco-azul-221-6152-l.ht'
+  'Pantanal Marimbus (Fazenda Marimbus'  'https://marimbus.com.br/passeios/'
+  'Pantanal Marimbus (Comunidade Reman'  'https://www.umviajante.com.br/bahia/7487-marimbus-e-rio-ronc'
+  'Cachoeira do Buracão'  'https://guia.melhoresdestinos.com.br/cachoeira-do-buracao-co'
+  'Cachoeira do Buracão - Guia'  'Guia Jô Prado: ZAP (77) 99193-2852'
+  'Cemitério Bizantino'  'https://blogs.gazetaonline.com.br/porondeandei/371/cemiterio'
+  'Igatu - Cidade de Pedra'  'https://viajecomnorma.com.br/igatu-ba-vila-de-pedra-chapada-'
+  'Cachoeira da Fumaça'  'https://guia.melhoresdestinos.com.br/cachoeira-da-fumaca-221'
+  'Cachoeira da Fumaça - Guias'  'https://acvvc.org/condutores/condutores/'
+  'Cachoeira do Riachinho'  'https://guia.melhoresdestinos.com.br/cachoeira-do-riachinho-'
+  'Gruta da Lapa Doce'  'https://guia.melhoresdestinos.com.br/gruta-da-lapa-doce-221-'
+  'Fazenda Pratinha'  'https://guia.melhoresdestinos.com.br/gruta-da-pratinha-e-gru'
+  'Morro do Pai Inácio'  'https://guia.melhoresdestinos.com.br/morro-do-pai-inacio-221'
+  'Piscinas Naturais do Serrano'  'https://guia.melhoresdestinos.com.br/parque-da-muritiba-serr'
+  'Mirante do Camelo'  'https://guia.melhoresdestinos.com.br/mirante-do-camelo-221-6'
+GASTOS (header + marcados):
+  row1: ['', '', 'Tipo', 'Obs', '', '', 'Preço', 'Taxas', 'Pessoas', 'Quant', 'Subtotal', 'Pago', '']
+  row2: ['►', 'Vôo RIO x SALVADOR x RIO', 'Transporte', 'PASSAGEM', '', '', '1616.8', '82.75', '2', '1', '=(G2+H2)*I2*J2', '=K2', '']
+  row3: ['►', '', '', 'BAGAGEM', '', '', '95', '', '2', '1', '=(G3+H3)*I3*J3', '=K3', '']
+  row4: ['►', 'Aluguel de carro', '', 'LOCALIZA', 'SMILES', '', '1170.16', '140.42', '1', '1', '=(G4+H4)*I4*J4', '=K4', '']
+  row5: ['►', 'Estalagem Oforasteiro', 'Hospedagem', 'MUCUGÊ', 'Villa com Vista do Jardim', '', '1140', '', '1', '1', '=(G5+H5)*I5*J5', '=K5', '']
+  row6: ['►', 'Villaflor Pousada', '', 'VALE DO CAPÃO', 'Apartamento Standard', '', '396', '', '1', '1', '=(G6+H6)*I6*J6', '', '']
+  row7: ['►', 'Pousada Solar Azul', '', 'LENÇÓIS', 'Suíte com Vista do Jardim', '', '820', '', '1', '1', '=(G7+H7)*I7*J7', '=K7', '']
+  row8: ['►', 'Ingresso Poço Encantado', 'Passeios', 'MUCUGÊ', '', '', '25', '', '2', '1', '=(G8+H8)*I8*J8', '', '']
+  row9: ['►', 'Ingresso Poço Azul', '', 'MUCUGÊ', 'Com flutuação', '', '30', '', '2', '1', '=(G9+H9)*I9*J9', '', '']
+  row10: ['►', 'Passeio barco Pantanal de Marimbus', '', 'MUCUGÊ', 'Fazenda Marimbus', '', '60', '', '2', '1', '=(G10+H10)*I10*J10', '', '']
+  row11: ['►', 'Ingresso Cachoeira do Buracão', '', 'MUCUGÊ', '', '', '15', '', '2', '1', '=(G11+H11)*I11*J11', '=K11', '']
+  row12: ['►', 'Guia Cachoeira do Buracão', '', 'MUCUGÊ', '', '', '200', '', '1', '1', '=(G12+H12)*I12*J12', '', '']
+  row13: ['►', 'Ingresso Cachoeira do Riachinho', '', 'MUCUGÊ', '', '', '6', '', '2', '1', '=(G13+H13)*I13*J13', '', '']
+  row14: ['►', 'Ingresso Cachoeira da Fumaça', '', 'VALE DO CAPÃO', '', '', '10', '', '2', '1', '=(G14+H14)*I14*J14', '', '']
+  row15: ['►', 'Guia Cachoeira da Fumaça', '', 'VALE DO CAPÃO', '', '', '200', '', '1', '1', '=(G15+H15)*I15*J15', '', '']
+  row16: ['►', 'Ingresso Gruta da Lapa Doce', '', 'LENÇÓIS', '', '', '30', '', '2', '1', '=(G16+H16)*I16*J16', '', '']
+  row17: ['►', 'Ingresso Fazenda Pratinha', '', 'LENÇÓIS', '', '', '80', '', '2', '1', '=(G17+H17)*I17*J17', '', '']
+  row18: ['►', 'Ingresso Fazenda Pratinha - Flutuaç', '', 'LENÇÓIS', '', '', '100', '', '2', '1', '=(G18+H18)*I18*J18', '', '']
+  row19: ['►', 'Ingresso Morro do Pai Inácio', '', 'LENÇÓIS', '', '', '12', '', '2', '1', '=(G19+H19)*I19*J19', '', '']
+  row20: ['►', 'Ingresso Piscinas Naturais do Serra', '', 'LENÇÓIS', '', '', '20', '', '2', '1', '=(G20+H20)*I20*J20', '', '']
+  row21: ['►', 'Guia Piscinas Naturais do Serrano', '', 'LENÇÓIS', '', '', '200', '', '1', '1', '=(G21+H21)*I21*J21', '', '']
+  row22: ['►', 'Almoços', 'Outros', '', '', '', '100', '', '2', '8', '=(G22+H22)*I22*J22', '', '']
+  row23: ['►', 'Jantares', '', '', '', '', '100', '', '2', '7', '=(G23+H23)*I23*J23', '', '']
+
+======================================================================
+### 2023-07 Mato Grosso ###
+======================================================================
+Abas: ['Roteiro', 'Roteiro SESC', 'Roteiro Nobres', 'Roteiro Chapada', 'Planejamento', 'Dicas', 'Gastos']
+Dimensoes: A1:L15  max_row=15 max_col=12
+MERGES:
+  D1:L1        r1c4:r1c12  FFFFC000  'programação'
+  D2:F2        r2c4:r2c6  FFFFC000  'dia'
+  G2:J2        r2c7:r2c10  FFFFC000  'tarde'
+  J3:K3        r3c10:r3c11  theme0_t-0.25  'Vôo Rio x Cuiabá|(18:20 - 21:50)'
+  D4:G4        r4c4:r4c7  theme5_t0.60  'Acqua Park Pantanal'
+  J4:K4        r4c10:r4c11  theme5_t0.60  'Parque das Águas'
+  D5:F5        r5c4:r5c6  theme5_t0.60  'Orla do Porto'
+  H5:I5        r5c8:r5c9  theme0_t-0.25  'Cuiabá x Poconé|(2h)'
+  D6:F6        r6c4:r6c6  theme7_t0.80  'Transpantaneira (4h)|06:15 - 11h15'
+  I6:J6        r6c9:r6c10  theme7_t0.80  'Corixo do Moquém (1h30)|15h30 - 17h00'
+  D7:E7        r7c4:r7c5  theme7_t0.80  'Despertar no Cuiabá (2h)|05:00 - 07:00'
+  H7:I7        r7c8:r7c9  theme7_t0.80  'Passeio no Parque SESC Baía das Pedras (1h30) |14h30 - '
+  D8:E8        r8c4:r8c5  theme7_t0.80  'Casa do Pantaneiro (1h30)|9:00 - 10:30'
+  E9:F9        r9c5:r9c6  theme0_t-0.25  'Poconé x Chapada dos Guimarães|(3h)'
+  H9:I9        r9c8:r9c9  theme6_t0.60  'Cachoeira Véu da Noiva'
+  D10:J10      r10c4:r10c10  theme6_t0.60  'Cidade de Pedra + Crista de Galo + Vale do Rio Claro (P'
+  F12:J12      r12c6:r12c10  theme0_t-0.25  'Vôo Cuiabá x Rio|(11:35 - 18:05)'
+  D14:F14      r14c4:r14c6  theme7_t0.80  'Conhecendo a Reserva Sesc Pantanal - RPPN (5h)|07:30 - '
+  G14:H14      r14c7:r14c8  theme7_t0.80  'Trilha Segredos da Mata RPPN SESC Pantanal (2h)'
+  J14:K14      r14c10:r14c11  theme7_t0.80  'Passeio de Bicicleta (3h)'
+  D15:E15      r15c4:r15c5  theme7_t0.80  'Trilha da vida Sesc BP (1h30)|15:15 - 16:45'
+  G15:H15      r15c7:r15c8  theme7_t0.80  'Trilha do Tatu (1h)|07:40 - 08:40 | 09:30 - 10:30'
+CELULAS:
+  [1,1]A1: 'ROTEIROS'  FFFFC000
+  [1,4]D1: 'programação'  FFFFC000
+  [2,1]A2: 'data'  FFFFC000
+  [2,2]B2: 'dia da semana'  FFFFC000
+  [2,4]D2: 'dia'  FFFFC000
+  [2,7]G2: 'tarde'  FFFFC000
+  [2,11]K2: 'noite'  FFFFC000
+  [2,12]L2: 'pernoite'  FFFFC000
+  [3,1]A3: '2023-07-19 00:00:00'  theme9_t0.60
+  [3,2]B3: '=A3'  theme9_t0.60
+  [3,10]J3: 'Vôo Rio x Cuiabá|(18:20 - 21:50)'  theme0_t-0.25
+  [3,12]L3: 'Cuiabá'  theme5_t0.40
+  [4,1]A4: '=A3+1'  theme9_t0.60
+  [4,2]B4: '=A4'  theme9_t0.60
+  [4,4]D4: 'Acqua Park Pantanal'  theme5_t0.60
+  [4,8]H4: 'Almoço'  theme7_t0.60
+  [4,10]J4: 'Parque das Águas'  theme5_t0.60
+  [4,12]L4: 'Cuiabá'  theme5_t0.40
+  [5,1]A5: '=A4+1'  theme9_t0.60
+  [5,2]B5: '=A5'  theme9_t0.60
+  [5,4]D5: 'Orla do Porto'  theme5_t0.60
+  [5,7]G5: 'Almoço|Várzea Grande Shopping'  theme7_t0.60
+  [5,8]H5: 'Cuiabá x Poconé|(2h)'  theme0_t-0.25
+  [5,12]L5: 'SESC'  theme7_t0.60
+  [6,1]A6: '=A5+1'  theme9_t0.60
+  [6,2]B6: '=A6'  theme9_t0.60
+  [6,4]D6: 'Transpantaneira (4h)|06:15 - 11h15'  theme7_t0.80
+  [6,7]G6: 'Almoço'  theme7_t0.60
+  [6,9]I6: 'Corixo do Moquém (1h30)|15h30 - 17h00'  theme7_t0.80
+  [6,12]L6: 'SESC'  theme7_t0.60
+  [7,1]A7: '=A6+1'  theme9_t0.60
+  [7,2]B7: '=A7'  theme9_t0.60
+  [7,4]D7: 'Despertar no Cuiabá (2h)|05:00 - 07:00'  theme7_t0.80
+  [7,6]F7: 'Borboletário'  theme7_t0.80
+  [7,7]G7: 'Almoço'  theme7_t0.60
+  [7,8]H7: 'Passeio no Parque SESC Baía das Pedras (1h30) |14h30 - 16h00'  theme7_t0.80
+  [7,11]K7: 'Focagem fluvial (1h)|20:00 - 21:00'  theme7_t0.80
+  [7,12]L7: 'SESC'  theme7_t0.60
+  [8,1]A8: '=A7+1'  theme9_t0.60
+  [8,2]B8: '=A8'  theme9_t0.60
+  [8,4]D8: 'Casa do Pantaneiro (1h30)|9:00 - 10:30'  theme7_t0.80
+  [8,7]G8: 'Almoço'  theme7_t0.60
+  [8,8]H8: 'Centro de interpretação ambiental'  theme7_t0.80
+  [8,9]I8: 'Arco e flecha'  theme7_t0.80
+  [8,12]L8: 'SESC'  theme7_t0.60
+  [9,1]A9: '=A8+1'  theme9_t0.60
+  [9,2]B9: '=A9'  theme9_t0.60
+  [9,5]E9: 'Poconé x Chapada dos Guimarães|(3h)'  theme0_t-0.25
+  [9,7]G9: 'Almoço'  theme6_t0.40
+  [9,8]H9: 'Cachoeira Véu da Noiva'  theme6_t0.60
+  [9,10]J9: 'Mirante do Centro Geodésico'  theme6_t0.60
+  [9,12]L9: 'Chapada dos Guimarães'  theme6_t0.40
+  [10,1]A10: '=A9+1'  theme9_t0.60
+  [10,2]B10: '=A10'  theme9_t0.60
+  [10,4]D10: 'Cidade de Pedra + Crista de Galo + Vale do Rio Claro (Poço da Anta e Poço Verde)|4 km / 5h / com guia / 4x4'  theme6_t0.60
+  [10,12]L10: 'Chapada dos Guimarães'  theme6_t0.40
+  [11,1]A11: '=A10+1'  theme9_t0.60
+  [11,2]B11: '=A11'  theme9_t0.60
+  [11,7]G11: 'Almoço'  theme6_t0.40
+  [11,12]L11: 'Chapada dos Guimarães'  theme6_t0.40
+  [12,1]A12: '=A11+1'  theme9_t0.60
+  [12,2]B12: '=A12'  theme9_t0.60
+  [12,5]E12: 'Chapada x Cuiabá|(1h)'  theme0_t-0.25
+  [12,6]F12: 'Vôo Cuiabá x Rio|(11:35 - 18:05)'  theme0_t-0.25
+  [14,4]D14: 'Conhecendo a Reserva Sesc Pantanal - RPPN (5h)|07:30 - 12:30'  theme7_t0.80
+  [14,7]G14: 'Trilha Segredos da Mata RPPN SESC Pantanal (2h)'  theme7_t0.80
+  [14,9]I14: 'Avistamento de aves'  theme7_t0.80
+  [14,10]J14: 'Passeio de Bicicleta (3h)'  theme7_t0.80
+  [15,4]D15: 'Trilha da vida Sesc BP (1h30)|15:15 - 16:45'  theme7_t0.80
+  [15,7]G15: 'Trilha do Tatu (1h)|07:40 - 08:40 | 09:30 - 10:30'  theme7_t0.80
+DICAS:
+  'Passeios SESC Pantanal'  'https://www.sescpantanal.com.br/hotel.aspx?s=8&i=28#!p2_3'
+  'Passeios - Nobres Turismo'  'http://nobresturismo.com.br/'
+  'Passeios - Prefiro Viajar'  'https://prefiroviajar.com.br/brasil/passeios-em-nobres-preco'
+  'Passeios - Pousada da Mata (bons de'  'http://pousadaestanciadamata.com.br/lazer-passeios/'
+  'Roteiro pela Chapada dos Guimarães'  'https://blog.obomdeviajar.com.br/2018/10/01/roteiro-pela-cha'
+  'Agência Chapada Off-Road'  'https://www.chapadaoffroad.com'
+  'O que fazer na Chapada'  'https://melhoresmomentosdavida.com/o-que-fazer-na-chapada-do'
+  'O que fazer na Chapada'  'https://mapadomato.info/o-que-fazer-em-chapada-dos-guimaraes'
+  'Chapada com crianças'  'https://www.thaisguimaraes.com.br/chapada-dos-guimaraes-com-'
+  'Chapada com crianças'  'https://www.mapadomato.info/onde-passear-com-as-criancas-em-'
+  'Guias Chapada'  'https://www.tripadvisor.com.br/Attraction_Review-g1600093-d2'
+GASTOS (header + marcados):
+  row1: ['', '', 'Tipo', 'Obs', '', '', '', 'Preço', 'Taxas', 'Pessoas', 'Quant', 'Subtotal R$', 'Pago', '']
+  row2: ['►', 'Vôo Rio x Cuiabá x Rio', 'Transporte', 'ADULTO', 'GOL', '', '', '1626.29', '', '3.25', '1', '=(H2+I2)*J2*K2', '=L2', '']
+  row3: ['►', '', '', 'BAGAGEM', '', '', '', '95', '', '1', '2', '=(H3+I3)*J3*K3', '=L3', '']
+  row4: ['►', 'Aluguel Carro', '', 'LOCALIZA + GOL', '+ 7.290 milhas', 'Grupo FS Intermediário ', 'Fiat Cronos 1.3', '317.38', '', '1', '1', '=(H4+I4)*J4*K4', '=L4', '']
+  row6: ['►', 'Amazon Aeroporto Hotel', 'Hospedagem', 'CUIABÁ', '', '', '', '628', '', '1', '2', '=(H6+I6)*J6*K6', '=L6', '']
+  row7: ['►', 'SESC Pantanal', '', 'POCONÉ', 'https://sescpantanal.com.br/hotel.a', '', '', '1284', '', '1', '4', '=(H7+I7)*J7*K7', '=L7', '']
+  row8: ['►', 'Pousada Penhasco', '', 'CHAPADA DOS GUIMARÃES', 'https://penhasco.com.br/', '', '', '1654.8999999999999', '', '1', '3', '=(H8+I8)*J8*K8', '', '']
+  row9: ['►', 'Cidade de Pedra + Vale do Rio Claro', 'Atividades', 'CHAPADA DOS GUIMARÃES', 'Kassya', 'Com carro 4x4', '', '350', '', '4', '1', '=(H9+I9)*J9*K9', '', '']
+  row13: ['►', 'Almoço', 'Outros', '', '', '', '', '70', '', '4', '8', '=(H13+I13)*J13*K13', '', '']
+  row14: ['►', 'Jantar', '', '', '', '', '', '70', '', '4', '7', '=(H14+I14)*J14*K14', '', '']
+
+======================================================================
+### 2023-09 São Paulo ###
+======================================================================
+Abas: ['Roteiro', 'Dicas']
+Dimensoes: A1:L7  max_row=7 max_col=12
+MERGES:
+  D1:K1        r1c4:r1c11  FFFFC000  ''
+  D2:E2        r2c4:r2c5  FFFFC000  ''
+  F2:I2        r2c6:r2c9  FFFFC000  'tarde'
+  D3:H3        r3c4:r3c8  theme0_t-0.25  'Rio x São Paulo|(09:00 - 16:00)'
+  D5:E5        r5c4:r5c5  theme4_t0.60  'Bairro da Liberdade'
+  D6:E6        r6c4:r6c5  theme4_t0.60  'Paulista'
+  G6:J6        r6c7:r6c10  theme4_t0.60  'The Town'
+  D7:H7        r7c4:r7c8  theme0_t-0.25  'São Paulo x Rio|(09:00 - 16:00)'
+CELULAS:
+  [1,1]A1: 'ROTEIROS'  FFFFC000
+  [2,1]A2: 'data'  FFFFC000
+  [2,2]B2: 'dia da semana'  FFFFC000
+  [2,6]F2: 'tarde'  FFFFC000
+  [2,10]J2: 'noite'  FFFFC000
+  [2,11]K2: 'pernoite'  FFFFC000
+  [3,1]A3: '2023-09-07 00:00:00'  theme9_t0.60
+  [3,2]B3: '=A3'  theme9_t0.60
+  [3,3]C3: 'IDA'  theme9_t0.40
+  [3,4]D3: 'Rio x São Paulo|(09:00 - 16:00)'  theme0_t-0.25
+  [3,11]K3: 'SÃO PAULO'  theme4_t-0.25
+  [4,1]A4: '=A3+1'  theme9_t0.60
+  [4,2]B4: '=A4'  theme9_t0.60
+  [4,6]F4: 'Almoço'  theme7_t0.60
+  [4,11]K4: 'SÃO PAULO'  theme4_t-0.25
+  [5,1]A5: '=A4+1'  theme9_t0.60
+  [5,2]B5: '=A5'  theme9_t0.60
+  [5,4]D5: 'Bairro da Liberdade'  theme4_t0.60
+  [5,6]F5: 'Almoço'  theme7_t0.60
+  [5,11]K5: 'SÃO PAULO'  theme4_t-0.25
+  [6,1]A6: '=A5+1'  theme9_t0.60
+  [6,2]B6: '=A6'  theme9_t0.60
+  [6,3]C6: 'The Town'  theme9_t0.40
+  [6,4]D6: 'Paulista'  theme4_t0.60
+  [6,6]F6: 'Almoço'  theme7_t0.60
+  [6,7]G6: 'The Town'  theme4_t0.60
+  [6,11]K6: 'SÃO PAULO'  theme4_t-0.25
+  [7,1]A7: '=A6+1'  theme9_t0.60
+  [7,2]B7: '=A7'  theme9_t0.60
+  [7,3]C7: 'VOLTA'  theme9_t0.40
+  [7,4]D7: 'São Paulo x Rio|(09:00 - 16:00)'  theme0_t-0.25
+DICAS:
+
+======================================================================
+### 2023-11 Portugal ###
+======================================================================
+Abas: ['Roteiro', 'Cidades', 'Dicas', 'Gastos']
+Dimensoes: A1:L24  max_row=24 max_col=12
+MERGES:
+  D1:L1        r1c4:r1c12  FFFFC000  'programação'
+  D2:F2        r2c4:r2c6  FFFFC000  'dia'
+  G2:J2        r2c7:r2c10  FFFFC000  'tarde'
+  D4:G4        r4c4:r4c7  theme0_t-0.25  'Vôo Rio x Lisboa|(22:10 - 10:40)'
+  H4:K4        r4c8:r4c11  theme0_t0.00  'DESCANSO'
+  E5:J5        r5c5:r5c10  theme0_t0.00  'Sintra|Linha 434 (Castelo dos Mouros, Palácio Nacional '
+  D6:K6        r6c4:r6c11  theme0_t0.00  'Centro, Alfama e Alto Chiado|Praça do Rossio, Praça da '
+  D7:K7        r7c4:r7c11  theme0_t0.00  'Parque das Nações e Bairro de Belém|Estação Oriente, ce'
+  D8:E8        r8c4:r8c5  theme0_t-0.05  'Lisboa x Évora|1h30'
+  F8:I8        r8c6:r8c9  theme0_t0.00  'Évora|Aqueduto da Água de Prata, Praça do Giraldo, Rua '
+  J8:K8        r8c10:r8c11  theme0_t-0.05  'Évora x Lisboa|1h30'
+  D9:E9        r9c4:r9c5  theme0_t-0.05  'Lisboa x Fátima|Alugar carro 08:30  1h30'
+  F9:H9        r9c6:r9c8  theme0_t0.00  'Fátima|Santuário de Fátima, Basílica de Nossa Senhora d'
+  D10:K10      r10c4:r10c11  theme0_t0.00  'Coimbra|Universidade de Coimbra, Sé Velha de Coimbra, S'
+  E11:J11      r11c5:r11c10  theme0_t0.00  'Aveiro|Costa Nova, Casas Coloridas, andar de moliceiro '
+  D12:K12      r12c4:r12c11  theme0_t0.00  'Porto|Rua de Santa Catarina, Centro Histórico e Ribeira'
+  D13:K13      r13c4:r13c11  theme0_t0.00  'Porto|Torre dos Clérigos, Livraria Lello, Jardim do Mor'
+  H14:I14      r14c8:r14c9  theme0_t0.00  '(30min)  Óbidos|Rua Direita, Castelo de Óbidos'
+  D15:E15      r15c4:r15c5  theme0_t-0.25  'Vôo Lisboa x Rio|(23:25 - 06:20)'
+CELULAS:
+  [1,1]A1: 'ROTEIRO'  FFFFC000
+  [1,4]D1: 'programação'  FFFFC000
+  [2,1]A2: 'data'  FFFFC000
+  [2,2]B2: 'dia da semana'  FFFFC000
+  [2,3]C2: 'título'  FFFFC000
+  [2,4]D2: 'dia'  FFFFC000
+  [2,7]G2: 'tarde'  FFFFC000
+  [2,11]K2: 'noite'  FFFFC000
+  [2,12]L2: 'pernoite'  FFFFC000
+  [3,1]A3: '2023-11-22 00:00:00'  theme9_t0.60
+  [3,2]B3: '=A3'  theme9_t0.60
+  [3,3]C3: 'Ida'  theme9_t0.80
+  [3,11]K3: 'Vôo Rio x Lisboa|(22:10 - 10:40)'  theme0_t-0.25
+  [3,12]L3: 'Avião'  theme0_t-0.35
+  [4,1]A4: '=A3+1'  theme9_t0.60
+  [4,2]B4: '=A4'  theme9_t0.60
+  [4,3]C4: 'Chegada'  theme9_t0.80
+  [4,4]D4: 'Vôo Rio x Lisboa|(22:10 - 10:40)'  theme0_t-0.25
+  [4,8]H4: 'DESCANSO'  theme0_t0.00
+  [4,12]L4: 'Lisboa'  FFC84300
+  [5,1]A5: '=A4+1'  theme9_t0.60
+  [5,2]B5: '=A5'  theme9_t0.60
+  [5,3]C5: 'Sintra'  theme9_t0.80
+  [5,4]D5: 'Lisboa x Sintra|40min'  theme0_t-0.05
+  [5,5]E5: 'Sintra|Linha 434 (Castelo dos Mouros, Palácio Nacional da Pena), Centro Histórico, Queijadas da Sapa, Linha 435 (Quinta da Regaleira, Parque e Palácio de Monserrate), Piriquita, Palácio Nacional de Sintra'  theme0_t0.00
+  [5,11]K5: 'Sintra x Lisboa|40min'  theme0_t-0.05
+  [5,12]L5: 'Lisboa'  FFC84300
+  [6,1]A6: '=A5+1'  theme9_t0.60
+  [6,2]B6: '=A6'  theme9_t0.60
+  [6,3]C6: 'Lisboa 1'  theme9_t0.80
+  [6,4]D6: 'Centro, Alfama e Alto Chiado|Praça do Rossio, Praça da Figueira, Mirador Santa Luzia, Mirador Portas do Sol, Castelo de São Jorge, Elevador da Baixa, Elevador Santa Justa, Convento do Carmo, Igreja de São Roque, Mirador Jardim de São Pedro de Alcântara, rua Augusta, Praça do Comércio'  theme0_t0.00
+  [6,12]L6: 'Lisboa'  FFC84300
+  [7,1]A7: '=A6+1'  theme9_t0.60
+  [7,2]B7: '=A7'  theme9_t0.60
+  [7,3]C7: 'Lisboa 2'  theme9_t0.80
+  [7,4]D7: 'Parque das Nações e Bairro de Belém|Estação Oriente, centro de compras Vasco da Gama, Oceanário de Lisboa, Parque das Nações, Torre Vasco da Gama, Cais do Sodré, Marcado da Ribeira, Mosteiro dos Jerônimos, praça do Império, Padrão do Descobrimento, Farol de Belém, Torre de Belém, Fábrica de Pastéis de Belém'  theme0_t0.00
+  [7,12]L7: 'Lisboa'  FFC84300
+  [8,1]A8: '=A7+1'  theme9_t0.60
+  [8,2]B8: '=A8'  theme9_t0.60
+  [8,3]C8: 'Évora'  theme9_t0.80
+  [8,4]D8: 'Lisboa x Évora|1h30'  theme0_t-0.05
+  [8,6]F8: 'Évora|Aqueduto da Água de Prata, Praça do Giraldo, Rua Cinco de Outubro, Sé de Évora, Templo Romano, Jardim Diana, Palácio Cadaval, Capela dos Ossos, Jardim Público de Évora'  theme0_t0.00
+  [8,10]J8: 'Évora x Lisboa|1h30'  theme0_t-0.05
+  [8,12]L8: 'Lisboa'  FFC84300
+  [9,1]A9: '=A8+1'  theme9_t0.60
+  [9,2]B9: '=A9'  theme9_t0.60
+  [9,3]C9: 'Fátima'  theme9_t0.80
+  [9,4]D9: 'Lisboa x Fátima|Alugar carro 08:30  1h30'  theme0_t-0.05
+  [9,6]F9: 'Fátima|Santuário de Fátima, Basílica de Nossa Senhora do Rosário de Fátima, Capelinha das Aparições, e outros'  theme0_t0.00
+  [9,9]I9: 'Lisboa x Conímbriga|1h'  theme0_t-0.05
+  [9,10]J9: 'Conímbriga|Ruinas de Conímbriga'  theme0_t0.00
+  [9,11]K9: 'Conímbriga x Coimbra|30min'  theme0_t-0.05
+  [9,12]L9: 'Coimbra'  theme2_t-0.50
+  [10,1]A10: '=A9+1'  theme9_t0.60
+  [10,2]B10: '=A10'  theme9_t0.60
+  [10,3]C10: 'Coimbra'  theme9_t0.80
+  [10,4]D10: 'Coimbra|Universidade de Coimbra, Sé Velha de Coimbra, Sé Nova de Coimbra, Igreja e Mosteiro de Santa Cruz, Igreja de São Tiago, Igreja de Santo Antônio dos Olivais'  theme0_t0.00
+  [10,12]L10: 'Coimbra'  theme2_t-0.50
+  [11,1]A11: '=A10+1'  theme9_t0.60
+  [11,2]B11: '=A11'  theme9_t0.60
+  [11,3]C11: 'Aveiro'  theme9_t0.80
+  [11,4]D11: 'Coimbra x Aveiro|1h'  theme0_t-0.05
+  [11,5]E11: 'Aveiro|Costa Nova, Casas Coloridas, andar de moliceiro pelos canais de Aveiro, Salinas de Aveiro, Museu da Arte Nova, comer os famosos Ovos Moles e as Tripas de Aveiro, Centro Histórico'  theme0_t0.00
+  [11,11]K11: 'Aveiro x Porto|1h '  theme0_t-0.05
+  [11,12]L11: 'Porto'  theme4_t-0.25
+  [12,1]A12: '=A11+1'  theme9_t0.60
+  [12,2]B12: '=A12'  theme9_t0.60
+  [12,3]C12: 'Porto 1'  theme9_t0.80
+  [12,4]D12: 'Porto|Rua de Santa Catarina, Centro Histórico e Ribeira'  theme0_t0.00
+  [12,12]L12: 'Porto'  theme4_t-0.25
+  [13,1]A13: '=A12+1'  theme9_t0.60
+  [13,2]B13: '=A13'  theme9_t0.60
+  [13,3]C13: 'Porto 2'  theme9_t0.80
+  [13,4]D13: 'Porto|Torre dos Clérigos, Livraria Lello, Jardim do Morro e Galerias de Paris, Igreja dos Clérigos (Spiritus)'  theme0_t0.00
+  [13,12]L13: 'Porto'  theme4_t-0.25
+  [14,1]A14: '=A13+1'  theme9_t0.60
+  [14,2]B14: '=A14'  theme9_t0.60
+  [14,3]C14: 'Óbidos'  theme9_t0.80
+  [14,4]D14: 'Porto x Batalha|2h'  theme0_t-0.05
+  [14,5]E14: 'Batalha|Mosteiro da Batalha'  theme0_t0.00
+  [14,6]F14: '(30min)  Nazaré|Forte São Miguel Arcanjo'  theme0_t0.00
+  [14,7]G14: '(15min)  Alcobaça|Mosteiro de Alcobaça|Origens Restaurante'  theme0_t0.00
+  [14,8]H14: '(30min)  Óbidos|Rua Direita, Castelo de Óbidos'  theme0_t0.00
+  [14,10]J14: 'Óbidos x Lisboa|1h'  theme0_t-0.05
+  [14,11]K14: 'Vôo Lisboa x Rio|(23:25 - 06:20)'  theme0_t-0.25
+  [14,12]L14: 'Avião'  theme0_t-0.35
+  [15,1]A15: '=A14+1'  theme9_t0.60
+  [15,2]B15: '=A15'  theme9_t0.60
+  [15,3]C15: 'Volta'  theme9_t0.80
+  [15,4]D15: 'Vôo Lisboa x Rio|(23:25 - 06:20)'  theme0_t-0.25
+  [17,3]C17: 'Cascais'  theme9_t0.80
+  [17,4]D17: 'Centro  Histórico de Cascais'  theme0_t0.00
+  [17,5]E17: 'Boca do Inferno'  theme0_t0.00
+  [17,6]F17: 'Cabo do Roca'  theme0_t0.00
+  [17,7]G17: 'Praia da Ribeira'  theme0_t0.00
+  [18,3]C18: 'Estoril'  theme9_t0.80
+  [18,4]D18: 'Casino Estoril'  theme0_t0.00
+  [19,3]C19: 'Leiria'  theme9_t0.80
+  [19,4]D19: 'Castelo de Leiria'  theme0_t0.00
+  [20,3]C20: 'Figueira da Foz'  theme9_t0.80
+  [21,3]C21: 'Peniche'  theme9_t0.80
+  [22,3]C22: 'Douro'  theme9_t0.80
+  [23,3]C23: 'Braga'  theme9_t0.80
+  [24,3]C24: 'Guimarães'  theme9_t0.80
+DICAS:
+  'Roteiro de 7 dias'  'https://www.almadeviajante.com/portugal-em-7-dias-itinerario'
+  'Roteiro de 7 dias'  'https://www.turistaprofissional.com/2013/03/24/roteiro-de-7-'
+  '7 roteiros'  'http://www.360meridianos.com/2015/12/roteiros-de-viagem-port'
+  'Como alugar carro em Portugal'  'https://www.eurodicas.com.br/alugar-carro-em-portugal/'
+  'Roteiro Lisboa'  'https://www.viagensecaminhos.com/2021/01/roteiro-lisboa.html'
+  'Roteiro Cascais e Sintra'  'https://www.viajeleve.net/cascais-e-sintra/'
+  'Roteiro Sintra'  'https://www.viajenaviagem.com/destino/lisboa/sintra/'
+  'Roteiro Fátima'  'https://www.viagensecaminhos.com/2020/10/fatima-portugal.htm'
+  'Roteiro Évora'  'https://www.viagensecaminhos.com/2020/07/evora-portugal.html'
+  'Roteiro Coimbra'  'https://viajonarios.com/coimbra/'
+  'Roteiro Aveiro'  'https://www.melhoresdestinos.com.br/aveiro-portugal.html'
+  'Roteiro Porto'  'https://www.viajaquepassa.com.br/portugal-roteiro-no-porto-p'
+  'Roteiro Óbidos'  'https://www.melhoresdestinos.com.br/obidos-o-que-fazer.html'
+GASTOS (header + marcados):
+  row1: ['', '', 'Tipo', 'Obs', '', '', '', '', 'Preço', 'Taxes', 'Pessoas', 'Quant', 'Subtotal', 'Moeda', 'Subtotal R$', 'Pago', '']
+  row2: ['►', 'Vôo Marcus', 'Transporte', 'TAP', '', '', '', '', '5661.29', '', '1', '1', '=(I2+J2)*K2*L2', '1', '=M2*N2', '=O2', '']
+  row3: ['►', 'Vôo Mônica', '', 'TAP', '', '', '', '', '5092.66', '', '1', '1', '=(I3+J3)*K3*L3', '1', '=M3*N3', '=O3', '']
+  row4: ['►', 'Traslado aeroporto', '', 'UBER', '', '', '', '', '10', '', '1', '2', '=(I4+J4)*K4*L4', '=Peso', '=M4*N4', '', '']
+  row6: ['►', 'Aluguel carro', '', 'SIXT', 'A PARTIR DIA 28', 'Renault Captur\nCFMR', 'VIA VERDE', 'Reserva: 893688', '171.54', '', '1', '1', '=(I6+J6)*K6*L6', '=Peso', '=M6*N6', '', '']
+  row7: ['►', 'Trem Lisboa x Évora', '', 'COMBOIOS DE PORTUGAL', 'https://www.cp.pt/sites/passageiros', '', '', '', '10', '', '2', '2', '=(I7+J7)*K7*L7', '=Peso', '=M7*N7', '=O7', '']
+  row9: ['►', 'Estacionamento', '', 'PORTO', '', '', '', '', '9', '', '1', '3', '=(I9+J9)*K9*L9', '=Euro*(1+IOF)', '=M9*N9', '', '']
+  row10: ['►', 'Residencial Florescente', 'Hospedagem', 'LISBOA', '5 noites', 'com café', '', '', '84.6', '4', '1', '5', '=(I10+J10)*K10*L10', '=Euro*(1+IOF)', '=M10*N10', '', '']
+  row11: ['►', 'Vila Julieta Guesthouse', '', 'COIMBRA', '2 noites', 'com café', '', '', '63', '', '1', '2', '=(I11+J11)*K11*L11', '=Euro*(1+IOF)', '=M11*N11', '', '']
+  row12: ['►', 'Grande Hotel do Porto', '', 'PORTO', '3 noites', 'com café', 'Estac. €9/dia', '', '99.9', '4', '1', '2', '=(I12+J12)*K12*L12', '=Euro*(1+IOF)', '=M12*N12', '', '']
+  row13: ['►', 'Ônibus Linha 434 e 435', 'Atividades', 'SINTRA', 'https://scotturb.com/', 'Hop-on Hop-off all buses', '', '', '13.5', '', '2', '1', '=(I13+J13)*K13*L13', '=Euro*(1+IOF)', '=M13*N13', '=O13', '']
+  row14: ['►', 'Ingresso Castelo dos Mouros', '', 'SINTRA', 'https://www.getyourguide.com.br/cas', '', '', '', '7.6', '', '2', '1', '=(I14+J14)*K14*L14', '=Euro*(1+IOF)', '=M14*N14', '=O14', '']
+  row15: ['►', 'Ingresso Palácio Nacional da Pena', '', 'SINTRA', 'https://www.getyourguide.com.br/pal', '', '', '', '14', '', '2', '1', '=(I15+J15)*K15*L15', '=Euro*(1+IOF)', '=M15*N15', '', '']
+  row16: ['►', 'Ingresso Quinta da Regaleira', '', 'SINTRA', 'https://regaleira.byblueticket.pt/', '', '', '', '11.81', '', '2', '1', '=(I16+J16)*K16*L16', '=Euro*(1+IOF)', '=M16*N16', '=O16', '']
+  row17: ['►', 'Ingresso Palácio Nacional de Sintra', '', 'SINTRA', '', '', '', '', '10', '', '2', '1', '=(I17+J17)*K17*L17', '=Euro*(1+IOF)', '=M17*N17', '', '']
+  row18: ['►', 'Ingresso Parque de Monserrate', '', 'SINTRA', '', '', '', '', '8', '', '2', '1', '=(I18+J18)*K18*L18', '=Euro*(1+IOF)', '=M18*N18', '', '']
+  row19: ['►', 'Lisboa Card', '', 'LISBOA', '', '', '', '', '43.7', '', '2', '1', '=(I19+J19)*K19*L19', '=Euro*(1+IOF)', '=M19*N19', '=O19', '']
+  row29: ['►', 'Almoço', 'Outros', '', '', '', '', '', '', '20', '2', '11', '=(I29+J29)*K29*L29', '=Euro*(1+IOF)', '=M29*N29', '', '']
+  row30: ['►', 'Jantar', '', '', '', '', '', '', '', '20', '2', '10', '=(I30+J30)*K30*L30', '=Euro*(1+IOF)', '=M30*N30', '', '']
+
+======================================================================
+### 2024-04 Salar de Uyuni ###
+======================================================================
+Abas: ['Roteiro', 'Dicas', 'Gastos']
+Dimensoes: A1:L15  max_row=15 max_col=12
+MERGES:
+  D1:L1        r1c4:r1c12  FFFFC000  'programação'
+  D2:F2        r2c4:r2c6  FFFFC000  'dia'
+  G2:J2        r2c7:r2c10  FFFFC000  'tarde'
+  D3:J3        r3c4:r3c10  FFBFBFBF  'Vôo Rio x Calama|11:05 - 14:58 | Santiago | 17:42 - 19:'
+  D4:J4        r4c4:r4c10  FFFFFFFF  'DESCANSO'
+  D5:I5        r5c4:r5c9  FFFFFFFF  'Lagunas Escondidas de Baltinache   + Vallecito e ônibus'
+  D6:I6        r6c4:r6c9  FFFFFFFF  'Trekking de Guatin e Puritama|9h às 16h'
+  D7:J7        r7c4:r7c10  FFFFFFFF  'Salar de Uyuni'
+  D8:J8        r8c4:r8c10  FFFFFFFF  'Salar de Uyuni'
+  D9:J9        r9c4:r9c10  FFFFFFFF  'Salar de Uyuni'
+  D10:G10      r10c4:r10c7  FFFFFFFF  'Salar de Uyuni'
+  H10:K10      r10c8:r10c11  FFFFFFFF  'DESCANSO'
+  D11:I11      r11c4:r11c9  FFFFFFFF  'Trekking Vulcão Lascar|5h30 às 16h'
+  E12:K12      r12c5:r12c11  FFBFBFBF  'Vôo Calama x Rio|13:23 - 15:29 | Santiago | 17:35 - 22:'
+  D14:F14      r14c4:r14c6  FFFFFFFF  'Sunset com Lhamas|16h30 às 20h30'
+  H14:I14      r14c8:r14c9  FFFFFFFF  'Tour Astronômico|19h30 às 22h'
+CELULAS:
+  [1,1]A1: 'ROTEIRO'  FFFFC000
+  [1,4]D1: 'programação'  FFFFC000
+  [2,1]A2: 'data'  FFFFC000
+  [2,2]B2: 'dia da semana'  FFFFC000
+  [2,3]C2: 'título'  FFFFC000
+  [2,4]D2: 'dia'  FFFFC000
+  [2,7]G2: 'tarde'  FFFFC000
+  [2,11]K2: 'noite'  FFFFC000
+  [2,12]L2: 'pernoite'  FFFFC000
+  [3,1]A3: '2024-04-19 00:00:00'  FFFCD5B4
+  [3,2]B3: '=A3'  FFFCD5B4
+  [3,3]C3: 'Ida'  FFFDE9D9
+  [3,4]D3: 'Vôo Rio x Calama|11:05 - 14:58 | Santiago | 17:42 - 19:50'  FFBFBFBF
+  [3,11]K3: 'Traslado Atacama|1h'  theme0_t-0.25
+  [3,12]L3: 'San Pedro de Atacama'  theme5_t0.60
+  [4,1]A4: '=A3+1'  FFFCD5B4
+  [4,2]B4: '=A4'  FFFCD5B4
+  [4,3]C4: 'Descanso'  FFFDE9D9
+  [4,4]D4: 'DESCANSO'  FFFFFFFF
+  [4,11]K4: '-'  FFFFFFFF
+  [4,12]L4: 'San Pedro de Atacama'  theme5_t0.60
+  [5,1]A5: '=A4+1'  FFFCD5B4
+  [5,2]B5: '=A5'  FFFCD5B4
+  [5,3]C5: 'Atacama 1'  FFFDE9D9
+  [5,4]D5: 'Lagunas Escondidas de Baltinache   + Vallecito e ônibus abandonado do deserto|7h às 15h'  FFFFFFFF
+  [5,10]J5: '-'  FFFFFFFF
+  [5,11]K5: '-'  FFFFFFFF
+  [5,12]L5: 'San Pedro de Atacama'  theme5_t0.60
+  [6,1]A6: '=A5+1'  FFFCD5B4
+  [6,2]B6: '=A6'  FFFCD5B4
+  [6,3]C6: 'Atacama 2'  FFFDE9D9
+  [6,4]D6: 'Trekking de Guatin e Puritama|9h às 16h'  FFFFFFFF
+  [6,10]J6: '-'  FFFFFFFF
+  [6,11]K6: '-'  FFFFFFFF
+  [6,12]L6: 'San Pedro de Atacama'  theme5_t0.60
+  [7,1]A7: '=A6+1'  FFFCD5B4
+  [7,2]B7: '=A7'  FFFCD5B4
+  [7,3]C7: 'Salar de Uyuni 1'  FFFDE9D9
+  [7,4]D7: 'Salar de Uyuni'  FFFFFFFF
+  [7,11]K7: '-'  FFFFFFFF
+  [7,12]L7: 'Uyuni'  FFCCECFF
+  [8,1]A8: '=A7+1'  FFFCD5B4
+  [8,2]B8: '=A8'  FFFCD5B4
+  [8,3]C8: 'Salar de Uyuni 2'  FFFDE9D9
+  [8,4]D8: 'Salar de Uyuni'  FFFFFFFF
+  [8,11]K8: '-'  FFFFFFFF
+  [8,12]L8: 'Uyuni'  FFCCECFF
+  [9,1]A9: '=A8+1'  FFFCD5B4
+  [9,2]B9: '=A9'  FFFCD5B4
+  [9,3]C9: 'Salar de Uyuni 3'  FFFDE9D9
+  [9,4]D9: 'Salar de Uyuni'  FFFFFFFF
+  [9,11]K9: '-'  FFFFFFFF
+  [9,12]L9: 'Uyuni'  FFCCECFF
+  [10,1]A10: '=A9+1'  FFFCD5B4
+  [10,2]B10: '=A10'  FFFCD5B4
+  [10,3]C10: 'Salar de Uyuni 4'  FFFDE9D9
+  [10,4]D10: 'Salar de Uyuni'  FFFFFFFF
+  [10,8]H10: 'DESCANSO'  FFFFFFFF
+  [10,12]L10: 'San Pedro de Atacama'  theme5_t0.60
+  [11,1]A11: '=A10+1'  FFFCD5B4
+  [11,2]B11: '=A11'  FFFCD5B4
+  [11,3]C11: 'Vulcão Lascar'  FFFDE9D9
+  [11,4]D11: 'Trekking Vulcão Lascar|5h30 às 16h'  FFFFFFFF
+  [11,10]J11: '-'  FFFFFFFF
+  [11,11]K11: '-'  FFFFFFFF
+  [11,12]L11: 'San Pedro de Atacama'  theme5_t0.60
+  [12,1]A12: '=A11+1'  FFFCD5B4
+  [12,2]B12: '=A12'  FFFCD5B4
+  [12,3]C12: 'Volta'  FFFDE9D9
+  [12,4]D12: 'Traslado Calama|1h'  theme0_t-0.25
+  [12,5]E12: 'Vôo Calama x Rio|13:23 - 15:29 | Santiago | 17:35 - 22:40'  FFBFBFBF
+  [14,4]D14: 'Sunset com Lhamas|16h30 às 20h30'  FFFFFFFF
+  [14,8]H14: 'Tour Astronômico|19h30 às 22h'  FFFFFFFF
+DICAS:
+  'Um Viajante'  'https://www.umviajante.com.br/onde-fica-o-salar-de-uyuni-e-o'
+  'Um Viajante'  'https://www.umviajante.com.br/roteiro-salar-de-uyuni-saindo-'
+  'Agência Travel Cruz Andina'  'https://travelcruzandina.com/'
+  'Agência FlaviaBia Expediciones'  'https://flaviabiaexpediciones.com/'
+  'Agência Cordillera Traveller'  'https://cordilleratraveller.com'
+  'Agência World White Travel'  'https://worldwhitetravel.com/'
+  'Agência Estrella del Sur'  'https://estrelladelsuruyuni.com/'
+  'Transfer'  'Transferpampa ou Transfer Altiplanico. Transvip NÃO!!!'
+GASTOS (header + marcados):
+  row1: ['', '', 'Tipo', 'Obs', '', '', '', '', 'Preço', 'Taxes', 'Pessoas', 'Quant', 'Subtotal', 'Moeda', 'Subtotal R$', 'Pago', 'Ação']
+  row2: ['►', 'Vôo Rio x Calama x Rio', 'Transporte', 'LATAM', '', '', '', '', '2031.14', '', '2', '1', '=(I2+J2)*K2*L2', '1', '=M2*N2', '=O2', '']
+  row3: ['►', 'Mala', '', 'LATAM', '', '', '', '', '246.75', '', '1', '2', '=(I3+J3)*K3*L3', '1', '=M3*N3', '=O3', '']
+  row4: ['►', 'Traslado aeroporto', '', 'TRANSFER', 'Ida e volta', 'Transfer Pampa', 'Xiaolin', '', '26000', '', '2', '1', '=(I4+J4)*K4*L4', '0.0055172', '=M4*N4', 'NA CONTA DA WISE', '']
+  row5: ['►', 'Nueva Lodge Estación ', 'Hotel', 'ATACAMA', '4 noites', 'Quarto Duplo com Vista da Piscina ', '', '', '448', '', '1', '1', '=(I5+J5)*K5*L5', '=Dólar*(1+IOF)', '=M5*N5', 'NOTAS DE DÓLAR', '']
+  row6: ['►', 'Nueva Lodge Estación ', '', 'ATACAMA', '2 noites', 'Quarto Duplo com Vista da Piscina ', '', '', '224', '', '1', '1', '=(I6+J6)*K6*L6', '=Dólar*(1+IOF)', '=M6*N6', 'NOTAS DE DÓLAR', '']
+  row7: ['►', 'Expedição Salar de Uyuni', 'Atividades', 'UYUNI', 'CRUZ ANDINA', 'PRIVADO LUXO', 'https://travelcruzandina.com/tours/', '', '1070', '2.65', '2', '1', '=(I7+J7)*K7*L7', '5.07326714212464', '=M7*N7', '=O7', '']
+  row11: ['►', 'Lagunas Escondidas de Baltinache - ', '', 'ATACAMA', 'DREAMS', 'https://www.dreamsatacama.com/tours', 'com almoço', 'com vallecito', '80000', '', '2', '1', '=(I11+J11)*K11*L11', '0.0055172', '=M11*N11', 'NA CONTA DA WISE', '']
+  row13: ['►', 'Lagunas Escondidas de Baltinache - ', '', 'ATACAMA', '', '', '', '', '10000', '', '2', '1', '=(I13+J13)*K13*L13', '0.0053548363636364', '=M13*N13', 'NA CONTA DA WISE', 'SACAR']
+  row17: ['►', 'Trekking de Guatin e Puritama - Exc', '', 'ATACAMA', 'XIAOLIN', 'PRIVADO', 'Ingresso incluído', '', '120000', '=1131/2', '2', '1', '=(I17+J17)*K17*L17', '0.0053548363636364', '=M17*N17', '=O17', '']
+  row20: ['►', 'Trekking Vulcão Lascar - Excursão', '', 'ATACAMA', 'XIAOLIN', '', '', '', '130000', '', '2', '1', '=(I20+J20)*K20*L20', '=Peso', '=M20*N20', 'NA CONTA DA WISE', '']
+  row23: ['►', 'Trekking Vulcão Lascar - Ingresso', '', 'ATACAMA', '', '', '', '', '10000', '', '1', '1', '=(I23+J23)*K23*L23', '0.0053548363636364', '=M23*N23', 'NA CONTA DA WISE', 'SACAR']
+  row24: ['►', 'Almoço', 'Outros', '', '', '', '', '', '15000', '', '2', '3', '=(I24+J24)*K24*L24', '0.0053548363636364', '=M24*N24', 'NA CONTA DA WISE', '']
+  row25: ['►', 'Jantar', '', '', '', '', '', '', '15000', '', '2', '6', '=(I25+J25)*K25*L25', '0.0053548363636364', '=M25*N25', 'NA CONTA DA WISE', '']
+  row26: ['►', 'Gastos + Ingressos Bolívia', '', 'UYUNI', '500 BOB p/p', '', '', '', '71000', '', '2', '1', '=(I26+J26)*K26*L26', '0.0055172', '=M26*N26', 'NA CONTA DA WISE', 'SACAR E TROCAR']
+
+======================================================================
+### 2024-07 Porto Seguro ###
+======================================================================
+Abas: ['Roteiro', 'Dicas', 'Gastos']
+Dimensoes: A1:L15  max_row=15 max_col=12
+MERGES:
+  E1:L1        r1c5:r1c12  FFFFC000  'programação'
+  E2:F2        r2c5:r2c6  FFFFC000  'dia'
+  H2:J2        r2c8:r2c10  FFFFC000  'tarde'
+  E3:F3        r3c5:r3c6  theme0_t-0.25  'Vôo Rio x Porto Seguro|10:45 - 12:20'
+  I3:J3        r3c9:r3c10  theme5_t0.80  'Centro de Cabrália|Praça de Artesanato, Local da 1a mis'
+  E4:F4        r4c5:r4c6  theme5_t0.80  'Praia de Coroa Vermelha'
+  H4:I4        r4c8:r4c9  theme5_t0.80  'Rota do Descobrimento|Memorial do Descobrimento, Cidade'
+  J4:K4        r4c10:r4c11  theme0_t-0.25  'Porto Seguro x Trancoso|2h'
+  E5:F5        r5c5:r5c6  theme6_t0.60  'Praia dos Nativos'
+  H5:J5        r5c8:r5c10  theme6_t0.60  'Praia dos Coqueiros'
+  E6:G6        r6c5:r6c7  theme6_t0.60  'Praia do Espelho'
+  I6:J6        r6c9:r6c10  theme6_t0.60  'Praia dos Amores'
+  E7:F7        r7c5:r7c6  theme0_t-0.25  'Trancoso x Arraial|Praia do Taípe, aeroporto, devolver '
+  I7:K7        r7c9:r7c11  theme3_t0.80  'Arraial d´Ajuda Eco Resort'
+  E8:I8        r8c5:r8c9  theme3_t0.80  'Arraial d´Ajuda Eco Parque'
+  J8:K8        r8c10:r8c11  theme3_t0.80  'Praia de Mucugê'
+  E9:I9        r9c5:r9c9  theme3_t0.80  'Arraial d´Ajuda Eco Resort'
+  J9:K9        r9c10:r9c11  theme3_t0.80  'Centro Histórico|+ Beco das Cores e Rua do Mucugê'
+  F10:G10      r10c6:r10c7  theme0_t-0.25  'Vôo Rio x Porto Seguro|12:30 - 14:25'
+CELULAS:
+  [1,1]A1: 'ROTEIRO'  FFFFC000
+  [1,5]E1: 'programação'  FFFFC000
+  [2,1]A2: 'data'  FFFFC000
+  [2,2]B2: 'dia da semana'  FFFFC000
+  [2,3]C2: 'dia'  FFFFC000
+  [2,4]D2: 'título'  FFFFC000
+  [2,5]E2: 'dia'  FFFFC000
+  [2,7]G2: 'almoço'  FFFFC000
+  [2,8]H2: 'tarde'  FFFFC000
+  [2,11]K2: 'noite'  FFFFC000
+  [2,12]L2: 'pernoite'  FFFFC000
+  [3,1]A3: '2024-07-19 00:00:00'  theme9_t0.60
+  [3,2]B3: '=A3'  theme9_t0.60
+  [3,3]C3: 'Dia 1'  theme9_t0.60
+  [3,4]D3: 'IDA'  theme9_t0.40
+  [3,5]E3: 'Vôo Rio x Porto Seguro|10:45 - 12:20'  theme0_t-0.25
+  [3,7]G3: 'Almoço'  theme0_t-0.05
+  [3,8]H3: 'Relaxar no Hotel'  theme5_t0.80
+  [3,9]I3: 'Centro de Cabrália|Praça de Artesanato, Local da 1a missa, Museu do Índio, Comércio Indígena Pataxó'  theme5_t0.80
+  [3,11]K3: 'Passarela do Álcool'  theme5_t0.80
+  [3,12]L3: 'SANTA CRUZ DE CABRÁLIA'  theme5_t0.40
+  [4,1]A4: '=A3+1'  theme9_t0.60
+  [4,2]B4: '=A4'  theme9_t0.60
+  [4,3]C4: 'Dia 2'  theme9_t0.60
+  [4,4]D4: 'Porto Seguro'  theme9_t0.40
+  [4,5]E4: 'Praia de Coroa Vermelha'  theme5_t0.80
+  [4,7]G4: 'Almoço|Barraca Colher de Pau '  theme0_t-0.05
+  [4,8]H4: 'Rota do Descobrimento|Memorial do Descobrimento, Cidade Histórica'  theme5_t0.80
+  [4,10]J4: 'Porto Seguro x Trancoso|2h'  theme0_t-0.25
+  [4,12]L4: 'TRANCOSO'  theme6_t-0.25
+  [5,1]A5: '=A4+1'  theme9_t0.60
+  [5,2]B5: '=A5'  theme9_t0.60
+  [5,3]C5: 'Dia 3'  theme9_t0.60
+  [5,4]D5: 'Trancoso'  theme9_t0.40
+  [5,5]E5: 'Praia dos Nativos'  theme6_t0.60
+  [5,7]G5: 'Almoço'  theme0_t-0.05
+  [5,8]H5: 'Praia dos Coqueiros'  theme6_t0.60
+  [5,11]K5: 'Quadrado'  theme6_t0.60
+  [5,12]L5: 'TRANCOSO'  theme6_t-0.25
+  [6,1]A6: '=A5+1'  theme9_t0.60
+  [6,2]B6: '=A6'  theme9_t0.60
+  [6,3]C6: 'Dia 4'  theme9_t0.60
+  [6,4]D6: 'Caraíva'  theme9_t0.40
+  [6,5]E6: 'Praia do Espelho'  theme6_t0.60
+  [6,8]H6: 'Almoço'  theme0_t-0.05
+  [6,9]I6: 'Praia dos Amores'  theme6_t0.60
+  [6,11]K6: 'Quadrado'  theme6_t0.60
+  [6,12]L6: 'TRANCOSO'  theme6_t-0.25
+  [7,1]A7: '=A6+1'  theme9_t0.60
+  [7,2]B7: '=A7'  theme9_t0.60
+  [7,3]C7: 'Dia 5'  theme9_t0.60
+  [7,4]D7: 'Eco Resort'  theme9_t0.40
+  [7,5]E7: 'Trancoso x Arraial|Praia do Taípe, aeroporto, devolver carro, Uber, balsa do Eco Resort'  theme0_t-0.25
+  [7,7]G7: 'Almoço'  theme0_t-0.05
+  [7,8]H7: 'Praia do Apaga-Fogo'  theme3_t0.80
+  [7,9]I7: 'Arraial d´Ajuda Eco Resort'  theme3_t0.80
+  [7,12]L7: "ARRAIAL D'AJUDA"  theme3_t0.40
+  [8,1]A8: '=A7+1'  theme9_t0.60
+  [8,2]B8: '=A8'  theme9_t0.60
+  [8,3]C8: 'Dia 6'  theme9_t0.60
+  [8,4]D8: 'Eco Parque'  theme9_t0.40
+  [8,5]E8: 'Arraial d´Ajuda Eco Parque'  theme3_t0.80
+  [8,10]J8: 'Praia de Mucugê'  theme3_t0.80
+  [8,12]L8: "ARRAIAL D'AJUDA"  theme3_t0.40
+  [9,1]A9: '=A8+1'  theme9_t0.60
+  [9,2]B9: '=A9'  theme9_t0.60
+  [9,3]C9: 'Dia 7'  theme9_t0.60
+  [9,4]D9: 'Eco Resort'  theme9_t0.40
+  [9,5]E9: 'Arraial d´Ajuda Eco Resort'  theme3_t0.80
+  [9,10]J9: 'Centro Histórico|+ Beco das Cores e Rua do Mucugê'  theme3_t0.80
+  [9,12]L9: "ARRAIAL D'AJUDA"  theme3_t0.40
+  [10,1]A10: '=A9+1'  theme9_t0.60
+  [10,2]B10: '=A10'  theme9_t0.60
+  [10,3]C10: 'Dia 8'  theme9_t0.60
+  [10,4]D10: 'VOLTA'  theme9_t0.40
+  [10,5]E10: 'Arraial x Porto Seguro|1h'  theme0_t-0.25
+  [10,6]F10: 'Vôo Rio x Porto Seguro|12:30 - 14:25'  theme0_t-0.25
+  [12,4]D12: 'Porto Seguro'  theme5_t0.40
+  [12,5]E12: 'Praia de Curuípe'  theme5_t0.80
+  [12,6]F12: 'Praia de Mundaí'  theme5_t0.80
+  [12,7]G12: 'Praia de Taperapuã'  theme5_t0.80
+  [12,8]H12: 'Rio dos Mangues'  theme5_t0.80
+  [12,9]I12: 'Mergulho em Recife de Fora'  theme5_t0.80
+  [12,10]J12: 'Parque Nacional do Pau-Brasil'  theme5_t0.80
+  [13,4]D13: 'Santa Cruz de Cabrália'  theme5_t0.40
+  [13,5]E13: 'Praia de Mutá'  theme5_t0.80
+  [13,6]F13: 'Observação de Baleias Jubarte'  theme5_t0.80
+  [14,4]D14: "Arraial d'Ajuda"  theme3_t0.40
+  [14,5]E14: 'Praia de Mucugê'  theme3_t0.80
+  [14,6]F14: 'Praia de Pitinga'  theme3_t0.80
+  [14,7]G14: 'Praia de Parracho'  theme3_t0.80
+  [14,8]H14: 'Praia Araçaípe'  theme3_t0.80
+  [14,9]I14: 'Praia dos Pescadores'  theme3_t0.80
+  [15,4]D15: 'Trancoso'  theme6_t-0.25
+  [15,5]E15: 'Praia Rio de Barra'  theme6_t0.60
+  [15,6]F15: 'Praia de Itapororoca'  theme6_t0.60
+  [15,8]H15: 'Caraívas'  theme6_t-0.25
+  [15,9]I15: 'Praia de Caraívas'  theme6_t0.60
+DICAS:
+  "Praias de Arraial d'Ajuda"  'https://www.feriasbrasil.com.br/ba/arraialdajuda/aspraias.cf'
+GASTOS (header + marcados):
+  row1: ['', '', 'Tipo', 'Obs', '', '', '', 'Preço', 'Taxas', 'Pessoas', 'Quant', 'Subtotal', 'Pago', '']
+  row2: ['►', 'Vôo RIO x PORTO SEGURO x RIO', 'Transporte', '', 'LATAM', '', '123.060 pts total\n30.765 pts p/ pes', '', '62.489999999999995', '4', '1', '=(H2+I2)*J2*K2', '=L2', '']
+  row3: ['►', '', '', '', 'LATAM', 'Bagagem', '', '100', '', '1', '2', '=(H3+I3)*J3*K3', '200', '']
+  row4: ['►', 'Aluguel de carrro', '', '', 'RENTCARS / ALAMO', 'SUV Pulse', 'Proteção danos e terceiros', '740.99', '', '1', '1', '=(H4+I4)*J4*K4', '107.7', '']
+  row5: ['►', 'Pousada Luar', 'Hospedagem', 'https://www.booking.com/hotel/br/po', 'SANTA CRUZ DE CABRÁLIA', 'Quarto quádruplo', '', '430', '', '1', '1', '=(H5+I5)*J5*K5', '', '']
+  row6: ['►', "Arraial d'Ajuda Eco Resort", '', 'https://www.arraialresort.com.br/', "ARRAIAL D'AJUDA", 'Quarto Família', '', '2557', '', '1', '3', '=(H6+I6)*J6*K6', '=L6', '']
+  row7: ['►', 'Pousada do Bosque', '', 'https://www.booking.com/hotel/br/po', 'TRANCOSO', 'Quarto quádruplo standard', 'estacionamento', '734.3333333333334', '', '1', '3', '=(H7+I7)*J7*K7', '=L7', '']
+  row12: ['►', 'Almoços', 'Outros', '', '', '', '', '70', '', '4', '7', '=(H12+I12)*J12*K12', '', '']
+  row13: ['►', 'Jantares', '', '', '', '', '', '70', '', '4', '6', '=(H13+I13)*J13*K13', '', '']
+
+======================================================================
+### 2024-11 Emirados Árabes Unidos ###
+======================================================================
+Abas: ['Roteiro', 'Dicas', 'Gastos']
+Dimensoes: A1:M15  max_row=15 max_col=13
+MERGES:
+  D1:M1        r1c4:r1c13  FFFFC000  'programação'
+  D2:E2        r2c4:r2c5  FFFFC000  'dia'
+  G2:K2        r2c7:r2c11  FFFFC000  'tarde'
+  D3:L3        r3c4:r3c12  theme0_t-0.25  'Vôo Rio x Dubai|03:45 - 00:30  (13h45)'
+  D4:F4        r4c4:r4c6  theme0_t-0.05  'DESCANSAR'
+  H4:K4        r4c8:r4c11  theme0_t0.00  'Centro Histórico Al Fahidi|Forte Al Fahidi (Museu de Du'
+  D5:K5        r5c4:r5c11  theme0_t0.00  'Burj Khalifa|Mirante At The Top no 124º andar, Dubai Ma'
+  D6:F6        r6c4:r6c6  theme0_t0.00  'Safári pelo Deserto'
+  H6:K6        r6c8:r6c11  theme0_t0.00  'Palm Jumeirah|acessar com monotrilho (transferência pel'
+  D7:E7        r7c4:r7c5  theme0_t-0.25  'Transfer Dubai x Abu Dhabi|(2h)'
+  F7:K7        r7c6:r7c11  theme0_t0.00  'Downtown Abu Dhabi|Forte Qasr Al Hosn, Palácio Qasr Al '
+  D8:F8        r8c4:r8c6  theme0_t0.00  'Grande Mesquita Sheikh Zayed'
+  H8:K8        r8c8:r8c11  theme0_t0.00  'Khalifa University'
+  D9:F9        r9c4:r9c6  theme0_t0.00  'Abu Dhabi University'
+  H9:I9        r9c8:r9c9  theme0_t0.00  'Louvre Abu Dhabi'
+  J9:K9        r9c10:r9c11  theme0_t0.00  'Galeria de arte\xa0Manarat Al Saadiyat'
+  D10:F10      r10c4:r10c6  theme0_t0.00  'Kai Beach Saadiyat|quinta e sexta Ladies Day'
+  H10:I10      r10c8:r10c9  theme0_t0.00  'Abu Dhabi Mall'
+  J10:L10      r10c10:r10c12  theme0_t-0.05  'DORMIR |17:00 - 01:00'
+  D11:E11      r11c4:r11c5  theme0_t-0.25  'Transfer Abu Dhabi x Dubai|03:00 - 05:15'
+  F11:J11      r11c6:r11c10  theme0_t-0.25  'Vôo Dubai x Rio|08:05 - 15:55  (14h50)'
+  D14:E14      r14c4:r14c5  theme0_t0.00  'Passeio de Barco pelo Golfo Pérsico'
+  F14:H14      r14c6:r14c8  theme0_t0.00  'Ilhas Al Bahrani e Dolphin'
+CELULAS:
+  [1,1]A1: 'ROTEIRO'  FFFFC000
+  [1,4]D1: 'programação'  FFFFC000
+  [2,1]A2: 'data'  FFFFC000
+  [2,2]B2: 'dia da semana'  FFFFC000
+  [2,3]C2: 'título'  FFFFC000
+  [2,4]D2: 'dia'  FFFFC000
+  [2,6]F2: 'almoço'  FFFFC000
+  [2,7]G2: 'tarde'  FFFFC000
+  [2,12]L2: 'noite'  FFFFC000
+  [2,13]M2: 'pernoite'  FFFFC000
+  [3,1]A3: '2024-11-16 00:00:00'  theme9_t0.60
+  [3,2]B3: '=A3'  theme9_t0.60
+  [3,3]C3: 'Ida'  theme9_t0.80
+  [3,4]D3: 'Vôo Rio x Dubai|03:45 - 00:30  (13h45)'  theme0_t-0.25
+  [3,13]M3: 'Dubai'  theme5_t0.60
+  [4,1]A4: '=A3+1'  theme9_t0.60
+  [4,2]B4: '=A4'  theme9_t0.60
+  [4,3]C4: 'Al Fahidi'  theme9_t0.80
+  [4,4]D4: 'DESCANSAR'  theme0_t-0.05
+  [4,7]G4: 'ALMOÇO'  theme0_t-0.05
+  [4,8]H4: 'Centro Histórico Al Fahidi|Forte Al Fahidi (Museu de Dubai), barco cruzando o Dubai Creek, Souks (mercados tradicionais de Dubai)'  theme0_t0.00
+  [4,12]L4: 'Jantar pelo Dubai Creek'  theme0_t0.00
+  [4,13]M4: 'Dubai'  theme5_t0.60
+  [5,1]A5: '=A4+1'  theme9_t0.60
+  [5,2]B5: '=A5'  theme9_t0.60
+  [5,3]C5: 'Burj Khalifa'  theme9_t0.80
+  [5,4]D5: 'Burj Khalifa|Mirante At The Top no 124º andar, Dubai Mall, Dubai Aquarium & Underwater Zoo, 18h entrada do Burj Khalifa (espetáculo das fontes)'  theme0_t0.00
+  [5,13]M5: 'Dubai'  theme5_t0.60
+  [6,1]A6: '=A5+1'  theme9_t0.60
+  [6,2]B6: '=A6'  theme9_t0.60
+  [6,3]C6: 'Deserto / Palm Jumeirah'  theme9_t0.80
+  [6,4]D6: 'Safári pelo Deserto'  theme0_t0.00
+  [6,7]G6: 'ALMOÇO'  theme0_t-0.05
+  [6,8]H6: 'Palm Jumeirah|acessar com monotrilho (transferência pelo metrô), Palm Tower (observatório The View)'  theme0_t0.00
+  [6,13]M6: 'Dubai'  theme5_t0.60
+  [7,1]A7: '=A6+1'  theme9_t0.60
+  [7,2]B7: '=A7'  theme9_t0.60
+  [7,3]C7: 'Downtown Abu Dhabi'  theme9_t0.80
+  [7,4]D7: 'Transfer Dubai x Abu Dhabi|(2h)'  theme0_t-0.25
+  [7,6]F7: 'Downtown Abu Dhabi|Forte Qasr Al Hosn, Palácio Qasr Al Watan, Corniche Street, Abu Dhabi Beach, hotel Emirates Palace'  theme0_t0.00
+  [7,13]M7: 'Abu Dhabi'  theme3_t0.80
+  [8,1]A8: '=A7+1'  theme9_t0.60
+  [8,2]B8: '=A8'  theme9_t0.60
+  [8,3]C8: 'Mesquita / Universidade'  theme9_t0.80
+  [8,4]D8: 'Grande Mesquita Sheikh Zayed'  theme0_t0.00
+  [8,7]G8: 'ALMOÇO'  theme0_t-0.05
+  [8,8]H8: 'Khalifa University'  theme0_t0.00
+  [8,12]L8: 'MAD Yas Island'  theme0_t0.00
+  [8,13]M8: 'Abu Dhabi'  theme3_t0.80
+  [9,1]A9: '=A8+1'  theme9_t0.60
+  [9,2]B9: '=A9'  theme9_t0.60
+  [9,3]C9: 'Abu Dhabi University'  theme9_t0.80
+  [9,4]D9: 'Abu Dhabi University'  theme0_t0.00
+  [9,7]G9: 'ALMOÇO'  theme0_t-0.05
+  [9,8]H9: 'Louvre Abu Dhabi'  theme0_t0.00
+  [9,10]J9: 'Galeria de arte\xa0Manarat Al Saadiyat'  theme0_t0.00
+  [9,13]M9: 'Abu Dhabi'  theme3_t0.80
+  [10,1]A10: '=A9+1'  theme9_t0.60
+  [10,2]B10: '=A10'  theme9_t0.60
+  [10,3]C10: 'Ilha de Saadiyat'  theme9_t0.80
+  [10,4]D10: 'Kai Beach Saadiyat|quinta e sexta Ladies Day'  theme0_t0.00
+  [10,7]G10: 'ALMOÇO'  theme0_t-0.05
+  [10,8]H10: 'Abu Dhabi Mall'  theme0_t0.00
+  [10,10]J10: 'DORMIR |17:00 - 01:00'  theme0_t-0.05
+  [10,13]M10: 'Abu Dhabi'  theme3_t0.80
+  [11,1]A11: '=A10+1'  theme9_t0.60
+  [11,2]B11: '=A11'  theme9_t0.60
+  [11,3]C11: 'Volta'  theme9_t0.80
+  [11,4]D11: 'Transfer Abu Dhabi x Dubai|03:00 - 05:15'  theme0_t-0.25
+  [11,6]F11: 'Vôo Dubai x Rio|08:05 - 15:55  (14h50)'  theme0_t-0.25
+  [13,2]B13: 'OPCIONAIS'  theme9_t0.60
+  [13,3]C13: 'Dubai'  theme9_t0.80
+  [14,2]B14: 'OPCIONAIS'  theme9_t0.60
+  [14,3]C14: 'Abu Dhabi'  theme9_t0.80
+  [14,4]D14: 'Passeio de Barco pelo Golfo Pérsico'  theme0_t0.00
+  [14,6]F14: 'Ilhas Al Bahrani e Dolphin'  theme0_t0.00
+  [14,12]L14: 'WHITE Abu Dhabi'  theme0_t0.00
+DICAS:
+  'Roteiro de 10 dias'  'https://www.grupodicas.com/asia/emirados-arabes/roteiro-de-1'
+  'Excursão Dubai Creek'  'https://www.civitatis.com/br/dubai/dubai-creek-al-fahidi-sou'
+  'Safari pelo Deserto'  'https://www.civitatis.com/br/dubai/safari-deserto-dubai/?aid'
+  'Transfer Abu Dhabi'  'https://www.grupodicas.com/asia/emirados-arabes/dubai/servic'
+  'Passeio de barco pelo Golfo Pérsico'  'https://www.grupodicas.com/asia/emirados-arabes/abu-dhabi/pa'
+  'Ilhas Al Bahrani e Dolphin'  'https://www.civitatis.com/br/abu-dhabi/excursao-ilhas-al-bah'
+  'Nol Silver Card'  'https://www.viajaquepassa.com.br/metro-de-dubai/'
+GASTOS (header + marcados):
+  row1: ['', '', 'Tipo', 'Obs', '', '', '', 'Preço', 'Taxes', 'Pessoas', 'Quant', 'Subtotal', 'Moeda', 'Subtotal R$', 'Pago', '']
+  row2: ['►', 'Vôo Rio x Dubai / Abu Dhabi x Rio', 'Transporte', 'EMIRATES', '2 bagagens', '', '', '5833.26', '', '2', '1', '=(H2+I2)*J2*K2', '1', '=L2*M2', '=N2', '']
+  row3: ['►', 'Transfer Dubai x Abu Dhabi', '', 'ÔNIBUS', 'E101', '1h30', '', '', '25', '2', '1', '=(H3+I3)*J3*K3', '=AED', '=L3*M3', '', '']
+  row4: ['►', 'Nol Silver Card', '', 'DUBAI', 'https://www.viajaquepassa.com.br/me', '', '', '', '25', '2', '1', '=(H4+I4)*J4*K4', '=AED', '=L4*M4', '', '']
+  row7: ['►', 'Atana Hotel', '', 'DUBAI', 'https://www.booking.com/hotel/ae/at', 'Quarto Standard', 'Sem café', '1213', '352', '1', '1', '=(H7+I7)*J7*K7', '=AED', '=L7*M7', 'RESERVADO\nPAGAMENTO 14/11', '']
+  row9: ['►', 'La Quinta by Wyndham Al Wahda', '', 'ABU DHABI', 'https://www.booking.com/hotel/ae/la', 'Quarto com 2 Camas de Solteiro', 'Sem café', '1710', '402', '1', '1', '=(H9+I9)*J9*K9', '=AED', '=L9*M9', 'RESERVADO', '']
+  row10: ['►', 'Tour Dubai Creek, Al Fahidi e Souks', 'Passeios', 'DUBAI', 'https://www.civitatis.com/br/dubai/', '', '', '273.2', '', '2', '1', '=(H10+I10)*J10*K10', '1', '=L10*M10', '=N10', '']
+  row12: ['►', 'Burj Khalifa - At The Top + Dubai A', '', 'DUBAI', 'https://www.burjkhalifa.ae/en/obser', 'L125.L124', 'Dubai Aquarium', '309', '', '2', '1', '=(H12+I12)*J12*K12', '=AED', '=L12*M12', '=N12', '']
+  row14: ['►', 'Safari pelo Deserto', '', 'DUBAI', 'https://www.civitatis.com/br/dubai/', '', '', '218.5', '', '2', '1', '=(H14+I14)*J14*K14', '1', '=L14*M14', '=N14', '']
+  row16: ['►', 'The View at Palm Jumeirah - Fast Tr', '', 'DUBAI', 'https://www.theviewpalm.ae/', '', '', '175', '', '2', '1', '=(H16+I16)*J16*K16', '=AED', '=L16*M16', '=N16', '']
+  row17: ['►', 'Qasr Al Hosn', '', 'ABU DHABI', 'https://tickets.qasralhosn.ae/buy-t', '', '', '30', '', '2', '1', '=(H17+I17)*J17*K17', '=AED', '=L17*M17', '=N17', '']
+  row18: ['►', 'Qasr Al Watan', '', 'ABU DHABI', 'https://www.qasralwatan.ae/en/booki', '', '', '65', '', '2', '1', '=(H18+I18)*J18*K18', '=AED', '=L18*M18', '=N18', '']
+  row19: ['►', 'Mesquita Sheikh Zayed', '', 'ABU DHABI', 'https://www.szgmc.gov.ae/en/individ', '', '', '', '', '2', '1', '=(H19+I19)*J19*K19', '=AED', '=L19*M19', '=N19', '']
+  row20: ['►', 'Kai Beach Saadiyat Island', '', 'ABU DHABI', 'https://www.kaibeachsaadiyat.com/ab', '', '', '125', '', '2', '1', '=(H20+I20)*J20*K20', '=AED', '=L20*M20', '', '']
+  row21: ['►', 'Louvre Abu Dhabi', '', 'ABU DHABI', 'https://www.louvreabudhabi.ae/en/bu', '', '', '60', '', '2', '1', '=(H21+I21)*J21*K21', '=AED', '=L21*M21', '', '']
+  row22: ['►', 'Café', 'Outros', 'DUBAI', 'Atana Hotel', '', '', '40', '', '2', '4', '=(H22+I22)*J22*K22', '=AED', '=L22*M22', '', '']
+  row23: ['►', 'Café', '', 'ABU DHABI', 'La Quinta by Wyndham', '', '', '45', '', '2', '4', '=(H23+I23)*J23*K23', '=AED', '=L23*M23', '', '']
+  row24: ['►', 'Almoços', '', '', '', '', '', '100', '', '2', '7', '=(H24+I24)*J24*K24', '1', '=L24*M24', '', '']
+  row25: ['►', 'Jantares', '', '', '', '', '', '100', '', '2', '7', '=(H25+I25)*J25*K25', '1', '=L25*M25', '', '']
+  row26: ['►', 'Chip e-SIM', '', 'AIRALO', 'https://www.airalo.com/pt-BR/middle', '2GB - 15 dias', '', '7', '', '2', '1', '=(H26+I26)*J26*K26', '=USD', '=L26*M26', '=N26/2', '']
+
+======================================================================
+### 2024-11 Orlando ###
+======================================================================
+Abas: ['Roteiro', 'Dicas', 'Gastos']
+Dimensoes: A1:N16  max_row=16 max_col=14
+MERGES:
+  D1:L1        r1c4:r1c12  FFFFC000  'programação'
+  D2:F2        r2c4:r2c6  FFFFC000  'dia'
+  G2:J2        r2c7:r2c10  FFFFC000  'tarde'
+  D3:I3        r3c4:r3c9  FFBFBFBF  'Vôo Rio x Orlando|05:20 - 15:35'
+  H4:J4        r4c8:r4c10  theme0_t-0.05  'Walmart'
+  H5:K5        r5c8:r5c11  theme0_t-0.05  'Mickey’s Very Merry Christmas Party|19:00 às 00:00'
+  H6:K6        r6c8:r6c11  theme0_t-0.05  'Disney Springs'
+  E7:J7        r7c5:r7c10  theme0_t-0.05  'Animal Kingdom|8h00 às 18h00'
+  D8:E8        r8c4:r8c5  theme0_t-0.05  'The Florida Mall'
+  I8:K8        r8c9:r8c11  theme0_t-0.05  'Universal CityWalk|após as 18 para não pagar estacionam'
+  D9:J9        r9c4:r9c10  theme0_t-0.05  'Orlando Vineland Premium Outlets'
+  H11:L11      r11c8:r11c12  FFBFBFBF  'Vôo Orlando x Rio|15:59 - 08:05'
+  D12:E12      r12c4:r12c5  FFBFBFBF  'Vôo Orlando x Rio|15:59 - 08:05'
+  D14:E14      r14c4:r14c5  FFFFFFFF  'Weeki Wachee State Park'
+  F14:G14      r14c6:r14c7  FFFFFFFF  'Lake Eola Park'
+  H14:I14      r14c8:r14c9  FFFFFFFF  'The Mall at Millenia'
+  J14:K14      r14c10:r14c11  FFFFFFFF  'Señor Frogs'
+  D15:E15      r15c4:r15c5  FFFFFFFF  'Kennedy Space Center'
+  F15:G15      r15c6:r15c7  FFFFFFFF  'Orlando Science Center'
+  H15:I15      r15c8:r15c9  FFFFFFFF  'WonderWorks\xa0'
+  J15:K15      r15c10:r15c11  FFFFFFFF  'Museum Of Illusions Orlando'
+  D16:E16      r16c4:r16c5  FFFFFFFF  'Icon Park / Orlando Eye'
+  F16:G16      r16c6:r16c7  FFFFFFFF  'Blue Man Group'
+  H16:I16      r16c8:r16c9  FFFFFFFF  'Lake Buena Vista Factory Stores '
+CELULAS:
+  [1,1]A1: 'ROTEIRO'  FFFFC000
+  [1,4]D1: 'programação'  FFFFC000
+  [2,1]A2: 'data'  FFFFC000
+  [2,2]B2: 'dia da semana'  FFFFC000
+  [2,3]C2: 'título'  FFFFC000
+  [2,4]D2: 'dia'  FFFFC000
+  [2,7]G2: 'tarde'  FFFFC000
+  [2,11]K2: 'noite'  FFFFC000
+  [2,12]L2: 'pernoite'  FFFFC000
+  [3,1]A3: '2024-11-25 00:00:00'  FFFCD5B4
+  [3,2]B3: '=A3'  FFFCD5B4
+  [3,3]C3: 'Ida'  FFFDE9D9
+  [3,4]D3: 'Vôo Rio x Orlando|05:20 - 15:35'  FFBFBFBF
+  [3,12]L3: 'Orlando'  FF00B0F0
+  [4,1]A4: '=A3+1'  FFFCD5B4
+  [4,2]B4: '=A4'  FFFCD5B4
+  [4,3]C4: 'Walmart'  FFFDE9D9
+  [4,4]D4: 'Comprar Lightning Lane '  theme0_t-0.05
+  [4,8]H4: 'Walmart'  theme0_t-0.05
+  [4,12]L4: 'Orlando'  FF00B0F0
+  [5,1]A5: '=A4+1'  FFFCD5B4
+  [5,2]B5: '=A5'  FFFCD5B4
+  [5,3]C5: 'Christmas Party'  FFFDE9D9
+  [5,4]D5: 'Fila Virtual|7h00'  theme0_t-0.05
+  [5,8]H5: 'Mickey’s Very Merry Christmas Party|19:00 às 00:00'  theme0_t-0.05
+  [5,12]L5: 'Orlando'  FF00B0F0
+  [5,14]N5: ''  theme0_t-0.15
+  [6,1]A6: '=A5+1'  FFFCD5B4
+  [6,2]B6: '=A6'  FFFCD5B4
+  [6,3]C6: 'Disney Springs'  FFFDE9D9
+  [6,8]H6: 'Disney Springs'  theme0_t-0.05
+  [6,12]L6: 'Orlando'  FF00B0F0
+  [7,1]A7: '=A6+1'  FFFCD5B4
+  [7,2]B7: '=A7'  FFFCD5B4
+  [7,3]C7: 'Animal Kingdom'  FFFDE9D9
+  [7,4]D7: 'Fila Virtual|7h00'  theme0_t-0.05
+  [7,5]E7: 'Animal Kingdom|8h00 às 18h00'  theme0_t-0.05
+  [7,12]L7: 'Orlando'  FF00B0F0
+  [8,1]A8: '=A7+1'  FFFCD5B4
+  [8,2]B8: '=A8'  FFFCD5B4
+  [8,3]C8: 'CityWalk'  FFFDE9D9
+  [8,4]D8: 'The Florida Mall'  theme0_t-0.05
+  [8,6]F8: 'BestBuy'  theme0_t-0.05
+  [8,9]I8: 'Universal CityWalk|após as 18 para não pagar estacionamento'  theme0_t-0.05
+  [8,12]L8: 'Orlando'  FF00B0F0
+  [9,1]A9: '=A8+1'  FFFCD5B4
+  [9,2]B9: '=A9'  FFFCD5B4
+  [9,3]C9: 'Outlet'  FFFDE9D9
+  [9,4]D9: 'Orlando Vineland Premium Outlets'  theme0_t-0.05
+  [9,12]L9: 'Orlando'  FF00B0F0
+  [10,1]A10: '=A9+1'  FFFCD5B4
+  [10,2]B10: '=A10'  FFFCD5B4
+  [10,3]C10: 'Livre'  FFFDE9D9
+  [10,12]L10: 'Orlando'  FF00B0F0
+  [11,1]A11: '=A10+1'  FFFCD5B4
+  [11,2]B11: '=A11'  FFFCD5B4
+  [11,3]C11: 'Volta'  FFFDE9D9
+  [11,8]H11: 'Vôo Orlando x Rio|15:59 - 08:05'  FFBFBFBF
+  [12,1]A12: '=A11+1'  FFFCD5B4
+  [12,2]B12: '=A12'  FFFCD5B4
+  [12,3]C12: 'Volta'  FFFDE9D9
+  [12,4]D12: 'Vôo Orlando x Rio|15:59 - 08:05'  FFBFBFBF
+  [14,4]D14: 'Weeki Wachee State Park'  FFFFFFFF
+  [14,6]F14: 'Lake Eola Park'  FFFFFFFF
+  [14,8]H14: 'The Mall at Millenia'  FFFFFFFF
+  [14,10]J14: 'Señor Frogs'  FFFFFFFF
+  [15,4]D15: 'Kennedy Space Center'  FFFFFFFF
+  [15,6]F15: 'Orlando Science Center'  FFFFFFFF
+  [15,8]H15: 'WonderWorks\xa0'  FFFFFFFF
+  [15,10]J15: 'Museum Of Illusions Orlando'  FFFFFFFF
+  [16,4]D16: 'Icon Park / Orlando Eye'  FFFFFFFF
+  [16,6]F16: 'Blue Man Group'  FFFFFFFF
+  [16,8]H16: 'Lake Buena Vista Factory Stores '  FFFFFFFF
+DICAS:
+  'Disney: Lightning Lane'  'https://www.vaipradisney.com/blog/faq-duvidas-frequentes-sob'
+  'Disney: Fila virtual'  'https://www.vaipradisney.com/blog/fila-virtual-disney/'
+  'Disney: DAS'  'https://www.vaipradisney.com/blog/disney-visitantes-necessid'
+  'Weeki Wachee State Park'  'https://weekiwachee.com/plan-your-paddling-trip/'
+GASTOS (header + marcados):
+  row1: ['', '', 'Tipo', 'Obs', '', '', '', '', 'Preço', 'Taxes', 'Pessoas', 'Quant', 'Subtotal', 'Moeda', 'Subtotal R$', 'Pago', '']
+  row2: ['►', 'Vôo Rio x Orlando x Rio', 'Transporte', 'COPA', '', '', '', '', '2729.38', '', '3', '1', '=(I2+J2)*K2*L2', '1', '=M2*N2', '=O2', '']
+  row3: ['►', 'Mala', '', 'COPA', '', '', '', '', '319.68', '', '3', '1', '=(I3+J3)*K3*L3', '1', '=M3*N3', '', '']
+  row4: ['►', 'Assentos', '', 'COPA', 'Assento Economy Extra', '', '', '', '2767.99', '', '1', '1', '=(I4+J4)*K4*L4', '1', '=M4*N4', '=O4', '']
+  row7: ['►', 'Aluguel carro - HERTZ', '', 'BOOKING', 'Small SUV (Grupo Q4) ', ' Nissan Rogue ou similar ', 'Seguros inclusos', '', '402.6', '', '1', '1', '=(I7+J7)*K7*L7', '5.5648', '=M7*N7', '=O7', '']
+  row8: ['►', 'Estacionamento', '', '', '', '', '', '', '30', '', '1', '2', '=(I8+J8)*K8*L8', '5.5648', '=M8*N8', '=O8', '']
+  row9: ['►', 'Blue Tree Lake Buena Vista', 'Hotel', 'BOOKING', 'suíte de 1 quarto', 'Estacionamento grátis', '', '', '702.72', '231', '1', '1', '=(I9+J9)*K9*L9', '5.5648', '=M9*N9', '=O9', '']
+  row13: ['►', 'Ingressos Disney - 1 dia', 'Atividades', 'DISNEY', 'Animal Kingdom', 'Data específica', '', '', '164', '10.66', '3', '1', '=(I13+J13)*K13*L13', '5.5648', '=M13*N13', '=O13', '']
+  row16: ['►', 'Ingressos Disney - Mickey’s Christm', '', 'UNDERCOVER TOURIST', 'Mickey’s Very Merry Christmas Party', '', '', '', '184.18', '18', '3', '1', '=(I16+J16)*K16*L16', '5.5648', '=M16*N16', '=O16', '']
+  row17: ['►', 'Lightning Lane Single Pass ', '', 'DISNEY', 'Animal Kingdom', 'Avatar Flight of Passage', '', '', '17', '', '2', '1', '=(I17+J17)*K17*L17', '=Dólar*(1+IOF)', '=M17*N17', '', '']
+  row23: ['►', 'Almoço', 'Outros', '', '', '', '', '', '12', '', '3', '8', '=(I23+J23)*K23*L23', '=Dólar*(1+IOF)', '=M23*N23', '', '']
+  row24: ['►', 'Jantar', '', '', '', '', '', '', '12', '', '3', '8', '=(I24+J24)*K24*L24', '=Dólar*(1+IOF)', '=M24*N24', '', '']

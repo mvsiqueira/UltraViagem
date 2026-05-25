@@ -165,15 +165,20 @@ public static class TripPdfExporter
         }
 
         const float DayLabelPt = 62f;  // largura fixa da célula do dia
-        const float RowPt      = 30f;  // altura de cada linha
+        const float MinRowPt   = 28f;  // altura mínima de cada linha (cresce se o texto quebrar)
         int slotsPerDay        = trip.ItinerarySlotsPerDay;
+
+        // Reduz fonte levemente quando há muitos slots (blocos mais estreitos).
+        // Trips com ≤ 8 slots ficam com o tamanho padrão; acima disso diminui 0.3pt por slot extra.
+        float actFontSize    = Math.Clamp(7.5f - Math.Max(0, slotsPerDay - 8) * 0.3f, 6f, 7.5f);
+        float detailFontSize = Math.Clamp(actFontSize - 1.5f, 4.5f, 6f);
 
         container.Column(col =>
         {
             foreach (var day in days)
             {
                 col.Item().BorderBottom(0.5f).BorderColor(BorderColor)
-                   .Height(RowPt).Row(row =>
+                   .MinHeight(MinRowPt).Row(row =>
                    {
                        // Rótulo do dia
                        row.ConstantItem(DayLabelPt)
@@ -200,11 +205,11 @@ public static class TripPdfExporter
                               .Column(c =>
                               {
                                   c.Item().AlignCenter()
-                                          .Text(act.Title).FontSize(7.5f)
+                                          .Text(act.Title).FontSize(actFontSize)
                                           .FontColor(ContrastColor(act.Color));
                                   if (!string.IsNullOrWhiteSpace(act.Details))
                                       c.Item().AlignCenter()
-                                              .Text(act.Details).FontSize(5.5f)
+                                              .Text(act.Details).FontSize(detailFontSize)
                                               .FontColor(ContrastColor(act.Color));
                               });
 

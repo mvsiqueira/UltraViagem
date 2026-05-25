@@ -4,10 +4,6 @@
 
 - Importação de viagens antigas.
 
-## Prioridade Média
-
-- PDF: melhorar layout do Roteiro Detalhado quando há muitos dias (texto cortado em blocos estreitos).
-
 ## Prioridade Baixa
 
 - App Android/Web

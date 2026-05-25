@@ -10,6 +10,7 @@ UltraViagem/
   config.json
   Viagem Carretera Austral.xlsx
   docs/
+  scripts/
   UltraViagem.Core/
   UltraViagem.App/
 ```
@@ -21,6 +22,24 @@ UltraViagem/
 - `UltraViagem.slnx`: solução .NET.
 - `config.json`: exemplo de configuração do repositório de viagens.
 - `Viagem Carretera Austral.xlsx`: planilha de referência usada como exemplo funcional.
+
+## Scripts De Importação
+
+Scripts Python para converter planilhas de viagem em `trip.json`. Executar a partir da raiz do projeto:
+
+```bash
+python scripts/import_chapada.py
+```
+
+```text
+scripts/
+  import_utils.py          ← utilitários compartilhados (openpyxl: build_merge_map, make_activity_fn, cell_color)
+  import_<viagem>.py       ← um script por viagem (.xlsx via openpyxl, .xls via xlrd — standalone)
+  inspect_*.py             ← scripts de inspeção de planilhas (uso pontual)
+```
+
+- `import_utils.py` é importado diretamente pelos scripts `.xlsx`; scripts `.xls` são standalone.
+- Todos os scripts gravam o `trip.json` dentro da pasta de viagem no Google Drive.
 
 ## UltraViagem.Core
 
