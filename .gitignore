@@ -7,3 +7,5 @@ publish/
 *.suo
 *.tmp
 ~$*
+__pycache__/
+*.pyc
