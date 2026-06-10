@@ -32,7 +32,11 @@ public sealed class AppViewModel : NotifyObject
     private ExpenseEditorViewModel? _selectedExpense;
     private ItineraryActivityViewModel? _selectedActivity;
     private record ActivityStyle(string Color, string Icon, string Type);
-    private ActivityStyle? _styleClipboard;
+    private record ActivitySnapshot(
+        string Title, string Type, string Color, string Icon,
+        string? Details, string? AdditionalData, int DurationSlots, int StartSlot);
+    private ActivityStyle?   _styleClipboard;
+    private ActivitySnapshot? _activityClipboard;
     private string? _tripFolderPath;
     private string _statusMessage = "Pronto";
     private string _taskFilter = "all";
@@ -249,13 +253,37 @@ public sealed class AppViewModel : NotifyObject
             if (ReferenceEquals(_selectedActivity, value)) return;
             if (_selectedActivity is not null) _selectedActivity.IsSelected = false;
             if (SetField(ref _selectedActivity, value) && _selectedActivity is not null)
+            {
                 _selectedActivity.IsSelected = true;
+                ClearSlotSelection(); // selecionar atividade limpa a seleção de slot
+            }
             OnPropertyChanged(nameof(HasSelectedActivity));
         }
     }
 
+    public void SelectEmptySlot(ItineraryDayViewModel day, int slot)
+    {
+        SelectedActivity = null;
+        foreach (var d in Itinerary) d.SelectedSlot = d == day ? slot : -1;
+        foreach (var r in BankRows) r.SelectedSlot = -1;
+    }
+
+    public void SelectEmptySlot(BankRowViewModel bankRow, int slot)
+    {
+        SelectedActivity = null;
+        foreach (var d in Itinerary) d.SelectedSlot = -1;
+        foreach (var r in BankRows) r.SelectedSlot = r == bankRow ? slot : -1;
+    }
+
+    public void ClearSlotSelection()
+    {
+        foreach (var d in Itinerary) d.SelectedSlot = -1;
+        foreach (var r in BankRows) r.SelectedSlot = -1;
+    }
+
     public bool HasSelectedActivity => SelectedActivity is not null;
-    public bool HasStyleClipboard => _styleClipboard is not null;
+    public bool HasStyleClipboard    => _styleClipboard    is not null;
+    public bool HasActivityClipboard => _activityClipboard is not null;
 
     public double ItinerarySlotWidth
     {
@@ -383,6 +411,7 @@ public sealed class AppViewModel : NotifyObject
         _activeVersionId = activeVersion?.Id ?? "";
         OnPropertyChanged(nameof(ActiveVersionId));
 
+        ItineraryDayViewModel.ConfigureStartDate(_trip?.StartDate ?? DateOnly.MinValue);
         Itinerary.ReplaceWith((activeVersion?.Itinerary ?? []).Select(ItineraryDayViewModel.FromDay));
         RefreshDayNumbers();
 
@@ -666,12 +695,7 @@ public sealed class AppViewModel : NotifyObject
 
     public void AddItineraryDay()
     {
-        var vm = new ItineraryDayViewModel
-        {
-            Id = $"dia-{Guid.NewGuid():N}",
-            Title = $"Dia {Itinerary.Count + 1}",
-            Date = _trip?.StartDate?.AddDays(Itinerary.Count)
-        };
+        var vm = new ItineraryDayViewModel { Id = $"dia-{Guid.NewGuid():N}" };
         Itinerary.Add(vm);
         RefreshDayNumbers();
         RefreshSummary();
@@ -781,6 +805,13 @@ public sealed class AppViewModel : NotifyObject
         SwitchToVersion(newVersion.Id);
     }
 
+    public void ShiftItineraryStartDate(DateOnly newStartDate)
+    {
+        if (_trip is not null) _trip.StartDate = newStartDate;
+        ItineraryDayViewModel.ConfigureStartDate(newStartDate);
+        foreach (var day in Itinerary) day.NotifyDateChanged();
+    }
+
     public void SwitchToVersion(string id)
     {
         if (_trip is null) return;
@@ -802,9 +833,11 @@ public sealed class AppViewModel : NotifyObject
         SelectedActivity = null;
         ClearAllActivityDims();
         ClearAllDayDims();
+        ClearSlotSelection();
         foreach (var day in Itinerary) { day.RejectEdit(); day.RejectDayEdit(); }
         foreach (var row in BankRows) row.RejectEdit();
 
+        ItineraryDayViewModel.ConfigureStartDate(_trip?.StartDate ?? DateOnly.MinValue);
         Itinerary.ReplaceWith(version.Itinerary.Select(ItineraryDayViewModel.FromDay));
         RefreshDayNumbers();
 
@@ -869,9 +902,7 @@ public sealed class AppViewModel : NotifyObject
     private static ItineraryDay CloneDay(ItineraryDay d) => new()
     {
         Id = $"dia-{Guid.NewGuid():N}",
-        Title = d.Title,
         Summary = d.Summary,
-        Date = d.Date,
         Activities = d.Activities.Select(CloneActivity).ToList()
     };
 
@@ -997,6 +1028,95 @@ public sealed class AppViewModel : NotifyObject
         SelectedActivity.Type = _styleClipboard.Type;
         ItineraryChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    // Copia bloco inteiro para o clipboard de atividade (Ctrl+C).
+    // Usa Display* para capturar o estado atual mesmo em edição.
+    // Atualiza também o styleClipboard para que Ctrl+Shift+V funcione.
+    public void CopyActivityToClipboard()
+    {
+        var source = Itinerary.Select(d => d.EditingActivity).FirstOrDefault(a => a is not null)
+                  ?? BankRows.Select(r => r.EditingActivity).FirstOrDefault(a => a is not null)
+                  ?? SelectedActivity;
+        if (source is null) return;
+
+        _activityClipboard = new ActivitySnapshot(
+            source.DisplayTitle, source.DisplayType, source.DisplayColor, source.DisplayIcon,
+            source.DisplayDetails, source.AdditionalData, source.DurationSlots, source.StartSlot);
+        _styleClipboard = new ActivityStyle(_activityClipboard.Color, _activityClipboard.Icon, _activityClipboard.Type);
+        OnPropertyChanged(nameof(HasActivityClipboard));
+        OnPropertyChanged(nameof(HasStyleClipboard));
+    }
+
+    // Cria novo bloco a partir do clipboard no mesmo dia/linha do bloco selecionado (Ctrl+V).
+    // - Com bloco selecionado: cola no mesmo slot do bloco selecionado.
+    // - Sem bloco selecionado (dia em edição): cola no primeiro slot livre da linha.
+    // Funciona entre versões porque o clipboard persiste na troca de versão.
+    public bool PasteActivityFromClipboard()
+    {
+        if (_activityClipboard is null) return false;
+
+        var snap = _activityClipboard;
+
+        // Determina container e slot de destino
+        var editingAct = Itinerary.Select(d => d.EditingActivity).FirstOrDefault(a => a is not null)
+                      ?? BankRows.Select(r => r.EditingActivity).FirstOrDefault(a => a is not null);
+
+        ItineraryDayViewModel? day     = null;
+        BankRowViewModel?      bankRow = null;
+        int pasteSlot;
+
+        if (editingAct is not null)
+        {
+            day       = FindDayForActivity(editingAct);
+            bankRow   = day is null ? FindBankRowForActivity(editingAct) : null;
+            pasteSlot = editingAct.StartSlot;
+        }
+        else if (SelectedActivity is not null)
+        {
+            day       = FindDayForActivity(SelectedActivity);
+            bankRow   = day is null ? FindBankRowForActivity(SelectedActivity) : null;
+            pasteSlot = SelectedActivity.StartSlot;
+        }
+        else
+        {
+            // Sem bloco selecionado: cola no slot selecionado (clique em área vazia)
+            day = Itinerary.FirstOrDefault(d => d.HasSelectedSlot);
+            if (day is not null)
+            {
+                pasteSlot = day.SelectedSlot;
+            }
+            else
+            {
+                bankRow = BankRows.FirstOrDefault(r => r.HasSelectedSlot);
+                if (bankRow is null) return false;
+                pasteSlot = bankRow.SelectedSlot;
+            }
+        }
+
+        if (day is null && bankRow is null) return false;
+
+        var copy = new ItineraryActivityViewModel
+        {
+            Id             = $"act-{Guid.NewGuid():N}",
+            Title          = snap.Title,
+            Type           = snap.Type,
+            Color          = snap.Color,
+            Icon           = snap.Icon,
+            Details        = snap.Details,
+            AdditionalData = snap.AdditionalData,
+            DurationSlots  = snap.DurationSlots,
+            StartSlot      = pasteSlot,
+        };
+
+        if (day is not null) day.Activities.Add(copy);
+        else                 bankRow!.Activities.Add(copy);
+
+        SelectedActivity = copy;
+        ItineraryChanged?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
+
 
     public void AddExpense()
     {
@@ -1152,6 +1272,16 @@ public sealed class AppViewModel : NotifyObject
     public void RefreshTripDetails()
     {
         RefreshSummary();
+    }
+
+    public void MoveDay(ItineraryDayViewModel day, int newIndex)
+    {
+        var current = Itinerary.IndexOf(day);
+        if (current < 0) return;
+        newIndex = Math.Clamp(newIndex, 0, Itinerary.Count - 1);
+        if (current == newIndex) return;
+        Itinerary.Move(current, newIndex);
+        RefreshDayNumbers();
     }
 
     private void RefreshDayNumbers()
@@ -1671,19 +1801,20 @@ public sealed class ItineraryDayViewModel : NotifyObject
 
     public static void ConfigureBlockHeight(int height) => _blockHeight = height;
 
-    private string _id = "", _title = "", _summary = "";
-    private DateOnly? _date;
-    private bool _isDragTarget, _isDimmed;
+    private static DateOnly _tripStartDate;
+    public static void ConfigureStartDate(DateOnly d) { _tripStartDate = d; }
+    public void NotifyDateChanged() => OnPropertyChanged(nameof(DateLabel));
+
+    private string _id = "", _summary = "";
+    private bool _isDragTarget, _isDimmed, _isDragging;
     private ItineraryActivityViewModel? _editingActivity;
 
     // ── day edit buffer ─────────────────────────────────────────────────────
     private bool _isEditingDay;
-    private string _editDayTitle = "";
     private string _editDaySummary = "";
-    private DateOnly? _editDayDate;
 
     public string Id { get => _id; set => SetField(ref _id, value); }
-    public string Title { get => _title; set => SetField(ref _title, value); }
+    public string Title => $"Dia {_number}";
     public string Summary { get => _summary; set { if (SetField(ref _summary, value)) { OnPropertyChanged(nameof(HasSummary)); OnPropertyChanged(nameof(CardTitle)); } } }
     public bool HasSummary => !string.IsNullOrWhiteSpace(_summary);
 
@@ -1691,12 +1822,28 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public string CardTitle => !string.IsNullOrWhiteSpace(_summary)
         ? _summary
         : Activities.FirstOrDefault(a => string.Equals(a.Type, "Pernoite", StringComparison.OrdinalIgnoreCase))?.Title ?? "";
-    public DateOnly? Date { get => _date; set { if (SetField(ref _date, value)) OnPropertyChanged(nameof(DateLabel)); } }
     public bool IsDragTarget { get => _isDragTarget; set => SetField(ref _isDragTarget, value); }
-    public bool IsDimmed { get => _isDimmed; set => SetField(ref _isDimmed, value); }
+    public bool IsDimmed     { get => _isDimmed;     set => SetField(ref _isDimmed,     value); }
+    public bool IsDragging   { get => _isDragging;   set => SetField(ref _isDragging,   value); }
 
     private int _number = 1;
-    public int Number { get => _number; set => SetField(ref _number, value); }
+    public int Number
+    {
+        get => _number;
+        set { if (SetField(ref _number, value)) { OnPropertyChanged(nameof(Title)); OnPropertyChanged(nameof(DateLabel)); } }
+    }
+
+    private int _selectedSlot = -1;
+    public int SelectedSlot
+    {
+        get => _selectedSlot;
+        set { if (SetField(ref _selectedSlot, value)) { OnPropertyChanged(nameof(HasSelectedSlot)); OnPropertyChanged(nameof(SelectedSlotX)); } }
+    }
+    public bool   HasSelectedSlot => _selectedSlot >= 0;
+    public double SelectedSlotX        => _selectedSlot * _slotWidth;
+    public double SlotWidth             => _slotWidth;
+    public double SelectionRectTop      => 1;
+    public double SelectionRectHeight   => Math.Max(0, _blockHeight + 8 - 2);
 
     private System.Windows.Media.ImageSource? _coverImage;
     public System.Windows.Media.ImageSource? CoverImage { get => _coverImage; private set { if (SetField(ref _coverImage, value)) OnPropertyChanged(nameof(HasCoverImage)); } }
@@ -1809,31 +1956,19 @@ public sealed class ItineraryDayViewModel : NotifyObject
     }
 
     public bool IsEditingDay { get => _isEditingDay; private set { if (SetField(ref _isEditingDay, value)) OnPropertyChanged(nameof(IsInEditMode)); } }
-    public string EditDayTitle { get => _editDayTitle; set => SetField(ref _editDayTitle, value); }
     public string EditDaySummary { get => _editDaySummary; set => SetField(ref _editDaySummary, value); }
-    public DateTime? EditDayDateDt
-    {
-        get => _editDayDate.HasValue ? _editDayDate.Value.ToDateTime(TimeOnly.MinValue) : null;
-        set { _editDayDate = value.HasValue ? DateOnly.FromDateTime(value.Value) : null; OnPropertyChanged(nameof(EditDayDateDt)); }
-    }
 
     public void BeginDayEdit()
     {
         RejectEdit(); // fecha edição de atividade se aberta
-        _editDayTitle = Title;
         _editDaySummary = Summary;
-        _editDayDate = Date;
-        OnPropertyChanged(nameof(EditDayTitle));
         OnPropertyChanged(nameof(EditDaySummary));
-        OnPropertyChanged(nameof(EditDayDateDt));
         IsEditingDay = true;
     }
 
     public void AcceptDayEdit()
     {
-        Title = string.IsNullOrWhiteSpace(EditDayTitle) ? Title : EditDayTitle.Trim();
         Summary = EditDaySummary.Trim();
-        Date = _editDayDate;
         IsEditingDay = false;
     }
 
@@ -1895,6 +2030,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
             foreach (ItineraryActivityViewModel a in e.OldItems)
                 a.PropertyChanged -= OnActivityPropertyChanged;
         RefreshOverviewProps();
+        RefreshOverlaps();
     }
 
     private void OnActivityPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -1903,6 +2039,26 @@ public sealed class ItineraryDayViewModel : NotifyObject
                            or nameof(ItineraryActivityViewModel.Type)
                            or nameof(ItineraryActivityViewModel.StartSlot))
             RefreshOverviewProps();
+        if (e.PropertyName is nameof(ItineraryActivityViewModel.StartSlot)
+                           or nameof(ItineraryActivityViewModel.DurationSlots))
+            RefreshOverlaps();
+    }
+
+    private void RefreshOverlaps()
+    {
+        var acts = Activities;
+        foreach (var a in acts) a.IsOverlapping = false;
+        for (int i = 0; i < acts.Count; i++)
+            for (int j = i + 1; j < acts.Count; j++)
+            {
+                var a = acts[i]; var b = acts[j];
+                if (a.StartSlot < b.StartSlot + b.DurationSlots &&
+                    b.StartSlot < a.StartSlot + a.DurationSlots)
+                {
+                    a.IsOverlapping = true;
+                    b.IsOverlapping = true;
+                }
+            }
     }
 
     private void RefreshOverviewProps()
@@ -1923,7 +2079,9 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public double EveningWidth => CanvasWidth - EveningStartX;
     public double AfternoonLabelX => MorningWidth + 4;
     public double EveningLabelX => EveningStartX + 4;
-    public string DateLabel => Date?.ToString("ddd dd/MM", CultureInfo.GetCultureInfo("pt-BR")) ?? "";
+    public string DateLabel => _tripStartDate == default
+        ? ""
+        : _tripStartDate.AddDays(_number - 1).ToString("ddd dd/MM", CultureInfo.GetCultureInfo("pt-BR"));
     public string ActivitiesLabel => Activities.Count == 0 ? "Sem atividades" : $"{Activities.Count} atividade{(Activities.Count == 1 ? "" : "s")}";
     public IEnumerable<double> SlotLinePositions => Enumerable.Range(1, _slotsPerDay - 1).Select(i => i * _slotWidth);
 
@@ -1938,18 +2096,15 @@ public sealed class ItineraryDayViewModel : NotifyObject
         OnPropertyChanged(nameof(AfternoonLabelX));
         OnPropertyChanged(nameof(EveningLabelX));
         OnPropertyChanged(nameof(SlotLinePositions));
+        OnPropertyChanged(nameof(SlotWidth));
+        OnPropertyChanged(nameof(SelectedSlotX));
+        OnPropertyChanged(nameof(SelectionRectHeight));
         foreach (var a in Activities) a.NotifyLayoutChanged();
     }
 
     public static ItineraryDayViewModel FromDay(ItineraryDay day)
     {
-        var vm = new ItineraryDayViewModel
-        {
-            Id = day.Id,
-            Title = day.Title,
-            Summary = day.Summary,
-            Date = day.Date
-        };
+        var vm = new ItineraryDayViewModel { Id = day.Id, Summary = day.Summary };
         foreach (var a in day.Activities)
             vm.Activities.Add(ItineraryActivityViewModel.FromActivity(a));
         return vm;
@@ -1958,9 +2113,7 @@ public sealed class ItineraryDayViewModel : NotifyObject
     public ItineraryDay ToDay() => new()
     {
         Id = string.IsNullOrWhiteSpace(Id) ? $"dia-{Guid.NewGuid():N}" : Id,
-        Title = Title.Trim(),
         Summary = Summary.Trim(),
-        Date = Date,
         Activities = Activities.Select(a => a.ToActivity()).ToList()
     };
 }
@@ -1978,7 +2131,46 @@ public sealed class BankRowViewModel : NotifyObject
     private ItineraryActivityViewModel? _editingActivity;
 
     public int RowIndex { get; set; }
-    public ObservableCollection<ItineraryActivityViewModel> Activities { get; } = [];
+    public ObservableCollection<ItineraryActivityViewModel> Activities { get; }
+
+    public BankRowViewModel()
+    {
+        Activities = [];
+        Activities.CollectionChanged += (_, e) =>
+        {
+            if (e.NewItems != null)
+                foreach (ItineraryActivityViewModel a in e.NewItems)
+                    a.PropertyChanged += OnActivityPropertyChanged;
+            if (e.OldItems != null)
+                foreach (ItineraryActivityViewModel a in e.OldItems)
+                    a.PropertyChanged -= OnActivityPropertyChanged;
+            RefreshOverlaps();
+        };
+    }
+
+    private void OnActivityPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ItineraryActivityViewModel.StartSlot)
+                           or nameof(ItineraryActivityViewModel.DurationSlots))
+            RefreshOverlaps();
+    }
+
+    private void RefreshOverlaps()
+    {
+        var acts = Activities;
+        foreach (var a in acts) a.IsOverlapping = false;
+        for (int i = 0; i < acts.Count; i++)
+            for (int j = i + 1; j < acts.Count; j++)
+            {
+                var a = acts[i]; var b = acts[j];
+                if (a.StartSlot < b.StartSlot + b.DurationSlots &&
+                    b.StartSlot < a.StartSlot + a.DurationSlots)
+                {
+                    a.IsOverlapping = true;
+                    b.IsOverlapping = true;
+                }
+            }
+    }
 
     public bool IsDragTarget { get => _isDragTarget; set => SetField(ref _isDragTarget, value); }
     public ItineraryActivityViewModel? EditingActivity
@@ -1989,7 +2181,19 @@ public sealed class BankRowViewModel : NotifyObject
     public bool HasEditingBlock => _editingActivity is not null;
 
     public double CanvasWidth => _slotsPerDay * _slotWidth;
-    public int CanvasHeight => _blockHeight + 8;
+    public int    CanvasHeight => _blockHeight + 8;
+
+    private int _selectedSlot = -1;
+    public int SelectedSlot
+    {
+        get => _selectedSlot;
+        set { if (SetField(ref _selectedSlot, value)) { OnPropertyChanged(nameof(HasSelectedSlot)); OnPropertyChanged(nameof(SelectedSlotX)); } }
+    }
+    public bool   HasSelectedSlot    => _selectedSlot >= 0;
+    public double SelectedSlotX      => _selectedSlot * _slotWidth;
+    public double SlotWidth          => _slotWidth;
+    public double SelectionRectTop   => 1;
+    public double SelectionRectHeight => Math.Max(0, _blockHeight + 8 - 2);
 
     public void BeginEdit(ItineraryActivityViewModel activity)
     {
@@ -2024,6 +2228,9 @@ public sealed class BankRowViewModel : NotifyObject
         OnPropertyChanged(nameof(CanvasWidth));
         OnPropertyChanged(nameof(CanvasHeight));
         OnPropertyChanged(nameof(SlotLinePositions));
+        OnPropertyChanged(nameof(SlotWidth));
+        OnPropertyChanged(nameof(SelectedSlotX));
+        OnPropertyChanged(nameof(SelectionRectHeight));
         foreach (var a in Activities) a.NotifyLayoutChanged();
     }
 }
@@ -2045,7 +2252,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     private string _id = "", _title = "", _color = "#DBEAFE", _icon = "", _type = "Atividade";
     private int _startSlot, _durationSlots = 2;
     private string? _details, _additionalData;
-    private bool _isSelected, _isEditing, _isDimmed;
+    private bool _isSelected, _isEditing, _isDimmed, _isOverlapping;
 
     // Edit buffer
     private string _editTitle = "", _editIcon = "", _editColor = "#DBEAFE", _editType = "Atividade";
@@ -2064,6 +2271,7 @@ public sealed class ItineraryActivityViewModel : NotifyObject
     public bool IsSelected { get => _isSelected; set => SetField(ref _isSelected, value); }
     public bool IsEditing { get => _isEditing; set => SetField(ref _isEditing, value); }
     public bool IsDimmed { get => _isDimmed; set => SetField(ref _isDimmed, value); }
+    public bool IsOverlapping { get => _isOverlapping; set => SetField(ref _isOverlapping, value); }
     public bool HasDetails => !string.IsNullOrWhiteSpace(_details);
 
     /// <summary>Ícone para exibição compacta: usa o emoji do campo Icon, ou um fallback por tipo.</summary>

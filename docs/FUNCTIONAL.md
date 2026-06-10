@@ -35,14 +35,14 @@ Ao criar uma viagem, a pasta é nomeada com o ano e mês da data inicial, seguid
 O botão `Dados da viagem` abre uma tela interna com:
 
 - nome;
-- data inicial;
-- data final;
+- data inicial (editável via calendário);
+- data final (somente leitura — calculada automaticamente como data inicial + número de dias do roteiro ativo); um botão **Alterar data** permite deslocar toda a sequência de dias: a data inicial é ajustada e todas as datas derivadas são recalculadas;
 - pessoas;
 - moeda base;
 - casas decimais para cotações (controla a precisão das taxas exibidas na aba Moedas);
 - caminho completo da pasta da viagem.
 
-As datas são editadas por controle de calendário e exibidas no formato do sistema. A tela permite renomear apenas a pasta da viagem dentro do repositório atual, sem alterar a pasta raiz escolhida.
+A data inicial é editada por controle de calendário. A tela permite renomear apenas a pasta da viagem dentro do repositório atual, sem alterar a pasta raiz escolhida.
 
 A tela segue o mesmo padrão dos demais painéis internos, com ícone, título, botão `<` para voltar e, no rodapé:
 
@@ -229,11 +229,12 @@ Cada viagem pode ter múltiplas versões independentes do roteiro, armazenadas e
 
 ### Dias
 
-- Cada dia tem um título livre, uma data opcional e um resumo de texto livre.
+- Cada dia tem um **resumo** de texto livre editável. Título ("Dia N") e data são **computados** automaticamente a partir do índice do dia e da data de início da viagem — não são campos livres.
 - O botão `+ Dia` adiciona um novo dia ao final.
-- Clicar duas vezes no painel do nome do dia entra em modo de edição: campos `Nome`, `Data` e `Resumo` ficam editáveis. Enter confirma; Esc cancela. Um segundo duplo-clique cancela a edição.
+- Clicar duas vezes no painel do nome do dia entra em modo de edição: apenas o campo `Resumo` fica editável. Enter confirma; Esc cancela. Um segundo duplo-clique cancela a edição.
 - O botão `🗑️ Excluir Dia` aparece na própria forma de edição; a exclusão pede confirmação.
 - O dia em edição recebe borda de destaque (AccentBrush) e os demais dias ficam esmaecidos (opacidade 0,35).
+- **Reordenar dias**: passe o mouse sobre o cabeçalho de qualquer dia para revelar o ícone de arrastar (⠿) à esquerda. Arraste-o verticalmente para mover o dia na sequência; ao soltar, o roteiro é salvo. As datas e títulos de todos os dias são recalculados automaticamente após a reordenação.
 
 ### Atividades
 
@@ -280,6 +281,14 @@ O banco é uma seção colapsável exibida abaixo de todos os dias. Ele armazena
 - Para **mover** uma atividade entre banco e dia (ou vice-versa), basta arrasta-la; não há botão de transferência.
 - A quantidade de linhas e as atividades do banco são persistidas em `trip.json` (`bankRows`, `bankActivities`).
 
+### Sobreposição de atividades
+
+Quando dois blocos ocupam slots que se sobrepõem no mesmo canvas, ambos exibem uma **borda vermelha** de alerta. A borda azul de seleção tem prioridade sobre a vermelha: um bloco sobreposto e selecionado simultaneamente exibe apenas a borda azul.
+
+### Seleção de slot vazio
+
+Clicar em uma área vazia do canvas de um dia ou do banco **seleciona o slot** clicado, indicado por um contorno tracejado azul. Um segundo clique no mesmo slot deseleciona. Selecionar uma atividade limpa a seleção de slot. A seleção de slot serve como destino para a operação de colar (Ctrl+V).
+
 ### Seleção e editor inline
 
 Clicar em uma atividade a seleciona (destaque azul na borda). Um painel de edição aparece abaixo do canvas da respectiva linha, mostrando:
@@ -293,6 +302,17 @@ Clicar em uma atividade a seleciona (destaque azul na borda). Um painel de ediç
 - botão excluir.
 
 Enter confirma a edição; Esc cancela. Clicar fora de qualquer atividade (área vazia do canvas) desmarca a seleção e cancela edições pendentes.
+
+### Atalhos de teclado no painel Roteiro
+
+| Atalho | Ação |
+|--------|------|
+| `Ctrl+C` | Copia o bloco selecionado para a área de transferência interna |
+| `Ctrl+V` | Cola o bloco copiado no slot selecionado (ou no slot do bloco selecionado) |
+| `Ctrl+Shift+V` | Cola apenas o estilo (cor, tipo, ícone) do bloco copiado no bloco selecionado |
+| `Ctrl+D` | Duplica o bloco selecionado |
+| `Delete` | Exclui o bloco selecionado (pede confirmação; padrão: Sim) |
+| `Esc` | Cancela edição inline aberta |
 
 ### Zoom
 

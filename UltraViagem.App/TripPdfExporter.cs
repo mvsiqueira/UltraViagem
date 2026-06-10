@@ -33,8 +33,8 @@ public static class TripPdfExporter
                 page.Content().PaddingTop(10).Column(col =>
                 {
                     if (activeVersion?.Itinerary.Count > 0)
-                        foreach (var day in activeVersion.Itinerary)
-                            col.Item().PaddingBottom(8).Element(c => DayBlock(c, day));
+                        foreach (var (day, idx) in activeVersion.Itinerary.Select((d, i) => (d, i)))
+                            col.Item().PaddingBottom(8).Element(c => DayBlock(c, day, idx, trip.StartDate));
                     else
                         col.Item().Text("Nenhum dia cadastrado.").FontColor(TextMuted);
                 });
@@ -175,8 +175,10 @@ public static class TripPdfExporter
 
         container.Column(col =>
         {
-            foreach (var day in days)
+            foreach (var (day, idx) in days.Select((d, i) => (d, i)))
             {
+                var dayTitle = $"Dia {idx + 1}";
+                var dayDate  = trip.StartDate?.AddDays(idx);
                 col.Item().BorderBottom(0.5f).BorderColor(BorderColor)
                    .MinHeight(MinRowPt).Row(row =>
                    {
@@ -184,9 +186,9 @@ public static class TripPdfExporter
                        row.ConstantItem(DayLabelPt)
                           .Background(Accent)
                           .PaddingHorizontal(4).AlignMiddle()
-                          .Text(day.Date.HasValue
-                              ? $"{day.Title} · {day.Date.Value.ToString("dd/MM", Ptbr)}"
-                              : day.Title)
+                          .Text(dayDate.HasValue
+                              ? $"{dayTitle} · {dayDate.Value.ToString("dd/MM", Ptbr)}"
+                              : dayTitle)
                           .FontSize(7.5f).SemiBold().FontColor("#FFFFFF");
 
                        // Linha do tempo horizontal
@@ -228,20 +230,21 @@ public static class TripPdfExporter
     // Section renderers
     // ─────────────────────────────────────────────────────────────────────
 
-    private static void DayBlock(IContainer container, ItineraryDay day)
+    private static void DayBlock(IContainer container, ItineraryDay day, int index, DateOnly? tripStart)
     {
+        var dayDate = tripStart?.AddDays(index);
         container.Column(col =>
         {
             col.Item().Row(row =>
             {
                 row.ConstantItem(32).Background(AccentLight).AlignCenter().AlignMiddle()
-                   .Text(day.Title.Replace("Dia ", "")).FontSize(9).SemiBold().FontColor(Accent);
+                   .Text($"{index + 1}").FontSize(9).SemiBold().FontColor(Accent);
 
                 row.RelativeItem().PaddingLeft(8).AlignMiddle().Column(c =>
                 {
                     var parts = new List<string>();
-                    if (day.Date.HasValue)
-                        parts.Add(day.Date.Value.ToString("ddd dd/MM", Ptbr));
+                    if (dayDate.HasValue)
+                        parts.Add(dayDate.Value.ToString("ddd dd/MM", Ptbr));
                     if (!string.IsNullOrWhiteSpace(day.Summary))
                         parts.Add(day.Summary);
                     c.Item().Text(string.Join("  —  ", parts)).SemiBold().FontSize(10);

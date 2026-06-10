@@ -2396,6 +2396,7 @@ public partial class MainWindow : Window
         OverviewPanel.Visibility = Visibility.Collapsed;
         TripDetailsPanel.Visibility = Visibility.Collapsed;
         ItineraryPanel.Visibility = Visibility.Visible;
+        ItineraryPanel.Focus();
         BudgetPanel.Visibility = Visibility.Collapsed;
         TasksPanel.Visibility = Visibility.Collapsed;
         TipsPanel.Visibility = Visibility.Collapsed;
@@ -2540,7 +2541,7 @@ public partial class MainWindow : Window
             return;
 
         var result = System.Windows.MessageBox.Show(
-            $"Remover o dia \"{day.Title}\" e todas as suas atividades?",
+            $"Remover \"{day.Title}\" e todas as suas atividades?",
             "Remover Dia",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
@@ -2601,15 +2602,50 @@ public partial class MainWindow : Window
 
     // ── Inline edit handlers ────────────────────────────────────────────────
 
-    private void DayDatePicker_CalendarOpened(object sender, RoutedEventArgs e)
-    {
-        if (sender is DatePicker dp && dp.SelectedDate.HasValue)
-            dp.DisplayDate = dp.SelectedDate.Value;
-    }
-
     private void EditTypeCombo_DropDownOpened(object sender, EventArgs e) => _typeComboOpen = true;
     private void EditTypeCombo_DropDownClosed(object sender, EventArgs e) =>
         Dispatcher.BeginInvoke(() => _typeComboOpen = false, System.Windows.Threading.DispatcherPriority.Input);
+
+    private ItineraryDayViewModel? _dragDay;
+
+    private void DayHandle_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not FrameworkElement fe || fe.DataContext is not ItineraryDayViewModel day) return;
+        _dragDay = day;
+        day.IsDragging = true;
+        Mouse.OverrideCursor = System.Windows.Input.Cursors.SizeNS;
+        fe.CaptureMouse();
+        e.Handled = true;
+    }
+
+    private void DayHandle_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (_dragDay is null || e.LeftButton != MouseButtonState.Pressed) return;
+        var pos = e.GetPosition(ItineraryDaysList);
+        _viewModel.MoveDay(_dragDay, GetDayIndexAtPosition(pos));
+    }
+
+    private void DayHandle_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_dragDay is null) return;
+        if (sender is FrameworkElement fe) fe.ReleaseMouseCapture();
+        _dragDay.IsDragging = false;
+        _dragDay = null;
+        Mouse.OverrideCursor = null;
+        SaveItineraryInternal("Dias reordenados.");
+        e.Handled = true;
+    }
+
+    private int GetDayIndexAtPosition(System.Windows.Point posInList)
+    {
+        for (int i = 0; i < ItineraryDaysList.Items.Count; i++)
+        {
+            if (ItineraryDaysList.ItemContainerGenerator.ContainerFromIndex(i) is not FrameworkElement c) continue;
+            var top = c.TranslatePoint(new System.Windows.Point(0, 0), ItineraryDaysList).Y;
+            if (posInList.Y < top + c.ActualHeight / 2) return i;
+        }
+        return ItineraryDaysList.Items.Count - 1;
+    }
 
     private void DayLabel_MouseDown(object sender, MouseButtonEventArgs e)
     {
@@ -2835,28 +2871,29 @@ public partial class MainWindow : Window
     {
         if (_typeComboOpen) return;
 
-        // Ctrl+C / Ctrl+V copiam/colam estilo quando o foco não está em um campo de texto
+        // Atalhos de teclado do roteiro (apenas fora de campos de texto)
         bool focusedOnText = System.Windows.Input.Keyboard.FocusedElement is System.Windows.Controls.Primitives.TextBoxBase;
-        if (!focusedOnText && System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control)
+        if (!focusedOnText)
         {
-            if (e.Key == System.Windows.Input.Key.C)
+            var mods  = System.Windows.Input.Keyboard.Modifiers;
+            bool ctrl  = (mods & System.Windows.Input.ModifierKeys.Control) != 0;
+            bool shift = (mods & System.Windows.Input.ModifierKeys.Shift)   != 0;
+
+            // Ctrl+C — copia o bloco inteiro (também atualiza o clipboard de estilo)
+            if (ctrl && !shift && e.Key == System.Windows.Input.Key.C)
             {
-                // Prioridade: bloco em edição (copia EditColor/EditIcon/EditType do formulário)
-                var editingAct = _viewModel.Itinerary.Select(d => d.EditingActivity).FirstOrDefault(a => a is not null)
-                    ?? _viewModel.BankRows.Select(r => r.EditingActivity).FirstOrDefault(a => a is not null);
-                if (editingAct is not null)
-                    _viewModel.CopyStyle(editingAct);
-                else if (_viewModel.SelectedActivity is not null)
-                    _viewModel.CopyStyleFromSelected();
-                else
-                    goto skipStyle;
+                _viewModel.CopyActivityToClipboard();
+                if (_viewModel.HasActivityClipboard)
+                    _viewModel.StatusMessage = "Bloco copiado.";
                 e.Handled = true;
                 return;
             }
-            else if (e.Key == System.Windows.Input.Key.V && _viewModel.HasStyleClipboard)
+
+            // Ctrl+Shift+V — cola apenas o estilo do bloco copiado no bloco selecionado
+            if (ctrl && shift && e.Key == System.Windows.Input.Key.V && _viewModel.HasStyleClipboard)
             {
                 var editingAct = _viewModel.Itinerary.Select(d => d.EditingActivity).FirstOrDefault(a => a is not null)
-                    ?? _viewModel.BankRows.Select(r => r.EditingActivity).FirstOrDefault(a => a is not null);
+                              ?? _viewModel.BankRows.Select(r => r.EditingActivity).FirstOrDefault(a => a is not null);
                 if (editingAct is not null)
                     _viewModel.PasteStyle(editingAct);
                 else if (_viewModel.SelectedActivity is not null)
@@ -2864,12 +2901,21 @@ public partial class MainWindow : Window
                     _viewModel.PasteStyleToSelected();
                     SaveItineraryInternal("Estilo colado.");
                 }
-                else
-                    goto skipStyle;
                 e.Handled = true;
                 return;
             }
-            else if (e.Key == System.Windows.Input.Key.D && _viewModel.SelectedActivity is not null)
+
+            // Ctrl+V — cola o bloco copiado no dia/linha do bloco selecionado
+            if (ctrl && !shift && e.Key == System.Windows.Input.Key.V && _viewModel.HasActivityClipboard)
+            {
+                if (_viewModel.PasteActivityFromClipboard())
+                    SaveItineraryInternal("Bloco colado.");
+                e.Handled = true;
+                return;
+            }
+
+            // Ctrl+D — duplica o bloco selecionado ao lado
+            if (ctrl && !shift && e.Key == System.Windows.Input.Key.D && _viewModel.SelectedActivity is not null)
             {
                 _viewModel.CopySelectedActivity();
                 SaveItineraryInternal("Atividade duplicada.");
@@ -2877,7 +2923,6 @@ public partial class MainWindow : Window
                 return;
             }
         }
-        skipStyle:
 
         foreach (var day in _viewModel.Itinerary)
         {
@@ -2950,7 +2995,7 @@ public partial class MainWindow : Window
                 "Excluir atividade",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question,
-                MessageBoxResult.No);
+                MessageBoxResult.Yes);
             if (confirm == MessageBoxResult.Yes)
             {
                 _viewModel.RemoveSelectedActivity();
@@ -2977,6 +3022,27 @@ public partial class MainWindow : Window
     {
         _viewModel.AddVersion(duplicateCurrent: true);
         SaveItineraryInternal($"Versão duplicada.");
+    }
+
+    private void ShiftDate_Click(object sender, RoutedEventArgs e)
+    {
+        var startDate = _viewModel.CurrentTrip?.StartDate;
+        var dt = startDate.HasValue
+            ? new DateTime(startDate.Value.Year, startDate.Value.Month, startDate.Value.Day)
+            : DateTime.Today;
+
+        ShiftDateCalendar.SelectedDate = dt;
+        ShiftDateCalendar.DisplayDate  = dt;
+
+        ShiftDatePopup.IsOpen = !ShiftDatePopup.IsOpen;
+    }
+
+    private void ShiftDateCalendar_SelectedDatesChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ShiftDateCalendar.SelectedDate is not { } dt) return;
+        ShiftDatePopup.IsOpen = false;
+        _viewModel.ShiftItineraryStartDate(DateOnly.FromDateTime(dt));
+        SaveItineraryInternal("Data do roteiro alterada.");
     }
 
     private void VersionTab_MouseDown(object sender, MouseButtonEventArgs e)
@@ -3087,14 +3153,37 @@ public partial class MainWindow : Window
 
     private void DayCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.OriginalSource is Canvas)
-            _viewModel.SelectedActivity = null;
+        // Só dispara para cliques no fundo do Canvas (não em blocos de atividade)
+        if (e.OriginalSource is not System.Windows.Controls.Canvas) return;
+        if (sender is not System.Windows.Controls.Canvas canvas) return;
+
+        ItineraryPanel.Focus();
+
+        var pos = e.GetPosition(canvas);
+
+        if (canvas.DataContext is ItineraryDayViewModel day)
+        {
+            int slot = Math.Clamp((int)(pos.X / day.SlotWidth), 0, _viewModel.ItinerarySlotsPerDay - 1);
+            if (day.SelectedSlot == slot) _viewModel.ClearSlotSelection();
+            else                          _viewModel.SelectEmptySlot(day, slot);
+        }
+        else if (canvas.DataContext is BankRowViewModel bankRow)
+        {
+            int slot = Math.Clamp((int)(pos.X / bankRow.SlotWidth), 0, _viewModel.ItinerarySlotsPerDay - 1);
+            if (bankRow.SelectedSlot == slot) _viewModel.ClearSlotSelection();
+            else                              _viewModel.SelectEmptySlot(bankRow, slot);
+        }
+        else return;
+
+        e.Handled = true;
     }
 
     private void ActivityBlock_MouseDown(object sender, MouseButtonEventArgs e)
     {
         if (sender is not FrameworkElement grid || grid.DataContext is not ItineraryActivityViewModel activity)
             return;
+
+        ItineraryPanel.Focus(); // garante foco para atalhos de teclado (Ctrl+C etc.)
 
         // Double-click: toggle inline editor
         if (e.ClickCount == 2)
@@ -3705,7 +3794,7 @@ public partial class MainWindow : Window
         var draft = TripDetailsWindow.FromTrip(_viewModel.CurrentTrip);
         TripDetailsTitleBox.Text = draft.Title;
         TripDetailsStartDatePicker.SelectedDate = ParseDraftDate(draft.StartDate);
-        TripDetailsEndDatePicker.SelectedDate = ParseDraftDate(draft.EndDate);
+        TripDetailsEndDateLabel.Text = ComputeEndDateLabel();
         TripDetailsPeopleBox.Text = draft.People.ToString(CultureInfo.InvariantCulture);
         TripDetailsCurrencyBox.Text = draft.BaseCurrency;
         TripDetailsRateDecimalDigitsBox.Text = (_viewModel.CurrentTrip?.RateDecimalDigits ?? 2).ToString(CultureInfo.InvariantCulture);
@@ -3715,6 +3804,19 @@ public partial class MainWindow : Window
         TripDetailsErrorText.Visibility = Visibility.Collapsed;
     }
 
+    private DateOnly? ComputeEndDate()
+    {
+        var start = _viewModel.CurrentTrip?.StartDate;
+        var count = _viewModel.Itinerary.Count;
+        return start.HasValue && count > 0 ? start.Value.AddDays(count - 1) : start;
+    }
+
+    private string ComputeEndDateLabel()
+    {
+        var d = ComputeEndDate();
+        return d.HasValue ? d.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) : "—";
+    }
+
     private TripDetailsDraft BuildTripDetailsDraft()
     {
         return new TripDetailsDraft
@@ -3722,7 +3824,7 @@ public partial class MainWindow : Window
             Id = _viewModel.CurrentTrip?.Id ?? "",
             Title = TripDetailsTitleBox.Text.Trim(),
             StartDate = FormatDraftDate(TripDetailsStartDatePicker.SelectedDate),
-            EndDate = FormatDraftDate(TripDetailsEndDatePicker.SelectedDate),
+            EndDate = ComputeEndDate()?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "",
             People = int.TryParse(TripDetailsPeopleBox.Text, CultureInfo.InvariantCulture, out var people) ? people : 0,
             BaseCurrency = string.IsNullOrWhiteSpace(TripDetailsCurrencyBox.Text) ? "BRL" : TripDetailsCurrencyBox.Text.Trim().ToUpperInvariant(),
             RateDecimalDigits = int.TryParse(TripDetailsRateDecimalDigitsBox.Text, CultureInfo.InvariantCulture, out var rdd) ? Math.Clamp(rdd, 0, 8) : 2,
@@ -3740,11 +3842,6 @@ public partial class MainWindow : Window
         }
 
         if (!ValidateDatePicker(TripDetailsStartDatePicker, "data inicial"))
-        {
-            return false;
-        }
-
-        if (!ValidateDatePicker(TripDetailsEndDatePicker, "data final"))
         {
             return false;
         }

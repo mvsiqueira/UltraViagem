@@ -1029,7 +1029,8 @@
 
                             <StackPanel Grid.Row="1" Grid.Column="1">
                                 <TextBlock Text="Data final" Style="{StaticResource Caption}" />
-                                <DatePicker x:Name="TripDetailsEndDatePicker" Margin="0,4,0,14" Height="34" />
+                                <TextBox x:Name="TripDetailsEndDateLabel" IsReadOnly="True"
+                                         Height="34" Margin="0,4,0,14" IsTabStop="False" />
                             </StackPanel>
 
                             <StackPanel Grid.Row="2" Margin="0,0,14,0">
@@ -2308,6 +2309,7 @@
 
             <!-- ItineraryPanel -->
             <Grid x:Name="ItineraryPanel" Grid.Row="1" Visibility="Collapsed" Margin="24,22,24,18"
+                  Focusable="True"
                   SizeChanged="ItineraryTimeline_SizeChanged"
                   PreviewMouseLeftButtonDown="ItineraryPanel_MouseDown"
                   PreviewKeyDown="ItineraryPanel_PreviewKeyDown"
@@ -2415,10 +2417,29 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
-                        <!-- New / Duplicate buttons -->
+                        <!-- New / Duplicate / Shift-date buttons -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,4">
                             <Button Content="+ Nova versão" Style="{StaticResource SecondaryButton}" Click="AddVersion_Click" Margin="0,0,6,0" />
-                            <Button Content="⧉ Duplicar" Style="{StaticResource SecondaryButton}" Click="DuplicateVersion_Click" />
+                            <Button Content="⧉ Duplicar" Style="{StaticResource SecondaryButton}" Click="DuplicateVersion_Click" Margin="0,0,6,0" />
+                            <Button x:Name="ShiftDateButton" Content="📅 Alterar data" Style="{StaticResource SecondaryButton}" Click="ShiftDate_Click" />
+                            <Popup x:Name="ShiftDatePopup"
+                                   PlacementTarget="{Binding ElementName=ShiftDateButton}"
+                                   Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                                <Border Background="{StaticResource PanelBackground}"
+                                        BorderBrush="{StaticResource BorderBrushSoft}"
+                                        BorderThickness="1" CornerRadius="6" Padding="8">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#000000" Opacity="0.15" BlurRadius="12" ShadowDepth="4" Direction="270" />
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <TextBlock Text="Data do primeiro dia do roteiro"
+                                                   FontSize="11" Opacity="0.6" Margin="2,0,2,6" />
+                                        <Calendar x:Name="ShiftDateCalendar"
+                                                  SelectionMode="SingleDate"
+                                                  SelectedDatesChanged="ShiftDateCalendar_SelectedDatesChanged" />
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -2450,6 +2471,10 @@
                                                     <DataTrigger Binding="{Binding IsDimmed}" Value="True">
                                                         <Setter Property="Opacity" Value="0.35" />
                                                     </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsDragging}" Value="True">
+                                                        <Setter Property="Opacity" Value="0.55" />
+                                                        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
@@ -2467,28 +2492,60 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
 
-                                            <!-- Day label (duplo-clique para editar) -->
-                                            <Border BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0" Padding="12,8"
+                                            <!-- Day label (duplo-clique para editar; handle ⠿ para arrastar) -->
+                                            <Border x:Name="DayLabelBorder" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="0,0,1,0"
+                                                    Padding="4,8,12,8" Background="Transparent"
                                                     MouseLeftButtonDown="DayLabel_MouseDown" Cursor="Arrow">
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding DateLabel}" FontSize="11" FontWeight="SemiBold"
-                                                               Foreground="{StaticResource AccentBrush}" />
-                                                    <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
-                                                               Margin="0,2,0,0" />
-                                                    <TextBlock Text="{Binding Summary}" FontSize="11" TextWrapping="Wrap"
-                                                               Foreground="{StaticResource MutedTextBrush}" Margin="0,3,0,0">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="18" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <!-- Drag handle -->
+                                                    <TextBlock Grid.Column="0" Text="⠿" FontSize="13"
+                                                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                               Cursor="SizeNS"
+                                                               PreviewMouseLeftButtonDown="DayHandle_MouseDown"
+                                                               PreviewMouseMove="DayHandle_MouseMove"
+                                                               PreviewMouseLeftButtonUp="DayHandle_MouseUp">
                                                         <TextBlock.Style>
                                                             <Style TargetType="TextBlock">
-                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}" />
+                                                                <Setter Property="Opacity" Value="0" />
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding HasSummary}" Value="True">
-                                                                        <Setter Property="Visibility" Value="Visible" />
+                                                                    <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                                                        <Setter Property="Opacity" Value="0.5" />
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding IsDragging}" Value="True">
+                                                                        <Setter Property="Opacity" Value="0.8" />
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </TextBlock.Style>
                                                     </TextBlock>
-                                                </StackPanel>
+
+                                                    <!-- Day info -->
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding DateLabel}" FontSize="11" FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource AccentBrush}" />
+                                                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                                   Margin="0,2,0,0" />
+                                                        <TextBlock Text="{Binding Summary}" FontSize="11" TextWrapping="Wrap"
+                                                                   Foreground="{StaticResource MutedTextBrush}" Margin="0,3,0,0">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding HasSummary}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Grid>
                                             </Border>
 
                                             <!-- Canvas area -->
@@ -2496,7 +2553,21 @@
                                                           VerticalScrollBarVisibility="Disabled"
                                                           ClipToBounds="True"
                                                           Margin="6,0">
-                                                <Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}">
+                                                <Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}"
+                                                        Background="Transparent"
+                                                        MouseLeftButtonDown="DayCanvas_MouseLeftButtonDown">
+                                                    <!-- Slot selecionado (indicador de colar bloco) -->
+                                                    <Rectangle Canvas.Top="{Binding SelectionRectTop}"
+                                                               Canvas.Left="{Binding SelectedSlotX}"
+                                                               Width="{Binding SlotWidth}"
+                                                               Height="{Binding SelectionRectHeight}"
+                                                               Fill="Transparent"
+                                                               Stroke="{StaticResource AccentBrush}"
+                                                               StrokeThickness="1.5"
+                                                               StrokeDashArray="5 3"
+                                                               Opacity="0.35"
+                                                               IsHitTestVisible="False"
+                                                               Visibility="{Binding HasSelectedSlot, Converter={StaticResource BoolToVisibility}}" />
                                                     <!-- Grid lines -->
                                                     <ItemsControl ItemsSource="{Binding SlotLinePositions}"
                                                                   Canvas.Left="0" Canvas.Top="0"
@@ -2597,8 +2668,9 @@
                                                                             </Grid>
                                                                             <TextBlock Text="{Binding DisplayDetails}"
                                                                                        FontSize="{Binding DetailsFontSize}" HorizontalAlignment="Center"
+                                                                                       TextAlignment="Center" TextWrapping="Wrap"
                                                                                        Foreground="{Binding DisplayTextColor, Converter={StaticResource StringToBrush}}"
-                                                                                       Opacity="0.78" TextTrimming="CharacterEllipsis">
+                                                                                       Opacity="0.78">
                                                                                 <TextBlock.Style>
                                                                                     <Style TargetType="TextBlock">
                                                                                         <Setter Property="Visibility" Value="Collapsed" />
@@ -2612,12 +2684,15 @@
                                                                             </TextBlock>
                                                                         </StackPanel>
                                                                     </Border>
-                                                                    <!-- Selection highlight -->
+                                                                    <!-- Selection / overlap highlight -->
                                                                     <Border CornerRadius="6" BorderThickness="2" Background="Transparent">
                                                                         <Border.Style>
                                                                             <Style TargetType="Border">
                                                                                 <Setter Property="BorderBrush" Value="Transparent" />
                                                                                 <Style.Triggers>
+                                                                                    <DataTrigger Binding="{Binding IsOverlapping}" Value="True">
+                                                                                        <Setter Property="BorderBrush" Value="#EF4444" />
+                                                                                    </DataTrigger>
                                                                                     <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                                                         <Setter Property="BorderBrush" Value="#2563EB" />
                                                                                     </DataTrigger>
@@ -2778,29 +2853,15 @@
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="180" />
-                                                        <ColumnDefinition Width="*" />
                                                         <ColumnDefinition Width="Auto" />
                                                     </Grid.ColumnDefinitions>
 
                                                     <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                                        <TextBlock Text="Nome do dia" Style="{StaticResource Caption}" />
-                                                        <TextBox Text="{Binding EditDayTitle, UpdateSourceTrigger=PropertyChanged}" Height="32" Margin="0,4,0,0" />
-                                                    </StackPanel>
-
-                                                    <StackPanel Grid.Column="1" Margin="0,0,10,0">
-                                                        <TextBlock Text="Data" Style="{StaticResource Caption}" />
-                                                        <DatePicker SelectedDate="{Binding EditDayDateDt}"
-                                                                    CalendarOpened="DayDatePicker_CalendarOpened"
-                                                                    Margin="0,4,0,0" />
-                                                    </StackPanel>
-
-                                                    <StackPanel Grid.Column="2" Margin="0,0,10,0">
                                                         <TextBlock Text="Resumo" Style="{StaticResource Caption}" />
                                                         <TextBox Text="{Binding EditDaySummary, UpdateSourceTrigger=PropertyChanged}" Height="32" Margin="0,4,0,0" />
                                                     </StackPanel>
 
-                                                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
                                                         <Button Style="{StaticResource CardActionButton}" ToolTip="Aceitar (Enter)" Click="AcceptDayEdit_Click" Margin="0,0,2,0">
                                                             <TextBlock Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
                                                         </Button>
@@ -2916,7 +2977,20 @@
                                                                   VerticalScrollBarVisibility="Disabled"
                                                                   ClipToBounds="True" Margin="6,0">
                                                         <Canvas Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}"
+                                                                Background="Transparent"
                                                                 MouseLeftButtonDown="DayCanvas_MouseLeftButtonDown">
+                                                            <!-- Slot selecionado (indicador de colar bloco) -->
+                                                            <Rectangle Canvas.Top="{Binding SelectionRectTop}"
+                                                                       Canvas.Left="{Binding SelectedSlotX}"
+                                                                       Width="{Binding SlotWidth}"
+                                                                       Height="{Binding SelectionRectHeight}"
+                                                                       Fill="Transparent"
+                                                                       Stroke="{StaticResource AccentBrush}"
+                                                                       StrokeThickness="1.5"
+                                                                       StrokeDashArray="5 3"
+                                                                       Opacity="0.35"
+                                                                       IsHitTestVisible="False"
+                                                                       Visibility="{Binding HasSelectedSlot, Converter={StaticResource BoolToVisibility}}" />
                                                             <!-- Grid lines -->
                                                             <ItemsControl ItemsSource="{Binding SlotLinePositions}"
                                                                           Canvas.Left="0" Canvas.Top="0"
@@ -3012,8 +3086,9 @@
                                                                                     </Grid>
                                                                                     <TextBlock Text="{Binding DisplayDetails}"
                                                                                                FontSize="{Binding DetailsFontSize}" HorizontalAlignment="Center"
+                                                                                               TextAlignment="Center" TextWrapping="Wrap"
                                                                                                Foreground="{Binding DisplayTextColor, Converter={StaticResource StringToBrush}}"
-                                                                                               Opacity="0.78" TextTrimming="CharacterEllipsis">
+                                                                                               Opacity="0.78">
                                                                                         <TextBlock.Style>
                                                                                             <Style TargetType="TextBlock">
                                                                                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -3032,6 +3107,9 @@
                                                                                     <Style TargetType="Border">
                                                                                         <Setter Property="BorderBrush" Value="Transparent" />
                                                                                         <Style.Triggers>
+                                                                                            <DataTrigger Binding="{Binding IsOverlapping}" Value="True">
+                                                                                                <Setter Property="BorderBrush" Value="#EF4444" />
+                                                                                            </DataTrigger>
                                                                                             <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                                                                 <Setter Property="BorderBrush" Value="#2563EB" />
                                                                                             </DataTrigger>
