@@ -6,12 +6,12 @@
 
 ## Prioridade Baixa
 
-- App Android/Web
-  
-   - Separar regras de domínio em biblioteca compartilhável.
-   - Definir contrato estável do `trip.json`.
-   - Avaliar MAUI, Avalonia, React Native ou web app local-first.
-   - Definir sincronização/conflito para uso em múltiplos dispositivos.
+- App Android (`UltraViagem.Android` — MAUI, fase 1 viewer)
+
+   - Viewer básico implementado: navegação Shell → TripsPage → TripPage (tabs).
+   - Bugs de build corrigidos: bindings compilados em `ItineraryPage` ajustados via `NumberedDay` wrapper.
+   - Abrir recentes via `File.OpenRead` pode falhar em Android 10+ se o cache do picker foi limpo — usar URI persistida futuramente.
+   - Próximos passos: separar Core em biblioteca compartilhada, definir contrato estável do `trip.json`, avaliar sincronização multi-dispositivo.
 
 ## Dívidas Técnicas
 

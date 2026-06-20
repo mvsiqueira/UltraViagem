@@ -24,12 +24,12 @@
         <Setter Property="Shell.TabBarUnselectedColor" Value="{StaticResource TextMuted}" />
     </Style>
 
-    <Style x:Key="CardFrame" TargetType="Frame">
+    <Style x:Key="CardFrame" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource Surface}" />
-        <Setter Property="BorderColor" Value="{StaticResource Border}" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Stroke" Value="{StaticResource Border}" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 10" />
+        <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="Padding" Value="14" />
-        <Setter Property="HasShadow" Value="False" />
         <Setter Property="Margin" Value="0,0,0,10" />
     </Style>
 

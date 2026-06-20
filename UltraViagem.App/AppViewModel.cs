@@ -1815,8 +1815,12 @@ public sealed class ItineraryDayViewModel : NotifyObject
 
     public string Id { get => _id; set => SetField(ref _id, value); }
     public string Title => $"Dia {_number}";
-    public string Summary { get => _summary; set { if (SetField(ref _summary, value)) { OnPropertyChanged(nameof(HasSummary)); OnPropertyChanged(nameof(CardTitle)); } } }
+    public string Summary { get => _summary; set { if (SetField(ref _summary, value)) { OnPropertyChanged(nameof(HasSummary)); OnPropertyChanged(nameof(CardTitle)); OnPropertyChanged(nameof(FlightIcon)); OnPropertyChanged(nameof(HasFlightIcon)); } } }
     public bool HasSummary => !string.IsNullOrWhiteSpace(_summary);
+    public string? FlightIcon => _summary.Trim().Equals("ida",   StringComparison.OrdinalIgnoreCase) ? "🛫"
+                                : _summary.Trim().Equals("volta", StringComparison.OrdinalIgnoreCase) ? "🛬"
+                                : null;
+    public bool HasFlightIcon => FlightIcon is not null;
 
     /// <summary>Título exibido no card da visão geral: Summary se preenchido, senão nome do Pernoite.</summary>
     public string CardTitle => !string.IsNullOrWhiteSpace(_summary)

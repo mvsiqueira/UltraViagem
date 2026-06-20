@@ -19,7 +19,7 @@
             <!-- Cards info -->
             <Label Text="Detalhes" Style="{StaticResource SectionHeader}" />
 
-            <Frame Style="{StaticResource CardFrame}">
+            <Border Style="{StaticResource CardFrame}">
                 <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="16" RowSpacing="12">
 
                     <!-- Pessoas -->
@@ -47,7 +47,7 @@
                     </VerticalStackLayout>
 
                 </Grid>
-            </Frame>
+            </Border>
 
             <!-- Mapa -->
             <Button Text="Abrir no Google Maps"

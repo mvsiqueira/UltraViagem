@@ -525,6 +525,7 @@
                                                                     Background="{StaticResource AccentSoftBrush}"
                                                                     ClipToBounds="True">
                                                                 <Grid>
+                                                                    <!-- Ícone padrão 🗺 (oculto se há avião ou imagem) -->
                                                                     <TextBlock Text="🗺" FontFamily="Segoe UI Emoji"
                                                                                FontSize="26" HorizontalAlignment="Center"
                                                                                VerticalAlignment="Center">
@@ -534,10 +535,18 @@
                                                                                     <DataTrigger Binding="{Binding HasCoverImage}" Value="True">
                                                                                         <Setter Property="Visibility" Value="Collapsed" />
                                                                                     </DataTrigger>
+                                                                                    <DataTrigger Binding="{Binding HasFlightIcon}" Value="True">
+                                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                                    </DataTrigger>
                                                                                 </Style.Triggers>
                                                                             </Style>
                                                                         </TextBlock.Style>
                                                                     </TextBlock>
+                                                                    <!-- Ícone de avião para ida/volta -->
+                                                                    <TextBlock Text="{Binding FlightIcon}" FontFamily="Segoe UI Emoji"
+                                                                               FontSize="28" HorizontalAlignment="Center"
+                                                                               VerticalAlignment="Center"
+                                                                               Visibility="{Binding HasFlightIcon, Converter={StaticResource BoolToVisibility}}" />
                                                                     <Image Source="{Binding CoverImage}" Stretch="UniformToFill"
                                                                            Visibility="{Binding HasCoverImage, Converter={StaticResource BoolToVisibility}}" />
                                                                     <!-- Botão de reload: overlay invisível, aparece no hover -->

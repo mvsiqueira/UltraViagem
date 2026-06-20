@@ -2,34 +2,35 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:core="clr-namespace:UltraViagem.Core;assembly=UltraViagem.Core"
+             xmlns:vm="clr-namespace:UltraViagem.Android.ViewModels"
              x:Class="UltraViagem.Android.Pages.ItineraryPage"
              Title="Roteiro">
 
-    <CollectionView ItemsSource="{Binding ActiveVersion.Itinerary}"
+    <CollectionView ItemsSource="{Binding DisplayItinerary}"
                     Margin="16,8">
 
         <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="core:ItineraryDay">
+            <DataTemplate x:DataType="vm:NumberedDay">
                 <VerticalStackLayout Spacing="6" Margin="0,0,0,16">
 
                     <!-- Cabeçalho do dia -->
                     <Grid ColumnDefinitions="40,*" ColumnSpacing="10">
-                        <Frame Grid.Column="0"
+                        <Border Grid.Column="0"
                                BackgroundColor="{StaticResource AccentLight}"
-                               BorderColor="Transparent"
-                               CornerRadius="8" Padding="0"
+                               Stroke="Transparent"
+                               StrokeShape="RoundRectangle 8" Padding="0"
                                HeightRequest="40" WidthRequest="40">
-                            <Label Text="{Binding Title}"
+                            <Label Text="{Binding Label}"
                                    TextColor="{StaticResource Accent}"
                                    FontAttributes="Bold" FontSize="12"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center" />
-                        </Frame>
+                        </Border>
                         <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
                             <Label Text="{Binding Summary}"
                                    FontAttributes="Bold" FontSize="15"
                                    TextColor="{StaticResource TextPrimary}" />
-                            <Label Text="{Binding Date, StringFormat='{0:ddd\, dd/MM/yyyy}'}"
+                            <Label Text="{Binding DateLabel}"
                                    Style="{StaticResource MutedLabel}" FontSize="12" />
                         </VerticalStackLayout>
                     </Grid>
@@ -39,14 +40,13 @@
                                 Wrap="Wrap" Direction="Row" Gap="6">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="core:ItineraryActivity">
-                                <Frame CornerRadius="16"
+                                <Border StrokeShape="RoundRectangle 16"
                                        Padding="10,5"
-                                       HasShadow="False"
-                                       BorderColor="Transparent">
-                                    <Frame.BackgroundColor>
+                                       Stroke="Transparent">
+                                    <Border.BackgroundColor>
                                         <Binding Path="Color"
                                                  Converter="{x:StaticResource HexToColor}" />
-                                    </Frame.BackgroundColor>
+                                    </Border.BackgroundColor>
                                     <Label Text="{Binding Title}"
                                            FontSize="12"
                                            LineBreakMode="NoWrap">
@@ -55,7 +55,7 @@
                                                      Converter="{x:StaticResource HexToContrastColor}" />
                                         </Label.TextColor>
                                     </Label>
-                                </Frame>
+                                </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </FlexLayout>

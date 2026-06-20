@@ -4,31 +4,34 @@ namespace UltraViagem.Android.Pages;
 
 public partial class TripsPage : ContentPage
 {
-    private readonly TripsViewModel _vm;
-    private readonly TripViewModel  _tripVm;
+    private TripsViewModel? _vm;
+    private TripViewModel?  _tripVm;
 
-    public TripsPage(TripsViewModel vm, TripViewModel tripVm)
-    {
-        InitializeComponent();
-        _vm     = vm;
-        _tripVm = tripVm;
-        BindingContext = vm;
-
-        // Observa quando uma viagem é carregada para navegar
-        vm.PropertyChanged += async (_, e) =>
-        {
-            if (e.PropertyName == nameof(TripsViewModel.LoadedTrip) && vm.LoadedTrip is not null)
-            {
-                _tripVm.Load(vm.LoadedTrip);
-                TripViewModel.Current = _tripVm;
-                await Shell.Current.GoToAsync("trip");
-            }
-        };
-    }
+    public TripsPage() => InitializeComponent();
 
     protected override void OnAppearing()
     {
         base.OnAppearing();
+
+        if (_vm == null)
+        {
+            var svc = IPlatformApplication.Current!.Services;
+            _vm    = svc.GetRequiredService<TripsViewModel>();
+            _tripVm = svc.GetRequiredService<TripViewModel>();
+            BindingContext = _vm;
+            _vm.PropertyChanged += OnVmPropertyChanged;
+        }
+
         _vm.RefreshRecents();
+    }
+
+    private async void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(TripsViewModel.LoadedTrip) && _vm!.LoadedTrip is not null)
+        {
+            _tripVm!.Load(_vm.LoadedTrip);
+            TripViewModel.Current = _tripVm;
+            await Shell.Current.GoToAsync("trip");
+        }
     }
 }

@@ -8,7 +8,7 @@ public partial class LinksPage : ContentPage
 
     private async void OnLinkTapped(object sender, TappedEventArgs e)
     {
-        if (sender is Frame { BindingContext: LinkItem link } &&
+        if (sender is Border { BindingContext: LinkItem link } &&
             Uri.TryCreate(link.Url, UriKind.Absolute, out var uri))
         {
             await Launcher.Default.OpenAsync(uri);

@@ -9,5 +9,5 @@
         <activity android:exported="true" android:name="crc64e1fb321c08285b90.MainActivity" />
     </application>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
 </manifest>

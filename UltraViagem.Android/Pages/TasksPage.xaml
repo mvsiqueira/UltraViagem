@@ -13,18 +13,18 @@
                 <Grid ColumnDefinitions="32,*" ColumnSpacing="10" Padding="0,8">
 
                     <!-- Checkbox visual (não interativo) -->
-                    <Frame Grid.Column="0"
+                    <Border Grid.Column="0"
                            WidthRequest="22" HeightRequest="22"
-                           CornerRadius="4" Padding="0"
-                           BorderColor="{StaticResource Border}"
+                           StrokeShape="RoundRectangle 4" Padding="0"
+                           Stroke="{StaticResource Border}"
                            HorizontalOptions="Center" VerticalOptions="Center">
-                        <Frame.Triggers>
-                            <DataTrigger TargetType="Frame"
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border"
                                          Binding="{Binding Status}" Value="done">
                                 <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
                                 <Setter Property="BorderColor" Value="{StaticResource Accent}" />
                             </DataTrigger>
-                        </Frame.Triggers>
+                        </Border.Triggers>
                         <Label Text="✓" FontSize="12" FontAttributes="Bold"
                                TextColor="White"
                                HorizontalOptions="Center" VerticalOptions="Center">
@@ -35,7 +35,7 @@
                                 </DataTrigger>
                             </Label.Triggers>
                         </Label>
-                    </Frame>
+                    </Border>
 
                     <!-- Texto -->
                     <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">

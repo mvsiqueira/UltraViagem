@@ -28,7 +28,7 @@
                                     SelectionMode="None">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <Frame Style="{StaticResource CardFrame}">
+                                <Border Style="{StaticResource CardFrame}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <VerticalStackLayout Grid.Column="0" Spacing="2">
                                             <Label Text="{Binding Title}"
@@ -39,19 +39,22 @@
                                                    FontSize="11"
                                                    LineBreakMode="TailTruncation" />
                                         </VerticalStackLayout>
-                                        <ImageButton Grid.Column="1"
-                                                     Source="close.png"
-                                                     BackgroundColor="Transparent"
-                                                     WidthRequest="32" HeightRequest="32"
-                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TripsViewModel}}, Path=RemoveRecentCommand}"
-                                                     CommandParameter="{Binding .}" />
+                                        <Button Grid.Column="1"
+                                                Text="✕"
+                                                BackgroundColor="Transparent"
+                                                TextColor="{StaticResource TextMuted}"
+                                                FontSize="16"
+                                                WidthRequest="36" HeightRequest="36"
+                                                Padding="0"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TripsViewModel}}, Path=RemoveRecentCommand}"
+                                                CommandParameter="{Binding .}" />
                                     </Grid>
-                                    <Frame.GestureRecognizers>
+                                    <Border.GestureRecognizers>
                                         <TapGestureRecognizer
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TripsViewModel}}, Path=OpenRecentCommand}"
                                             CommandParameter="{Binding .}" />
-                                    </Frame.GestureRecognizers>
-                                </Frame>
+                                    </Border.GestureRecognizers>
+                                </Border>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                         <CollectionView.EmptyView>

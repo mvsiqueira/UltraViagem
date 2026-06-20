@@ -21,15 +21,20 @@ public sealed class TripViewModel : BindableObject
     public bool   HasLinks      => Trip.Links.Count > 0;
     public bool   HasExpenses   => Trip.Expenses.Count > 0;
 
+    public List<NumberedDay> DisplayItinerary { get; private set; } = [];
+
     public void Load(Trip trip)
     {
         Trip = trip;
         ActiveVersion = trip.ItineraryVersions.FirstOrDefault(v => v.Id == trip.ActiveVersionId)
                      ?? trip.ItineraryVersions.FirstOrDefault();
 
-        DurationLabel = BuildDurationLabel(trip);
-        TotalLabel    = BuildTotalLabel(trip);
-        PaidLabel     = BuildPaidLabel(trip);
+        DurationLabel    = BuildDurationLabel(trip);
+        TotalLabel       = BuildTotalLabel(trip);
+        PaidLabel        = BuildPaidLabel(trip);
+        DisplayItinerary = ActiveVersion?.Itinerary
+            .Select((d, i) => new NumberedDay(d, i + 1, trip.StartDate?.AddDays(i)))
+            .ToList() ?? [];
 
         OnPropertyChanged(nameof(Trip));
         OnPropertyChanged(nameof(ActiveVersion));
@@ -40,6 +45,7 @@ public sealed class TripViewModel : BindableObject
         OnPropertyChanged(nameof(HasTasks));
         OnPropertyChanged(nameof(HasLinks));
         OnPropertyChanged(nameof(HasExpenses));
+        OnPropertyChanged(nameof(DisplayItinerary));
     }
 
     private static string BuildDurationLabel(Trip trip)
@@ -94,5 +100,22 @@ public sealed class TripViewModel : BindableObject
         int b = Convert.ToInt32(hexColor[4..6], 16);
         double brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
         return brightness > 0.55 ? "#111827" : "#FFFFFF";
+    }
+}
+
+/// <summary>Wrapper que expõe número e data calculados de um ItineraryDay.</summary>
+public sealed class NumberedDay
+{
+    public string Label     { get; }
+    public string DateLabel { get; }
+    public string Summary   { get; }
+    public List<ItineraryActivity> Activities { get; }
+
+    public NumberedDay(ItineraryDay day, int number, DateOnly? date)
+    {
+        Label      = $"D{number}";
+        DateLabel  = date?.ToString("ddd, dd/MM/yyyy", new System.Globalization.CultureInfo("pt-BR")) ?? "";
+        Summary    = day.Summary;
+        Activities = day.Activities;
     }
 }
