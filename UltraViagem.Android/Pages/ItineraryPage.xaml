@@ -37,11 +37,12 @@
 
                     <!-- Chips das atividades -->
                     <FlexLayout BindableLayout.ItemsSource="{Binding Activities}"
-                                Wrap="Wrap" Direction="Row" Gap="6">
+                                Wrap="Wrap" Direction="Row">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="core:ItineraryActivity">
                                 <Border StrokeShape="RoundRectangle 16"
                                        Padding="10,5"
+                                       Margin="0,0,6,6"
                                        Stroke="Transparent">
                                     <Border.BackgroundColor>
                                         <Binding Path="Color"

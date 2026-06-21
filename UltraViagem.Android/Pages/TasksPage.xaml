@@ -22,7 +22,7 @@
                             <DataTrigger TargetType="Border"
                                          Binding="{Binding Status}" Value="done">
                                 <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                                <Setter Property="BorderColor" Value="{StaticResource Accent}" />
+                                <Setter Property="Stroke" Value="{StaticResource Accent}" />
                             </DataTrigger>
                         </Border.Triggers>
                         <Label Text="✓" FontSize="12" FontAttributes="Bold"
