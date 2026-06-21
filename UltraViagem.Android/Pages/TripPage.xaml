@@ -1,16 +1,125 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<TabbedPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-            xmlns:pages="clr-namespace:UltraViagem.Android.Pages"
-            x:Class="UltraViagem.Android.Pages.TripPage"
-            BarBackgroundColor="{StaticResource Surface}"
-            SelectedTabColor="{StaticResource Accent}"
-            UnselectedTabColor="{StaticResource TextMuted}">
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltraViagem.Android.Pages.TripPage"
+             NavigationPage.HasNavigationBar="False">
 
-    <pages:OverviewPage  Title="Visão Geral" />
-    <pages:ItineraryPage Title="Roteiro" />
-    <pages:ExpensesPage  Title="Gastos" />
-    <pages:LinksPage     Title="Dicas" />
-    <pages:TasksPage     Title="Tarefas" />
+    <Grid>
 
-</TabbedPage>
+        <!-- ── LAYOUT PRINCIPAL ── -->
+        <Grid RowDefinitions="56,*">
+
+            <!-- Barra superior -->
+            <Grid Grid.Row="0" ColumnDefinitions="56,*,56"
+                  BackgroundColor="{StaticResource Surface}">
+                <BoxView Grid.ColumnSpan="3" VerticalOptions="End"
+                         HeightRequest="1" Color="{StaticResource Border}" />
+                <Button Grid.Column="0"
+                        Text="☰" FontSize="20" Padding="0"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource TextPrimary}"
+                        Clicked="OnHamburgerClicked" />
+                <Label Grid.Column="1" x:Name="ToolbarTitle"
+                       VerticalOptions="Center" HorizontalOptions="Center"
+                       FontSize="15" FontAttributes="Bold"
+                       TextColor="{StaticResource TextPrimary}"
+                       LineBreakMode="TailTruncation" />
+                <Button Grid.Column="2"
+                        Text="✕" FontSize="16" Padding="0"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource TextMuted}"
+                        Clicked="OnCloseClicked" />
+            </Grid>
+
+            <!-- Área de conteúdo da seção atual -->
+            <ContentView Grid.Row="1" x:Name="ContentArea" />
+
+        </Grid>
+
+        <!-- ── SCRIM (escurece o conteúdo quando o drawer abre) ── -->
+        <BoxView x:Name="DrawerScrim"
+                 BackgroundColor="#80000000"
+                 Opacity="0" IsVisible="False">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnScrimTapped" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+
+        <!-- ── PAINEL LATERAL ── -->
+        <Grid x:Name="DrawerPanel"
+              WidthRequest="280"
+              HorizontalOptions="Start"
+              BackgroundColor="{StaticResource Surface}"
+              TranslationX="-280">
+            <VerticalStackLayout>
+
+                <!-- Cabeçalho -->
+                <Grid HeightRequest="120"
+                      BackgroundColor="{StaticResource Accent}"
+                      Padding="20,0,20,16">
+                    <Label x:Name="DrawerTripName"
+                           TextColor="White"
+                           FontSize="15" FontAttributes="Bold"
+                           VerticalOptions="End"
+                           LineBreakMode="TailTruncation" />
+                </Grid>
+
+                <!-- Itens de navegação -->
+                <VerticalStackLayout Spacing="0" Padding="0,8,0,0">
+
+                    <Grid ColumnDefinitions="4,*" HeightRequest="52">
+                        <BoxView x:Name="Bar0" Grid.Column="0" BackgroundColor="{StaticResource Accent}" IsVisible="False" />
+                        <Label x:Name="Label0" Grid.Column="1" Text="Visão Geral"
+                               VerticalOptions="Center" Margin="20,0,0,0" FontSize="15"
+                               TextColor="{StaticResource TextPrimary}" />
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavItemTapped" CommandParameter="0" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="4,*" HeightRequest="52">
+                        <BoxView x:Name="Bar1" Grid.Column="0" BackgroundColor="{StaticResource Accent}" IsVisible="False" />
+                        <Label x:Name="Label1" Grid.Column="1" Text="Roteiro"
+                               VerticalOptions="Center" Margin="20,0,0,0" FontSize="15"
+                               TextColor="{StaticResource TextPrimary}" />
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavItemTapped" CommandParameter="1" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="4,*" HeightRequest="52">
+                        <BoxView x:Name="Bar2" Grid.Column="0" BackgroundColor="{StaticResource Accent}" IsVisible="False" />
+                        <Label x:Name="Label2" Grid.Column="1" Text="Gastos"
+                               VerticalOptions="Center" Margin="20,0,0,0" FontSize="15"
+                               TextColor="{StaticResource TextPrimary}" />
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavItemTapped" CommandParameter="2" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="4,*" HeightRequest="52">
+                        <BoxView x:Name="Bar3" Grid.Column="0" BackgroundColor="{StaticResource Accent}" IsVisible="False" />
+                        <Label x:Name="Label3" Grid.Column="1" Text="Dicas"
+                               VerticalOptions="Center" Margin="20,0,0,0" FontSize="15"
+                               TextColor="{StaticResource TextPrimary}" />
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavItemTapped" CommandParameter="3" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="4,*" HeightRequest="52">
+                        <BoxView x:Name="Bar4" Grid.Column="0" BackgroundColor="{StaticResource Accent}" IsVisible="False" />
+                        <Label x:Name="Label4" Grid.Column="1" Text="Tarefas"
+                               VerticalOptions="Center" Margin="20,0,0,0" FontSize="15"
+                               TextColor="{StaticResource TextPrimary}" />
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavItemTapped" CommandParameter="4" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Grid>
+
+    </Grid>
+</ContentPage>

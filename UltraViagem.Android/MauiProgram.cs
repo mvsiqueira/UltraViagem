@@ -16,7 +16,6 @@ public static class MauiProgram
         builder.Services.AddSingleton<TripsViewModel>();
         builder.Services.AddTransient<TripViewModel>();
         builder.Services.AddTransient<TripsPage>();
-        builder.Services.AddTransient<TripPage>();
         builder.Services.AddTransient<OverviewPage>();
         builder.Services.AddTransient<ItineraryPage>();
         builder.Services.AddTransient<TasksPage>();

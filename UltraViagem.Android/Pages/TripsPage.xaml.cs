@@ -1,3 +1,4 @@
+using UltraViagem.Android.Services;
 using UltraViagem.Android.ViewModels;
 
 namespace UltraViagem.Android.Pages;
@@ -23,6 +24,21 @@ public partial class TripsPage : ContentPage
         }
 
         _vm.RefreshRecents();
+    }
+
+    private void OnRecentSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is CollectionView cv && e.CurrentSelection.FirstOrDefault() is RecentTrip recent)
+        {
+            cv.SelectedItem = null;
+            _vm!.OpenRecentCommand.Execute(recent);
+        }
+    }
+
+    private void OnRemoveRecentClicked(object? sender, EventArgs e)
+    {
+        if (sender is BindableObject bo && bo.BindingContext is RecentTrip recent)
+            _vm!.RemoveRecentCommand.Execute(recent);
     }
 
     private async void OnVmPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

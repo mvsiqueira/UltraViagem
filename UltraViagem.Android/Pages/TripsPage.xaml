@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:UltraViagem.Android.ViewModels"
+             xmlns:svc="clr-namespace:UltraViagem.Android.Services"
              x:Class="UltraViagem.Android.Pages.TripsPage"
              Title="UltraViagem">
 
@@ -25,9 +25,10 @@
                            IsVisible="{Binding Recents.Count, Converter={x:StaticResource CountToBool}}" />
 
                     <CollectionView ItemsSource="{Binding Recents}"
-                                    SelectionMode="None">
+                                    SelectionMode="Single"
+                                    SelectionChanged="OnRecentSelectionChanged">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="svc:RecentTrip">
                                 <Border Style="{StaticResource CardFrame}">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <VerticalStackLayout Grid.Column="0" Spacing="2">
@@ -46,14 +47,8 @@
                                                 FontSize="16"
                                                 WidthRequest="36" HeightRequest="36"
                                                 Padding="0"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TripsViewModel}}, Path=RemoveRecentCommand}"
-                                                CommandParameter="{Binding .}" />
+                                                Clicked="OnRemoveRecentClicked" />
                                     </Grid>
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TripsViewModel}}, Path=OpenRecentCommand}"
-                                            CommandParameter="{Binding .}" />
-                                    </Border.GestureRecognizers>
                                 </Border>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
