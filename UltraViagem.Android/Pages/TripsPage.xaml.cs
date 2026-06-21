@@ -31,7 +31,7 @@ public partial class TripsPage : ContentPage
         {
             _tripVm!.Load(_vm.LoadedTrip);
             TripViewModel.Current = _tripVm;
-            await Shell.Current.GoToAsync("trip");
+            await Navigation.PushModalAsync(new TripPage());
         }
     }
 }
