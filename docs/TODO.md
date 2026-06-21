@@ -8,8 +8,9 @@
 
 - App Android (`UltraViagem.Android` — MAUI, fase 1 viewer)
 
-   - Viewer básico implementado: navegação Shell → TripsPage → TripPage (tabs).
+   - Viewer básico implementado e funcionando: navegação Shell → TripsPage → TripPage (tabs).
    - Bugs de build corrigidos: bindings compilados em `ItineraryPage` ajustados via `NumberedDay` wrapper.
+   - Bug crítico de inicialização corrigido: `MainApplication.cs` (subclasse de `MauiApplication`) estava ausente; sem ela o Android nunca chama `CreateMauiApp()` e o app exibe tela branca.
    - Abrir recentes via `File.OpenRead` pode falhar em Android 10+ se o cache do picker foi limpo — usar URI persistida futuramente.
    - Próximos passos: separar Core em biblioteca compartilhada, definir contrato estável do `trip.json`, avaliar sincronização multi-dispositivo.
 

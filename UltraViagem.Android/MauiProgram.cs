@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using UltraViagem.Android.Pages;
 using UltraViagem.Android.Services;
 using UltraViagem.Android.ViewModels;
 
@@ -9,29 +10,18 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
-        builder
-            .UseMauiApp<App>()
-            .ConfigureFonts(fonts =>
-            {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-            });
+        builder.UseMauiApp<App>();
 
-        // Serviços
         builder.Services.AddSingleton<TripFileService>();
-
-        // ViewModels
         builder.Services.AddSingleton<TripsViewModel>();
         builder.Services.AddTransient<TripViewModel>();
-
-        // Pages
-        builder.Services.AddSingleton<Pages.TripsPage>();
-        builder.Services.AddTransient<Pages.TripPage>();
-        builder.Services.AddTransient<Pages.OverviewPage>();
-        builder.Services.AddTransient<Pages.ItineraryPage>();
-        builder.Services.AddTransient<Pages.ExpensesPage>();
-        builder.Services.AddTransient<Pages.LinksPage>();
-        builder.Services.AddTransient<Pages.TasksPage>();
+        builder.Services.AddTransient<TripsPage>();
+        builder.Services.AddTransient<TripPage>();
+        builder.Services.AddTransient<OverviewPage>();
+        builder.Services.AddTransient<ItineraryPage>();
+        builder.Services.AddTransient<TasksPage>();
+        builder.Services.AddTransient<ExpensesPage>();
+        builder.Services.AddTransient<LinksPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();
