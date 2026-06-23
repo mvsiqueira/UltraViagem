@@ -54,14 +54,30 @@
             <VerticalStackLayout>
 
                 <!-- Cabeçalho -->
-                <Grid HeightRequest="120"
+                <Grid HeightRequest="160"
                       BackgroundColor="{StaticResource Accent}"
-                      Padding="20,0,20,16">
-                    <Label x:Name="DrawerTripName"
-                           TextColor="White"
-                           FontSize="15" FontAttributes="Bold"
-                           VerticalOptions="End"
-                           LineBreakMode="TailTruncation" />
+                      Padding="20,44,20,16">
+                    <VerticalStackLayout VerticalOptions="Fill" Spacing="0">
+
+                        <!-- Logo + nome do app na mesma linha -->
+                        <HorizontalStackLayout Spacing="10" VerticalOptions="Start">
+                            <Image Source="logo.png"
+                                   HeightRequest="32" WidthRequest="32"
+                                   VerticalOptions="Center" />
+                            <Label Text="UltraViagem"
+                                   TextColor="White"
+                                   FontSize="22" FontAttributes="Bold"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+
+                        <!-- Nome da viagem -->
+                        <Label x:Name="DrawerTripName"
+                               TextColor="#CCffffff"
+                               FontSize="12"
+                               Margin="0,10,0,0"
+                               LineBreakMode="TailTruncation" />
+
+                    </VerticalStackLayout>
                 </Grid>
 
                 <!-- Itens de navegação -->
@@ -114,6 +130,16 @@
                                TextColor="{StaticResource TextPrimary}" />
                         <Grid.GestureRecognizers>
                             <TapGestureRecognizer Tapped="OnNavItemTapped" CommandParameter="4" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="4,*" HeightRequest="52">
+                        <BoxView x:Name="Bar5" Grid.Column="0" BackgroundColor="{StaticResource Accent}" IsVisible="False" />
+                        <Label x:Name="Label5" Grid.Column="1" Text="Arquivos"
+                               VerticalOptions="Center" Margin="20,0,0,0" FontSize="15"
+                               TextColor="{StaticResource TextPrimary}" />
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnNavItemTapped" CommandParameter="5" />
                         </Grid.GestureRecognizers>
                     </Grid>
 

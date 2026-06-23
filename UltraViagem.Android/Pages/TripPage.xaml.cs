@@ -6,10 +6,11 @@ public partial class TripPage : ContentPage
 {
     private readonly TripViewModel _vm;
     private bool _drawerOpen;
+    private int _currentSection;
     private (BoxView bar, Label label)[] _navItems = null!;
 
     private static readonly string[] SectionTitles =
-        ["Visão Geral", "Roteiro", "Gastos", "Dicas", "Tarefas"];
+        ["Visão Geral", "Roteiro", "Gastos", "Dicas", "Tarefas", "Arquivos"];
 
     public TripPage()
     {
@@ -26,13 +27,46 @@ public partial class TripPage : ContentPage
             (Bar2, Label2),
             (Bar3, Label3),
             (Bar4, Label4),
+            (Bar5, Label5),
         ];
 
         ShowSection(0);
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _vm.SectionRequested -= ShowSection;
+        _vm.SectionRequested += ShowSection;
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        _vm.SectionRequested -= ShowSection;
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (_drawerOpen)
+        {
+            _ = CloseDrawer();
+            return true;
+        }
+        // Em uma seção interna, o back volta para a Visão Geral
+        if (_currentSection != 0)
+        {
+            ShowSection(0);
+            return true;
+        }
+        // Na Visão Geral, deixa o comportamento padrão (fecha a viagem → lista)
+        return base.OnBackButtonPressed();
+    }
+
     private void ShowSection(int index)
     {
+        _currentSection = index;
+
         var accent  = (Color)Application.Current!.Resources["Accent"];
         var primary = (Color)Application.Current!.Resources["TextPrimary"];
 
@@ -52,6 +86,7 @@ public partial class TripPage : ContentPage
             2 => new ExpensesPage(),
             3 => new LinksPage(),
             4 => new TasksPage(),
+            5 => new FilesPage(),
             _ => new OverviewPage(),
         };
         ContentArea.Content = page.Content;

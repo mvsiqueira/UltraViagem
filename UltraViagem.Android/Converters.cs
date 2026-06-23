@@ -59,3 +59,37 @@ public sealed class StringToBoolConverter : IValueConverter
         => value is string s && !string.IsNullOrWhiteSpace(s);
     public object ConvertBack(object? value, Type t, object? p, CultureInfo c) => throw new NotImplementedException();
 }
+
+/// <summary>Extrai a extensão de um nome de arquivo e retorna em maiúsculas (ex: "PDF").</summary>
+public sealed class FileExtLabelConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not string filename) return "?";
+        var ext = Path.GetExtension(filename).TrimStart('.').ToUpperInvariant();
+        return ext.Length > 4 ? ext[..4] : (ext.Length > 0 ? ext : "?");
+    }
+    public object ConvertBack(object? value, Type t, object? p, CultureInfo c) => throw new NotImplementedException();
+}
+
+/// <summary>Mapeia extensão de arquivo para uma cor de badge.</summary>
+public sealed class FileExtColorConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        var ext = (value is string s ? Path.GetExtension(s).TrimStart('.').ToLowerInvariant() : "");
+        return ext switch
+        {
+            "pdf"                           => Color.FromArgb("#EF4444"),
+            "doc" or "docx"                 => Color.FromArgb("#3B82F6"),
+            "xls" or "xlsx"                 => Color.FromArgb("#22C55E"),
+            "png" or "jpg" or "jpeg"
+                or "gif" or "webp" or "svg" => Color.FromArgb("#8B5CF6"),
+            "mp4" or "mov" or "avi"
+                or "mkv"                    => Color.FromArgb("#EC4899"),
+            "zip" or "rar" or "7z"          => Color.FromArgb("#F97316"),
+            _                               => Color.FromArgb("#6B7280"),
+        };
+    }
+    public object ConvertBack(object? value, Type t, object? p, CultureInfo c) => throw new NotImplementedException();
+}

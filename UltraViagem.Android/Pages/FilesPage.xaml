@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:UltraViagem.Android.Pages"
+             xmlns:controls="clr-namespace:UltraViagem.Android.Controls"
+             x:Class="UltraViagem.Android.Pages.FilesPage"
+             Title="Arquivos">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <CollectionView x:Name="FilesList"
+                        Grid.Row="0"
+                        Margin="16,8,16,8"
+                        SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="local:SelectableFile">
+                    <controls:LongPressBorder Style="{StaticResource CardFrame}"
+                                             Tapped="OnFileTapped"
+                                             LongPressed="OnFileLongPressed">
+                        <Grid ColumnDefinitions="Auto,52,*,Auto" ColumnSpacing="8" VerticalOptions="Center">
+
+                            <!-- Checkbox (modo seleção) -->
+                            <Border Grid.Column="0"
+                                    WidthRequest="24" HeightRequest="24"
+                                    StrokeShape="RoundRectangle 5"
+                                    Stroke="{StaticResource Accent}"
+                                    VerticalOptions="Center"
+                                    IsVisible="{Binding IsSelectionMode}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border"
+                                                 Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="✓" FontSize="11" FontAttributes="Bold"
+                                       TextColor="White"
+                                       HorizontalOptions="Center" VerticalOptions="Center"
+                                       IsVisible="{Binding IsSelected}" />
+                            </Border>
+
+                            <!-- Badge extensão -->
+                            <Border Grid.Column="1"
+                                    WidthRequest="44" HeightRequest="44"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 8"
+                                    BackgroundColor="{Binding File, Converter={x:StaticResource FileExtColor}}"
+                                    HorizontalOptions="Start" VerticalOptions="Center">
+                                <Label Text="{Binding File, Converter={x:StaticResource FileExtLabel}}"
+                                       TextColor="White"
+                                       FontSize="11" FontAttributes="Bold"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+
+                            <!-- Nome do arquivo -->
+                            <!-- Nome do arquivo -->
+                            <Label Grid.Column="2"
+                                   Text="{Binding File}"
+                                   Style="{StaticResource TitleLabel}"
+                                   FontSize="14"
+                                   LineBreakMode="MiddleTruncation"
+                                   VerticalOptions="Center" />
+
+                            <!-- Seta -->
+                            <Label Grid.Column="3"
+                                   Text="›"
+                                   FontSize="22"
+                                   TextColor="{StaticResource TextMuted}"
+                                   VerticalOptions="Center"
+                                   IsVisible="{Binding ShowArrow}" />
+
+                        </Grid>
+                    </controls:LongPressBorder>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="Nenhum arquivo anexado"
+                       Style="{StaticResource MutedLabel}"
+                       HorizontalOptions="Center" Margin="0,40,0,0" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <!-- Barra de ação — modo seleção -->
+        <Grid x:Name="ActionBar" Grid.Row="1" IsVisible="False"
+              ColumnDefinitions="Auto,*,Auto,Auto"
+              BackgroundColor="{StaticResource Surface}"
+              Padding="8,4">
+            <BoxView Grid.ColumnSpan="4"
+                     VerticalOptions="Start" HeightRequest="1"
+                     Color="{StaticResource Border}" />
+            <Button Grid.Column="0" Text="Cancelar"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource TextMuted}"
+                    FontSize="14" Padding="8,0"
+                    Clicked="OnCancelSelectionClicked" />
+            <Label x:Name="SelectionCountLabel" Grid.Column="1"
+                   Text=""
+                   FontSize="13"
+                   TextColor="{StaticResource TextMuted}"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center" />
+            <Button Grid.Column="2" Text="Baixar"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource Accent}"
+                    FontSize="14" Padding="8,0"
+                    Clicked="OnDownloadClicked" />
+            <Button Grid.Column="3" Text="Excluir"
+                    BackgroundColor="Transparent"
+                    TextColor="#EF4444"
+                    FontSize="14" Padding="8,0"
+                    Clicked="OnDeleteClicked" />
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

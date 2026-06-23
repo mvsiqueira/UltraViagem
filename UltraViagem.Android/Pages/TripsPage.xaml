@@ -1,82 +1,161 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:UltraViagem.Android.ViewModels"
              xmlns:svc="clr-namespace:UltraViagem.Android.Services"
              x:Class="UltraViagem.Android.Pages.TripsPage"
+             x:DataType="vm:TripsViewModel"
              Title="UltraViagem">
 
-    <ContentPage.Content>
-        <Grid RowDefinitions="Auto,*,Auto" Padding="20">
+    <Grid RowDefinitions="Auto,*,Auto" Padding="24,0">
 
-            <!-- Header -->
-            <VerticalStackLayout Grid.Row="0" Spacing="4" Margin="0,20,0,24">
-                <Label Text="UltraViagem"
-                       FontSize="28" FontAttributes="Bold"
-                       TextColor="{StaticResource Accent}" />
-                <Label Text="Suas viagens no bolso"
-                       Style="{StaticResource MutedLabel}" />
-            </VerticalStackLayout>
+        <!-- Cabeçalho -->
+        <VerticalStackLayout Grid.Row="0" Spacing="4" Margin="0,40,0,28">
+            <Label Text="UltraViagem"
+                   FontSize="28" FontAttributes="Bold"
+                   TextColor="{StaticResource Accent}" />
+            <Label Text="Suas viagens no bolso"
+                   Style="{StaticResource MutedLabel}" />
+        </VerticalStackLayout>
 
-            <!-- Lista de recentes -->
-            <ScrollView Grid.Row="1">
-                <VerticalStackLayout Spacing="0">
+        <!-- Conteúdo rolável -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="0">
 
-                    <Label Text="Recentes" Style="{StaticResource SectionHeader}"
-                           IsVisible="{Binding Recents.Count, Converter={x:StaticResource CountToBool}}" />
+                <!-- Estado: sem pasta -->
+                <VerticalStackLayout IsVisible="{Binding HasRepo, Converter={StaticResource InvertBool}}"
+                                     Spacing="8" Margin="0,40,0,0"
+                                     HorizontalOptions="Center">
+                    <Label Text="Nenhuma pasta selecionada"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource TextPrimary}"
+                           HorizontalOptions="Center" />
+                    <Label Text="Selecione a pasta onde suas viagens estão salvas (Google Drive, OneDrive…)"
+                           Style="{StaticResource MutedLabel}"
+                           FontSize="12"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
 
-                    <CollectionView ItemsSource="{Binding Recents}"
-                                    SelectionMode="Single"
-                                    SelectionChanged="OnRecentSelectionChanged">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="svc:RecentTrip">
-                                <Border Style="{StaticResource CardFrame}">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                            <Label Text="{Binding Title}"
-                                                   Style="{StaticResource TitleLabel}"
-                                                   LineBreakMode="TailTruncation" />
-                                            <Label Text="{Binding Path}"
-                                                   Style="{StaticResource MutedLabel}"
-                                                   FontSize="11"
-                                                   LineBreakMode="TailTruncation" />
-                                        </VerticalStackLayout>
-                                        <Button Grid.Column="1"
-                                                Text="✕"
-                                                BackgroundColor="Transparent"
-                                                TextColor="{StaticResource TextMuted}"
-                                                FontSize="16"
-                                                WidthRequest="36" HeightRequest="36"
-                                                Padding="0"
-                                                Clicked="OnRemoveRecentClicked" />
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                        <CollectionView.EmptyView>
-                            <VerticalStackLayout HorizontalOptions="Center" Margin="0,40,0,0" Spacing="8">
-                                <Label Text="Nenhuma viagem recente"
-                                       Style="{StaticResource MutedLabel}"
-                                       HorizontalOptions="Center" />
-                                <Label Text="Toque em Abrir para selecionar um trip.json"
-                                       Style="{StaticResource MutedLabel}"
-                                       FontSize="12"
+                <!-- Estado: com pasta -->
+                <VerticalStackLayout IsVisible="{Binding HasRepo}" Spacing="0">
+
+                    <!-- Rótulo da pasta + botão Trocar -->
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                        <Label Grid.Column="0"
+                               Text="{Binding RepoLabel}"
+                               Style="{StaticResource MutedLabel}"
+                               VerticalOptions="Center" />
+                        <Button Grid.Column="1"
+                                Text="Trocar pasta"
+                                BackgroundColor="Transparent"
+                                TextColor="{StaticResource Accent}"
+                                FontSize="13"
+                                Padding="0"
+                                HeightRequest="36"
+                                Command="{Binding SelectFolderCommand}" />
+                    </Grid>
+
+                    <!-- Carregando -->
+                    <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                       IsVisible="{Binding IsBusy}"
+                                       Color="{StaticResource Accent}"
                                        HorizontalOptions="Center"
-                                       HorizontalTextAlignment="Center" />
+                                       Margin="0,32" />
+
+                    <!-- Listas (quando não está carregando) -->
+                    <VerticalStackLayout IsVisible="{Binding IsBusy, Converter={StaticResource InvertBool}}"
+                                         Spacing="0">
+
+                        <!-- Seção: Última viagem -->
+                        <VerticalStackLayout IsVisible="{Binding HasLastTrip}">
+                            <Label Text="Última viagem" Style="{StaticResource SectionHeader}" />
+                            <Border Style="{StaticResource CardFrame}"
+                                    BackgroundColor="{StaticResource Accent}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnLastTripTapped" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0"
+                                           Text="{Binding LastTrip.Title}"
+                                           FontSize="16" FontAttributes="Bold"
+                                           TextColor="White"
+                                           LineBreakMode="TailTruncation"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="›"
+                                           FontSize="22"
+                                           TextColor="White"
+                                           VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Seção: Todas as viagens -->
+                        <Label Text="Todas as viagens" Style="{StaticResource SectionHeader}" />
+
+                        <!-- Lista de viagens via BindableLayout (sem problema de altura) -->
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Trips}"
+                                             Spacing="0">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="svc:TripEntry">
+                                    <Border Style="{StaticResource CardFrame}">
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnTripTapped" />
+                                        </Border.GestureRecognizers>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding Title}"
+                                                   Style="{StaticResource TitleLabel}"
+                                                   LineBreakMode="TailTruncation"
+                                                   VerticalOptions="Center" />
+                                            <Label Grid.Column="1"
+                                                   Text="›"
+                                                   FontSize="22"
+                                                   TextColor="{StaticResource TextMuted}"
+                                                   VerticalOptions="Center" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+
+                        <!-- Estado vazio: sem permissão -->
+                        <Border Style="{StaticResource CardFrame}"
+                                BackgroundColor="#FEF2F2"
+                                IsVisible="{Binding HasPermissionError}"
+                                Margin="0,8,0,0">
+                            <VerticalStackLayout Spacing="4">
+                                <Label Text="Acesso à pasta perdido"
+                                       FontAttributes="Bold"
+                                       TextColor="#B91C1C" />
+                                <Label Text="O Android revogou o acesso após reinicialização. Toque em 'Trocar pasta' e selecione a pasta novamente para restaurar."
+                                       FontSize="13"
+                                       TextColor="#B91C1C" />
                             </VerticalStackLayout>
-                        </CollectionView.EmptyView>
-                    </CollectionView>
+                        </Border>
+
+                        <!-- Estado vazio: pasta sem viagens -->
+                        <Label Text="Nenhuma viagem encontrada nesta pasta"
+                               Style="{StaticResource MutedLabel}"
+                               IsVisible="{Binding HasTrips, Converter={StaticResource InvertBool}}"
+                               HorizontalOptions="Center"
+                               Margin="0,16,0,0" />
+
+                    </VerticalStackLayout>
 
                 </VerticalStackLayout>
-            </ScrollView>
 
-            <!-- Botão abrir -->
-            <Button Grid.Row="2"
-                    Text="Abrir trip.json"
-                    Style="{StaticResource AccentButton}"
-                    Command="{Binding OpenCommand}"
-                    IsEnabled="{Binding IsBusy, Converter={x:StaticResource InvertBool}}"
-                    Margin="0,12,0,20" />
+            </VerticalStackLayout>
+        </ScrollView>
 
-        </Grid>
-    </ContentPage.Content>
+        <!-- Botão principal (só aparece quando não há pasta) -->
+        <Button Grid.Row="2"
+                Text="Selecionar pasta de viagens"
+                Style="{StaticResource AccentButton}"
+                Command="{Binding SelectFolderCommand}"
+                IsVisible="{Binding HasRepo, Converter={StaticResource InvertBool}}"
+                Margin="0,16,0,32" />
+
+    </Grid>
 </ContentPage>

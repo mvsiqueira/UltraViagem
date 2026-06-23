@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltraViagem.Android.Pages.ItemEditPage"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Barra superior -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*,Auto"
+              BackgroundColor="{StaticResource Surface}"
+              Padding="4,8,4,8">
+            <Border Grid.ColumnSpan="3"
+                    StrokeThickness="0"
+                    BackgroundColor="{StaticResource Surface}">
+                <!-- sombra inferior -->
+                <Border.Shadow>
+                    <Shadow Brush="{StaticResource TextPrimary}" Offset="0,1" Radius="4" Opacity="0.08" />
+                </Border.Shadow>
+            </Border>
+
+            <Button Grid.Column="0"
+                    Text="Cancelar"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource TextMuted}"
+                    FontSize="15"
+                    Padding="12,0"
+                    Clicked="OnCancelClicked" />
+
+            <Label Grid.Column="1"
+                   x:Name="TitleLabel"
+                   FontSize="16" FontAttributes="Bold"
+                   TextColor="{StaticResource TextPrimary}"
+                   HorizontalOptions="Center" VerticalOptions="Center" />
+
+            <Button Grid.Column="2"
+                    Text="Salvar"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource Accent}"
+                    FontSize="15" FontAttributes="Bold"
+                    Padding="12,0"
+                    Clicked="OnSaveClicked" />
+        </Grid>
+
+        <!-- Conteúdo -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24,24" Spacing="20">
+
+                <!-- Campo 1 (sempre visível) -->
+                <VerticalStackLayout Spacing="6">
+                    <Label x:Name="F1Label"
+                           Style="{StaticResource MutedLabel}"
+                           FontAttributes="Bold" FontSize="11"
+                           TextTransform="Uppercase" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}"
+                            Stroke="{StaticResource Border}"
+                            StrokeShape="RoundRectangle 8"
+                            Padding="12,0">
+                        <Entry x:Name="F1Entry"
+                               FontSize="15"
+                               TextColor="{StaticResource TextPrimary}"
+                               PlaceholderColor="{StaticResource TextMuted}"
+                               BackgroundColor="Transparent"
+                               ReturnType="Next" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Campo 2 (opcional) -->
+                <VerticalStackLayout x:Name="F2Group" Spacing="6">
+                    <Label x:Name="F2Label"
+                           Style="{StaticResource MutedLabel}"
+                           FontAttributes="Bold" FontSize="11"
+                           TextTransform="Uppercase" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}"
+                            Stroke="{StaticResource Border}"
+                            StrokeShape="RoundRectangle 8"
+                            Padding="12,0">
+                        <Editor x:Name="F2Entry"
+                                FontSize="15"
+                                TextColor="{StaticResource TextPrimary}"
+                                PlaceholderColor="{StaticResource TextMuted}"
+                                BackgroundColor="Transparent"
+                                AutoSize="TextChanges"
+                                MinimumHeightRequest="44" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Botão Excluir (só no modo edição) -->
+                <Button x:Name="DeleteButton"
+                        IsVisible="False"
+                        Text="Excluir"
+                        BackgroundColor="Transparent"
+                        TextColor="#EF4444"
+                        BorderColor="#EF4444"
+                        BorderWidth="1"
+                        CornerRadius="8"
+                        FontSize="15"
+                        Padding="0,14"
+                        Margin="0,12,0,0"
+                        Clicked="OnDeleteClicked" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

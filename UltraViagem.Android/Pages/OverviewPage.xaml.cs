@@ -6,10 +6,19 @@ public partial class OverviewPage : ContentPage
 {
     public OverviewPage() => InitializeComponent();
 
-    private async void OnOpenMapClicked(object sender, EventArgs e)
+    private async void OnBlockTapped(object? sender, TappedEventArgs e)
     {
-        var vm = BindingContext as TripViewModel;
-        if (vm?.Trip.MyMapsUrl is { } url && !string.IsNullOrWhiteSpace(url))
-            await Launcher.Default.OpenAsync(new Uri(url));
+        var vm = TripViewModel.Current;
+        if (vm == null) return;
+
+        if (e.Parameter is "map")
+        {
+            if (vm.Trip.MyMapsUrl is { } url && !string.IsNullOrWhiteSpace(url))
+                await Launcher.Default.OpenAsync(new Uri(url));
+            return;
+        }
+
+        if (e.Parameter is string s && int.TryParse(s, out int index))
+            vm.RequestSection(index);
     }
 }

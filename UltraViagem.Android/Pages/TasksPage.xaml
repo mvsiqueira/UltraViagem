@@ -1,69 +1,93 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:core="clr-namespace:UltraViagem.Core;assembly=UltraViagem.Core"
+             xmlns:vm="clr-namespace:UltraViagem.Android.ViewModels"
+             xmlns:controls="clr-namespace:UltraViagem.Android.Controls"
              x:Class="UltraViagem.Android.Pages.TasksPage"
              Title="Tarefas">
 
-    <CollectionView ItemsSource="{Binding Trip.Tasks}"
-                    Margin="16,8"
-                    SelectionMode="None">
-        <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="core:TaskItem">
-                <Grid ColumnDefinitions="32,*" ColumnSpacing="10" Padding="0,8">
+    <Grid>
 
-                    <!-- Checkbox visual (não interativo) -->
-                    <Border Grid.Column="0"
-                           WidthRequest="22" HeightRequest="22"
-                           StrokeShape="RoundRectangle 4" Padding="0"
-                           Stroke="{StaticResource Border}"
-                           HorizontalOptions="Center" VerticalOptions="Center">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border"
-                                         Binding="{Binding Status}" Value="done">
-                                <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
-                                <Setter Property="Stroke" Value="{StaticResource Accent}" />
-                            </DataTrigger>
-                        </Border.Triggers>
-                        <Label Text="✓" FontSize="12" FontAttributes="Bold"
-                               TextColor="White"
-                               HorizontalOptions="Center" VerticalOptions="Center">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label"
-                                             Binding="{Binding Status}" Value="pending">
-                                    <Setter Property="IsVisible" Value="False" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                    </Border>
+        <CollectionView ItemsSource="{Binding ObservableTasks}"
+                        Margin="16,8,16,80"
+                        SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:ObservableTaskItem">
 
-                    <!-- Texto -->
-                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
-                        <Label Text="{Binding Title}" FontSize="14">
-                            <Label.Triggers>
-                                <DataTrigger TargetType="Label"
+                    <!-- Toca-e-segura no item inteiro para editar -->
+                    <controls:LongPressGrid ColumnDefinitions="44,*" ColumnSpacing="4"
+                                            Padding="0,6"
+                                            LongPressed="OnTaskLongPressed">
+
+                        <!-- Checkbox: tap = toggle -->
+                        <Border Grid.Column="0"
+                                WidthRequest="24" HeightRequest="24"
+                                StrokeShape="RoundRectangle 5" Padding="0"
+                                Stroke="{StaticResource Border}"
+                                HorizontalOptions="Center" VerticalOptions="Center">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border"
                                              Binding="{Binding Status}" Value="done">
-                                    <Setter Property="TextDecorations" Value="Strikethrough" />
-                                    <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                                    <Setter Property="BackgroundColor" Value="{StaticResource Accent}" />
+                                    <Setter Property="Stroke" Value="{StaticResource Accent}" />
                                 </DataTrigger>
-                                <DataTrigger TargetType="Label"
-                                             Binding="{Binding Status}" Value="pending">
-                                    <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
-                                </DataTrigger>
-                            </Label.Triggers>
-                        </Label>
-                        <Label Text="{Binding Notes}"
-                               Style="{StaticResource MutedLabel}" FontSize="12"
-                               IsVisible="{Binding Notes, Converter={x:StaticResource StringToBool}}" />
-                    </VerticalStackLayout>
+                            </Border.Triggers>
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnToggleTapped" />
+                            </Border.GestureRecognizers>
+                            <Label Text="✓" FontSize="13" FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center" VerticalOptions="Center">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding Status}" Value="pending">
+                                        <Setter Property="IsVisible" Value="False" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                        </Border>
 
-                </Grid>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-        <CollectionView.EmptyView>
-            <Label Text="Nenhuma tarefa registrada"
-                   Style="{StaticResource MutedLabel}"
-                   HorizontalOptions="Center" Margin="0,40,0,0" />
-        </CollectionView.EmptyView>
-    </CollectionView>
+                        <!-- Texto do item (parte longa = segura para editar) -->
+                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                            <Label Text="{Binding Title}" FontSize="14">
+                                <Label.Triggers>
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding Status}" Value="done">
+                                        <Setter Property="TextDecorations" Value="Strikethrough" />
+                                        <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                                    </DataTrigger>
+                                    <DataTrigger TargetType="Label"
+                                                 Binding="{Binding Status}" Value="pending">
+                                        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+                                    </DataTrigger>
+                                </Label.Triggers>
+                            </Label>
+                            <Label Text="{Binding Notes}"
+                                   Style="{StaticResource MutedLabel}" FontSize="12"
+                                   IsVisible="{Binding Notes, Converter={x:StaticResource StringToBool}}" />
+                        </VerticalStackLayout>
+
+                    </controls:LongPressGrid>
+
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="Nenhuma tarefa. Toque em + para adicionar."
+                       Style="{StaticResource MutedLabel}"
+                       HorizontalOptions="Center" Margin="0,40,0,0" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <!-- FAB -->
+        <Button Text="+"
+                FontSize="26" FontAttributes="Bold"
+                WidthRequest="56" HeightRequest="56"
+                CornerRadius="28"
+                HorizontalOptions="End" VerticalOptions="End"
+                Margin="0,0,16,16"
+                BackgroundColor="{StaticResource Accent}"
+                TextColor="White"
+                Clicked="OnAddTapped" />
+
+    </Grid>
 </ContentPage>

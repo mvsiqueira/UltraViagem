@@ -9,6 +9,8 @@
     <local:CountToBoolConverter     x:Key="CountToBool" />
     <local:InvertBoolConverter      x:Key="InvertBool" />
     <local:StringToBoolConverter    x:Key="StringToBool" />
+    <local:FileExtLabelConverter    x:Key="FileExtLabel" />
+    <local:FileExtColorConverter    x:Key="FileExtColor" />
 
     <Style TargetType="Page" ApplyToDerivedTypes="True">
         <Setter Property="BackgroundColor" Value="{StaticResource AppBackground}" />

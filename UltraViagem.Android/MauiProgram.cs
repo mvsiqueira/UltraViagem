@@ -13,6 +13,7 @@ public static class MauiProgram
         builder.UseMauiApp<App>();
 
         builder.Services.AddSingleton<TripFileService>();
+        builder.Services.AddSingleton<FolderPickerService>();
         builder.Services.AddSingleton<TripsViewModel>();
         builder.Services.AddTransient<TripViewModel>();
         builder.Services.AddTransient<TripsPage>();
@@ -21,6 +22,7 @@ public static class MauiProgram
         builder.Services.AddTransient<TasksPage>();
         builder.Services.AddTransient<ExpensesPage>();
         builder.Services.AddTransient<LinksPage>();
+        builder.Services.AddTransient<FilesPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();

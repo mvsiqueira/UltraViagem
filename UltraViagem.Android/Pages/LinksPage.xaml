@@ -2,34 +2,52 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:core="clr-namespace:UltraViagem.Core;assembly=UltraViagem.Core"
+             xmlns:controls="clr-namespace:UltraViagem.Android.Controls"
              x:Class="UltraViagem.Android.Pages.LinksPage"
              Title="Dicas">
 
-    <CollectionView ItemsSource="{Binding Trip.Links}"
-                    Margin="16,8"
-                    SelectionMode="None">
-        <CollectionView.ItemTemplate>
-            <DataTemplate x:DataType="core:LinkItem">
-                <Border Style="{StaticResource CardFrame}">
-                    <VerticalStackLayout Spacing="4">
-                        <Label Text="{Binding Title}"
-                               Style="{StaticResource TitleLabel}"
-                               FontSize="14" />
-                        <Label Text="{Binding Url}"
-                               FontSize="12"
-                               TextColor="#2563EB"
-                               LineBreakMode="TailTruncation" />
-                    </VerticalStackLayout>
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnLinkTapped" />
-                    </Border.GestureRecognizers>
-                </Border>
-            </DataTemplate>
-        </CollectionView.ItemTemplate>
-        <CollectionView.EmptyView>
-            <Label Text="Nenhuma dica registrada"
-                   Style="{StaticResource MutedLabel}"
-                   HorizontalOptions="Center" Margin="0,40,0,0" />
-        </CollectionView.EmptyView>
-    </CollectionView>
+    <Grid>
+
+        <CollectionView ItemsSource="{Binding ObservableLinks}"
+                        Margin="16,8,16,80"
+                        SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="core:LinkItem">
+
+                    <!-- LongPressBorder É o card: toque abre URL, segura edita -->
+                    <controls:LongPressBorder Style="{StaticResource CardFrame}"
+                                              Tapped="OnLinkTapped"
+                                              LongPressed="OnLinkLongPressed">
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="{Binding Title}"
+                                   Style="{StaticResource TitleLabel}"
+                                   FontSize="14" />
+                            <Label Text="{Binding Url}"
+                                   FontSize="12"
+                                   TextColor="#2563EB"
+                                   LineBreakMode="TailTruncation" />
+                        </VerticalStackLayout>
+                    </controls:LongPressBorder>
+
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <Label Text="Nenhuma dica. Toque em + para adicionar."
+                       Style="{StaticResource MutedLabel}"
+                       HorizontalOptions="Center" Margin="0,40,0,0" />
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <!-- FAB -->
+        <Button Text="+"
+                FontSize="26" FontAttributes="Bold"
+                WidthRequest="56" HeightRequest="56"
+                CornerRadius="28"
+                HorizontalOptions="End" VerticalOptions="End"
+                Margin="0,0,16,16"
+                BackgroundColor="{StaticResource Accent}"
+                TextColor="White"
+                Clicked="OnAddTapped" />
+
+    </Grid>
 </ContentPage>
