@@ -203,10 +203,48 @@ public sealed class TripFileService
         }
         catch { return false; }
     }
+
+    // ── Cache da lista de viagens ────────────────────────────
+    // Guarda o resultado do último scan num arquivo privado do app para
+    // exibição instantânea na próxima abertura, enquanto o scan roda em segundo plano.
+
+    private static string CacheFilePath => Path.Combine(FileSystem.AppDataDirectory, "trips_cache.json");
+
+    public List<TripEntry>? LoadTripsCache(string repoUri)
+    {
+        try
+        {
+            if (!File.Exists(CacheFilePath)) return null;
+            var json  = File.ReadAllText(CacheFilePath);
+            var cache = JsonSerializer.Deserialize<TripsCache>(json, JsonOptions);
+            // Só usa o cache se for da mesma pasta atualmente selecionada
+            if (cache == null || cache.RepoUri != repoUri) return null;
+            return cache.Entries;
+        }
+        catch { return null; }
+    }
+
+    public async Task SaveTripsCacheAsync(string repoUri, List<TripEntry> entries)
+    {
+        try
+        {
+            var cache = new TripsCache { RepoUri = repoUri, Entries = entries };
+            var json  = JsonSerializer.Serialize(cache, JsonOptions);
+            await File.WriteAllTextAsync(CacheFilePath, json);
+        }
+        catch { }
+    }
+}
+
+public sealed class TripsCache
+{
+    public string RepoUri { get; set; } = "";
+    public List<TripEntry> Entries { get; set; } = [];
 }
 
 public sealed record TripEntry(string Title, string? StartDate, string UriString)
 {
+    [JsonIgnore]
     public string SortKey   => StartDate ?? Title;
     public string? FolderUri { get; init; }
 }

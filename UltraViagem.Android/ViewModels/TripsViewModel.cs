@@ -46,24 +46,54 @@ public sealed class TripsViewModel : BindableObject
     public async Task InitializeAsync()
     {
         var saved = _service.GetSavedRepoUri();
+        var last  = _service.GetLastTrip();
+
         if (saved != null)
         {
             _repoUri = saved;
             _repoLabel = ExtractLabel(saved);
             OnPropertyChanged(nameof(HasRepo));
             OnPropertyChanged(nameof(RepoLabel));
-            await ScanAsync();
+
+            // 1) Exibe o cache imediatamente (se houver), evitando a espera do scan
+            var cached  = _service.LoadTripsCache(saved);
+            bool hasCache = cached is { Count: > 0 };
+            if (hasCache)
+            {
+                ReplaceTrips(cached!);
+                ResolveLastTrip(last);
+            }
+
+            // 2) Rescan: silencioso quando já há cache exibido; com spinner na primeira vez
+            await ScanAsync(silent: hasCache);
         }
 
-        // Carrega a última viagem aberta para exibir no card de destaque
-        var last = _service.GetLastTrip();
-        if (last != null)
-        {
-            // Prefere o entry escaneado (título pode ter mudado)
-            LastTrip = Trips.FirstOrDefault(t => t.UriString == last.UriString) ?? last;
-            OnPropertyChanged(nameof(LastTrip));
-            OnPropertyChanged(nameof(HasLastTrip));
-        }
+        // Resolve/atualiza a última viagem após o scan
+        ResolveLastTrip(last);
+    }
+
+    private void ResolveLastTrip(TripEntry? last)
+    {
+        if (last == null) return;
+        // Prefere o entry escaneado (título pode ter mudado)
+        LastTrip = Trips.FirstOrDefault(t => t.UriString == last.UriString) ?? last;
+        OnPropertyChanged(nameof(LastTrip));
+        OnPropertyChanged(nameof(HasLastTrip));
+    }
+
+    private void ReplaceTrips(IEnumerable<TripEntry> entries)
+    {
+        Trips.Clear();
+        foreach (var e in entries) Trips.Add(e);
+        OnPropertyChanged(nameof(HasTrips));
+    }
+
+    private bool TripsMatch(List<TripEntry> entries)
+    {
+        if (entries.Count != Trips.Count) return false;
+        for (int i = 0; i < entries.Count; i++)
+            if (entries[i].UriString != Trips[i].UriString) return false;
+        return true;
     }
 
     private async Task SelectFolderAsync()
@@ -90,25 +120,37 @@ public sealed class TripsViewModel : BindableObject
         }
     }
 
-    private async Task ScanAsync()
+    private async Task ScanAsync(bool silent = false)
     {
-        if (_repoUri == null || IsBusy) return;
-        IsBusy = true;
+        if (_repoUri == null) return;
+        if (!silent)
+        {
+            if (IsBusy) return;
+            IsBusy = true;
+        }
         try
         {
-            global::Android.Util.Log.Debug("UVDBG", $"ScanAsync: uri={_repoUri}");
+            global::Android.Util.Log.Debug("UVDBG", $"ScanAsync: uri={_repoUri} silent={silent}");
             var entries = await _service.ScanRepositoryAsync(_repoUri);
             global::Android.Util.Log.Debug("UVDBG", $"ScanAsync: found {entries.Count} trips, permDenied={_service.ScanPermissionDenied}");
-            Trips.Clear();
-            foreach (var e in entries)
-            {
-                global::Android.Util.Log.Debug("UVDBG", $"  trip: {e.Title}");
-                Trips.Add(e);
-            }
-            OnPropertyChanged(nameof(HasTrips));
             OnPropertyChanged(nameof(HasPermissionError));
+
+            if (_service.ScanPermissionDenied)
+            {
+                // Acesso perdido: num scan silencioso mantém o cache exibido;
+                // num scan normal limpa a lista para mostrar o card de erro.
+                if (!silent) ReplaceTrips([]);
+                return;
+            }
+
+            // Atualiza a lista só se mudou (evita flicker no scan silencioso)
+            if (!TripsMatch(entries))
+                ReplaceTrips(entries);
+
+            // Persiste o cache para a próxima abertura
+            await _service.SaveTripsCacheAsync(_repoUri, entries);
         }
-        finally { IsBusy = false; }
+        finally { if (!silent) IsBusy = false; }
     }
 
     private async Task OpenTripAsync(TripEntry? entry)

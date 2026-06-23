@@ -25,6 +25,10 @@
      - Abertura/cópia/exclusão funcionam tanto em armazenamento local quanto no Google Drive: `BuildSiblingUri` (manipula docId hierárquico) com fallback para `FindSiblingInFolder` (enumera filhos da pasta pelo nome, para docIds opacos). O `FolderUri` da viagem é capturado no scan e propagado até o `TripViewModel`.
      - Download copia para `Download/UltraViagem/` via `MediaStore`.
 
+   - **Cache da lista de viagens**: o resultado do scan é persistido em `trips_cache.json` (arquivo privado em `FileSystem.AppDataDirectory`, contendo `repoUri` + entries). Na abertura, a lista do cache é exibida imediatamente e o scan roda em segundo plano (`ScanAsync(silent: true)`), atualizando a lista só se mudou — evita a espera do scan do Drive, que é lento com muitas viagens.
+     - O cache só é usado se o `repoUri` salvo bate com a pasta selecionada; trocar de pasta o ignora e sobrescreve.
+     - Se o acesso for perdido num rescan silencioso, o cache permanece visível e o card de erro aparece (em vez de esvaziar a tela).
+
    - Próximos passos: edição de itens no Android, separar Core em biblioteca compartilhada, avaliar sincronização multi-dispositivo.
 
 ## Dívidas Técnicas
