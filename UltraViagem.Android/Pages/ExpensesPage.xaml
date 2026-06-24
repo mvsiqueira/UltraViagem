@@ -141,15 +141,15 @@
                 <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                     <VerticalStackLayout Grid.Column="0" Spacing="1">
                         <Label Text="ESTIMADO" FontSize="10" CharacterSpacing="0.6" TextColor="{StaticResource TextMuted}" />
-                        <Label Text="{Binding TotalLabel}" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource Accent}" />
+                        <Label Text="{Binding TotalLabel}" FontSize="13" FontAttributes="Bold" TextColor="{StaticResource Accent}" />
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Column="1" Spacing="1">
                         <Label Text="PAGO" FontSize="10" CharacterSpacing="0.6" TextColor="{StaticResource TextMuted}" />
-                        <Label Text="{Binding PaidLabel}" FontSize="15" FontAttributes="Bold" TextColor="#3B6D11" />
+                        <Label Text="{Binding PaidLabel}" FontSize="13" FontAttributes="Bold" TextColor="#3B6D11" />
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Column="2" Spacing="1">
                         <Label Text="A PAGAR" FontSize="10" CharacterSpacing="0.6" TextColor="{StaticResource TextMuted}" />
-                        <Label Text="{Binding PendingLabel}" FontSize="15" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" />
+                        <Label Text="{Binding PendingLabel}" FontSize="13" FontAttributes="Bold" TextColor="#EF4444" />
                     </VerticalStackLayout>
                 </Grid>
                 <ProgressBar Progress="{Binding PaidFraction}" ProgressColor="{StaticResource Accent}" />

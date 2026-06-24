@@ -455,6 +455,7 @@ public sealed class ExpenseRow : BindableObject
     private static readonly CultureInfo PtBr  = new("pt-BR");
     private static readonly Color PaidGreen   = Color.FromArgb("#3B6D11");
     private static readonly Color Muted        = Color.FromArgb("#9CA3AF");
+    private static readonly Color Pending      = Color.FromArgb("#EF4444");
 
     private readonly ExpenseItem _e;
     private readonly string _baseCurrency;
@@ -474,7 +475,7 @@ public sealed class ExpenseRow : BindableObject
 
     public bool  IsPaid      => _e.IsActive && _e.PaidAmount > 0 && _e.PaidAmount >= _e.SubtotalBase;
     public string StatusLabel => !_e.IsActive ? "inativo" : (IsPaid ? "✓ pago" : "pendente");
-    public Color StatusColor  => IsPaid ? PaidGreen : Muted;
+    public Color StatusColor  => !_e.IsActive ? Muted : (IsPaid ? PaidGreen : Pending);
 
     // Detalhes (modo expandido)
     public bool   HasCompany => !string.IsNullOrWhiteSpace(_e.Company);
