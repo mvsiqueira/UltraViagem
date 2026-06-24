@@ -34,6 +34,11 @@ public sealed class TripViewModel : BindableObject
     public string LinksInfo      { get; private set; } = "";
     public string FilesInfo      { get; private set; } = "";
 
+    // ── Gastos agrupados por categoria + resumo ──────────────
+    public ObservableCollection<ExpenseGroup> ExpenseGroups { get; } = [];
+    public string PendingLabel { get; private set; } = "";
+    public double PaidFraction { get; private set; }
+
     // Disparado quando o usuário toca num bloco da Visão Geral; TripPage troca de seção.
     public event Action<int>? SectionRequested;
     public void RequestSection(int index) => SectionRequested?.Invoke(index);
@@ -64,6 +69,7 @@ public sealed class TripViewModel : BindableObject
             .ToList() ?? [];
 
         BuildOverviewInfos(trip);
+        BuildExpenseGroups(trip);
 
         ObservableTasks.Clear();
         foreach (var t in trip.Tasks)
@@ -89,6 +95,44 @@ public sealed class TripViewModel : BindableObject
         OnPropertyChanged(nameof(ExpensesInfo));
         OnPropertyChanged(nameof(LinksInfo));
         OnPropertyChanged(nameof(FilesInfo));
+        OnPropertyChanged(nameof(ExpenseGroups));
+        OnPropertyChanged(nameof(PendingLabel));
+        OnPropertyChanged(nameof(PaidFraction));
+    }
+
+    private void BuildExpenseGroups(Trip trip)
+    {
+        ExpenseGroups.Clear();
+        var baseCur = trip.BaseCurrency;
+
+        // Agrupa por categoria preservando a ordem de primeira aparição
+        var order = new List<string>();
+        var buckets = new Dictionary<string, List<ExpenseRow>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var e in trip.Expenses)
+        {
+            var cat = string.IsNullOrWhiteSpace(e.Type) ? "Outros" : e.Type!.Trim();
+            if (!buckets.TryGetValue(cat, out var list))
+            {
+                list = [];
+                buckets[cat] = list;
+                order.Add(cat);
+            }
+            list.Add(new ExpenseRow(e, baseCur));
+        }
+
+        foreach (var cat in order)
+        {
+            var rows     = buckets[cat];
+            var subtotal = rows.Where(r => r.IsActive).Sum(r => r.ValueBaseRaw);
+            ExpenseGroups.Add(new ExpenseGroup(cat, ExpenseCategoryStyle.For(cat),
+                FormatCurrency(subtotal, baseCur), rows));
+        }
+
+        var total   = trip.Expenses.Where(e => e.IsActive).Sum(e => e.SubtotalBase);
+        var paid    = trip.Expenses.Where(e => e.IsActive).Sum(e => e.PaidAmount);
+        var pending = Math.Max(0m, total - paid);
+        PendingLabel = FormatCurrency(pending, baseCur);
+        PaidFraction = total > 0 ? (double)Math.Clamp(paid / total, 0m, 1m) : 0d;
     }
 
     private void BuildOverviewInfos(Trip trip)
@@ -376,5 +420,120 @@ public sealed class ObservableTaskItem : BindableObject
         Inner.Notes = notes;
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(Notes));
+    }
+}
+
+// ── Gastos ──────────────────────────────────────────────────────────────────
+
+public sealed class ExpenseGroup : List<ExpenseRow>
+{
+    public string    Name          { get; }
+    public string    SubtotalLabel { get; }
+    public Color     HeaderColor   { get; }
+    public Color     MarkerColor   { get; }
+    public Microsoft.Maui.Controls.Shapes.Geometry? Icon { get; }
+
+    public ExpenseGroup(string name, ExpenseCategoryStyle style, string subtotal, List<ExpenseRow> rows)
+        : base(rows)
+    {
+        Name          = name;
+        SubtotalLabel = subtotal;
+        HeaderColor   = style.TextColor;
+        MarkerColor   = style.MarkerColor;
+        Icon          = ParseGeometry(style.IconData);
+    }
+
+    private static Microsoft.Maui.Controls.Shapes.Geometry? ParseGeometry(string data)
+    {
+        try { return (Microsoft.Maui.Controls.Shapes.Geometry?)new Microsoft.Maui.Controls.Shapes.PathGeometryConverter().ConvertFromInvariantString(data); }
+        catch { return null; }
+    }
+}
+
+public sealed class ExpenseRow : BindableObject
+{
+    private static readonly CultureInfo PtBr  = new("pt-BR");
+    private static readonly Color PaidGreen   = Color.FromArgb("#3B6D11");
+    private static readonly Color Muted        = Color.FromArgb("#9CA3AF");
+
+    private readonly ExpenseItem _e;
+    private readonly string _baseCurrency;
+
+    public ExpenseRow(ExpenseItem e, string baseCurrency)
+    {
+        _e = e;
+        _baseCurrency = baseCurrency;
+    }
+
+    public string Title    => _e.Title;
+    public bool   IsActive => _e.IsActive;
+
+    // Valor na moeda base (ignora o flag ativo para exibição do item)
+    public decimal ValueBaseRaw => _e.Subtotal * _e.ExchangeRateToBase;
+    public string  ValueLabel   => TripViewModel.FormatCurrency(ValueBaseRaw, _baseCurrency);
+
+    public bool  IsPaid      => _e.IsActive && _e.PaidAmount > 0 && _e.PaidAmount >= _e.SubtotalBase;
+    public string StatusLabel => !_e.IsActive ? "inativo" : (IsPaid ? "✓ pago" : "pendente");
+    public Color StatusColor  => IsPaid ? PaidGreen : Muted;
+
+    // Detalhes (modo expandido)
+    public bool   HasCompany => !string.IsNullOrWhiteSpace(_e.Company);
+    public string Company    => _e.Company ?? "";
+    public bool   HasNotes   => !string.IsNullOrWhiteSpace(_e.Notes);
+    public string Notes      => _e.Notes ?? "";
+    public bool   HasLink    => !string.IsNullOrWhiteSpace(_e.Link);
+    public string Link       => _e.Link ?? "";
+
+    public string PriceUnitLabel => TripViewModel.FormatCurrency(_e.Price + _e.Taxes, _e.Currency);
+    public string PeopleQtyLabel => $"{_e.People} × {_e.Quantity}";
+    public bool   ShowExchange   => _e.Currency != _baseCurrency;
+    public string ExchangeLabel  => _e.ExchangeRateToBase.ToString("N4", PtBr);
+    public string PaidValueLabel => TripViewModel.FormatCurrency(_e.PaidAmount, _baseCurrency);
+
+    private bool _isExpanded;
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set { if (_isExpanded != value) { _isExpanded = value; OnPropertyChanged(); } }
+    }
+}
+
+public sealed class ExpenseCategoryStyle
+{
+    // Ícones Tabler (outline) embutidos como path SVG
+    private const string IconBed     = "M5 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M22 17v-3h-20 M2 8v9 M12 14h10v-2a3 3 0 0 0 -3 -3h-7v5";
+    private const string IconPlane   = "M16 10h4a2 2 0 0 1 0 4h-4l-4 7h-3l2 -7h-4l-2 2h-3l2 -4l-2 -4h3l2 2h4l-2 -7h3l4 7";
+    private const string IconCamera  = "M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2 M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0";
+    private const string IconFork    = "M19 3v12h-5c-.023 -3.681 .184 -7.406 5 -12m0 12v6h-1v-3m-10 -14v17m-3 -17v3a3 3 0 1 0 6 0v-3";
+    private const string IconBag     = "M6.331 8h11.339a2 2 0 0 1 1.977 2.304l-1.255 8.152a3 3 0 0 1 -2.966 2.544h-6.852a3 3 0 0 1 -2.965 -2.544l-1.255 -8.152a2 2 0 0 1 1.977 -2.304 M9 11v-5a3 3 0 0 1 6 0v5";
+    private const string IconReceipt = "M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2m4 -14h6m-6 4h6m-2 4h2";
+
+    public Color  MarkerColor { get; init; } = Color.FromArgb("#6B7280");
+    public Color  TextColor   { get; init; } = Color.FromArgb("#374151");
+    public string IconData    { get; init; } = IconReceipt;
+
+    public static ExpenseCategoryStyle For(string category) => Normalize(category) switch
+    {
+        "hospedagem" or "hotel" =>
+            new() { MarkerColor = Color.FromArgb("#534AB7"), TextColor = Color.FromArgb("#26215C"), IconData = IconBed },
+        "transporte" or "transportes" or "voo" or "voos" =>
+            new() { MarkerColor = Color.FromArgb("#185FA5"), TextColor = Color.FromArgb("#042C53"), IconData = IconPlane },
+        "passeios" or "passeio" or "atividades" or "ingressos" or "passeios e ingressos" =>
+            new() { MarkerColor = Color.FromArgb("#0F6E56"), TextColor = Color.FromArgb("#04342C"), IconData = IconCamera },
+        "refeicao" or "refeicoes" or "alimentacao" or "comida" =>
+            new() { MarkerColor = Color.FromArgb("#854F0B"), TextColor = Color.FromArgb("#412402"), IconData = IconFork },
+        "compras" or "shopping" =>
+            new() { MarkerColor = Color.FromArgb("#993556"), TextColor = Color.FromArgb("#4B1528"), IconData = IconBag },
+        _ => new(),
+    };
+
+    private static string Normalize(string s)
+    {
+        var formD = s.Trim().ToLowerInvariant().Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new System.Text.StringBuilder(formD.Length);
+        foreach (var ch in formD)
+            if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                sb.Append(ch);
+        return sb.ToString();
     }
 }
