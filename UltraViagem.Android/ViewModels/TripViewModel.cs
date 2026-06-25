@@ -135,6 +135,57 @@ public sealed class TripViewModel : BindableObject
         PaidFraction = total > 0 ? (double)Math.Clamp(paid / total, 0m, 1m) : 0d;
     }
 
+    // ── Edição de gastos ─────────────────────────────────────
+
+    public async Task AddExpenseAsync(ExpenseItem values)
+    {
+        values.Id = Guid.NewGuid().ToString("N")[..8];
+        Trip.Expenses.Add(values);
+        RefreshExpenseState();
+        await SaveAsync();
+    }
+
+    public async Task UpdateExpenseAsync(ExpenseItem target, ExpenseItem v)
+    {
+        target.Title    = v.Title;
+        target.Type     = v.Type;
+        target.Company  = v.Company;
+        target.Link     = v.Link;
+        target.Notes    = v.Notes;
+        target.Price    = v.Price;
+        target.Taxes    = v.Taxes;
+        target.People   = v.People;
+        target.Quantity = v.Quantity;
+        target.Currency = v.Currency;
+        target.ExchangeRateToBase = v.ExchangeRateToBase;
+        target.PaidAmount = v.PaidAmount;
+        target.IsActive   = v.IsActive;
+        RefreshExpenseState();
+        await SaveAsync();
+    }
+
+    public async Task DeleteExpenseAsync(ExpenseItem item)
+    {
+        Trip.Expenses.Remove(item);
+        RefreshExpenseState();
+        await SaveAsync();
+    }
+
+    private void RefreshExpenseState()
+    {
+        TotalLabel = BuildTotalLabel(Trip);
+        PaidLabel  = BuildPaidLabel(Trip);
+        BuildExpenseGroups(Trip);
+        BuildOverviewInfos(Trip);
+        OnPropertyChanged(nameof(TotalLabel));
+        OnPropertyChanged(nameof(PaidLabel));
+        OnPropertyChanged(nameof(HasExpenses));
+        OnPropertyChanged(nameof(ExpensesInfo));
+        OnPropertyChanged(nameof(ExpenseGroups));
+        OnPropertyChanged(nameof(PendingLabel));
+        OnPropertyChanged(nameof(PaidFraction));
+    }
+
     private void BuildOverviewInfos(Trip trip)
     {
         var days       = ActiveVersion?.Itinerary.Count ?? 0;
@@ -465,6 +516,8 @@ public sealed class ExpenseRow : BindableObject
         _e = e;
         _baseCurrency = baseCurrency;
     }
+
+    public ExpenseItem Source => _e;
 
     public string Title    => _e.Title;
     public bool   IsActive => _e.IsActive;

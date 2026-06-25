@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:UltraViagem.Android.ViewModels"
+             xmlns:controls="clr-namespace:UltraViagem.Android.Controls"
              x:Class="UltraViagem.Android.Pages.ExpensesPage"
              Title="Gastos">
 
@@ -45,33 +46,35 @@
                             Padding="12,2" Margin="0,0,0,8">
                         <VerticalStackLayout>
 
-                            <!-- Linha principal (toque expande) -->
-                            <Grid ColumnDefinitions="*,Auto" Padding="0,10" ColumnSpacing="8">
-                                <Grid.Triggers>
-                                    <DataTrigger TargetType="Grid" Binding="{Binding IsActive}" Value="False">
-                                        <Setter Property="Opacity" Value="0.4" />
-                                    </DataTrigger>
-                                </Grid.Triggers>
-                                <Grid.GestureRecognizers>
-                                    <TapGestureRecognizer Tapped="OnExpenseTapped" />
-                                </Grid.GestureRecognizers>
+                            <!-- Linha principal: toque expande, toque longo edita -->
+                            <controls:LongPressBorder Stroke="Transparent" StrokeThickness="0"
+                                                      BackgroundColor="Transparent" Padding="0"
+                                                      Tapped="OnExpenseTapped"
+                                                      LongPressed="OnExpenseLongPressed">
+                                <Grid ColumnDefinitions="*,Auto" Padding="0,10" ColumnSpacing="8">
+                                    <Grid.Triggers>
+                                        <DataTrigger TargetType="Grid" Binding="{Binding IsActive}" Value="False">
+                                            <Setter Property="Opacity" Value="0.4" />
+                                        </DataTrigger>
+                                    </Grid.Triggers>
 
-                                <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
-                                    <Label Text="{Binding Title}"
-                                           FontSize="14"
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                        <Label Text="{Binding Title}"
+                                               FontSize="14"
+                                               TextColor="{StaticResource TextPrimary}"
+                                               LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding StatusLabel}"
+                                               FontSize="11"
+                                               TextColor="{Binding StatusColor}" />
+                                    </VerticalStackLayout>
+
+                                    <Label Grid.Column="1"
+                                           Text="{Binding ValueLabel}"
+                                           FontSize="14" FontAttributes="Bold"
                                            TextColor="{StaticResource TextPrimary}"
-                                           LineBreakMode="TailTruncation" />
-                                    <Label Text="{Binding StatusLabel}"
-                                           FontSize="11"
-                                           TextColor="{Binding StatusColor}" />
-                                </VerticalStackLayout>
-
-                                <Label Grid.Column="1"
-                                       Text="{Binding ValueLabel}"
-                                       FontSize="14" FontAttributes="Bold"
-                                       TextColor="{StaticResource TextPrimary}"
-                                       VerticalOptions="Center" />
-                            </Grid>
+                                           VerticalOptions="Center" />
+                                </Grid>
+                            </controls:LongPressBorder>
 
                             <!-- Detalhes (modo expandido) -->
                             <Border IsVisible="{Binding IsExpanded}"
@@ -131,6 +134,18 @@
                        HorizontalOptions="Center" Margin="0,40,0,0" />
             </CollectionView.EmptyView>
         </CollectionView>
+
+        <!-- FAB: novo gasto -->
+        <Button Grid.Row="0"
+                Text="+"
+                FontSize="26" FontAttributes="Bold"
+                WidthRequest="56" HeightRequest="56"
+                CornerRadius="28"
+                HorizontalOptions="End" VerticalOptions="End"
+                Margin="0,0,16,16"
+                BackgroundColor="{StaticResource Accent}"
+                TextColor="White"
+                Clicked="OnAddTapped" />
 
         <!-- Cartão-resumo (rodapé) -->
         <Border Grid.Row="1"

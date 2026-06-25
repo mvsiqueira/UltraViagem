@@ -32,9 +32,10 @@
    - **Gastos** (`ExpensesPage`): lista agrupada por categoria (`CollectionView` com `IsGrouped`), construída em `TripViewModel.BuildExpenseGroups`.
      - Cada grupo tem cabeçalho com ícone Tabler + cor por categoria (`ExpenseCategoryStyle`, com mapa fixo de categorias conhecidas — Hospedagem/Transporte/Passeios/Refeição/Compras — e fallback genérico cinza para categorias livres; normaliza acentos e maiúsculas) e o subtotal da categoria.
      - Itens (`ExpenseRow`) mostram título, status (✓ pago / pendente, inativos esmaecidos) e valor na moeda base. Toque expande o item exibindo Fornecedor, Preço unit. (na moeda do item), Pessoas × Qtd, Câmbio (só quando a moeda ≠ base), Pago, notas e link "Abrir reserva".
-     - Cartão-resumo no rodapé: Estimado / Pago / A pagar + `ProgressBar` (`PaidFraction`). Totais consideram apenas itens ativos.
+     - Cartão-resumo no rodapé: Estimado / Pago / A pagar (este em vermelho) + `ProgressBar` (`PaidFraction`). Totais consideram apenas itens ativos.
+     - **Edição** (`ExpenseEditPage`, modal): toque longo no item abre o editor com formulário completo (título, categoria, fornecedor, link, observações, preço unit., taxas, pessoas, quantidade, moeda, câmbio, valor pago e toggle ativo); botão Excluir (com confirmação). FAB "+" cria um gasto novo com defaults da viagem. Persistido via `TripViewModel.AddExpenseAsync` / `UpdateExpenseAsync` / `DeleteExpenseAsync`, que reconstroem grupos e totais e salvam o `trip.json`.
 
-   - Próximos passos: edição de itens no Android, separar Core em biblioteca compartilhada, avaliar sincronização multi-dispositivo.
+   - Próximos passos: edição das demais seções no Android, separar Core em biblioteca compartilhada, avaliar sincronização multi-dispositivo.
 
 ## Dívidas Técnicas
 

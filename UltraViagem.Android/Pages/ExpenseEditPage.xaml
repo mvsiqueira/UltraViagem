@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltraViagem.Android.Pages.ExpenseEditPage"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Barra superior -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*,Auto"
+              BackgroundColor="{StaticResource Surface}"
+              Padding="4,8">
+            <Button Grid.Column="0" Text="Cancelar"
+                    BackgroundColor="Transparent" TextColor="{StaticResource TextMuted}"
+                    FontSize="15" Padding="12,0" Clicked="OnCancelClicked" />
+            <Label Grid.Column="1" x:Name="TitleLabel"
+                   FontSize="16" FontAttributes="Bold"
+                   TextColor="{StaticResource TextPrimary}"
+                   HorizontalOptions="Center" VerticalOptions="Center" />
+            <Button Grid.Column="2" Text="Salvar"
+                    BackgroundColor="Transparent" TextColor="{StaticResource Accent}"
+                    FontSize="15" FontAttributes="Bold" Padding="12,0" Clicked="OnSaveClicked" />
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="20,20" Spacing="16">
+
+                <!-- Título -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="TÍTULO" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Entry x:Name="TitleEntry" FontSize="15" BackgroundColor="Transparent"
+                               TextColor="{StaticResource TextPrimary}" PlaceholderColor="{StaticResource TextMuted}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Categoria -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="CATEGORIA" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Entry x:Name="TypeEntry" FontSize="15" BackgroundColor="Transparent"
+                               Placeholder="Hospedagem, Transporte, Passeios…"
+                               TextColor="{StaticResource TextPrimary}" PlaceholderColor="{StaticResource TextMuted}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Fornecedor -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="FORNECEDOR" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Entry x:Name="CompanyEntry" FontSize="15" BackgroundColor="Transparent"
+                               TextColor="{StaticResource TextPrimary}" PlaceholderColor="{StaticResource TextMuted}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Preço unit. | Taxas -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="6">
+                        <Label Text="PREÇO UNIT." Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <Entry x:Name="PriceEntry" FontSize="15" Keyboard="Numeric" BackgroundColor="Transparent"
+                                   TextColor="{StaticResource TextPrimary}" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="TAXAS" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <Entry x:Name="TaxesEntry" FontSize="15" Keyboard="Numeric" BackgroundColor="Transparent"
+                                   TextColor="{StaticResource TextPrimary}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Pessoas | Quantidade -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="6">
+                        <Label Text="PESSOAS" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <Entry x:Name="PeopleEntry" FontSize="15" Keyboard="Numeric" BackgroundColor="Transparent"
+                                   TextColor="{StaticResource TextPrimary}" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="QUANTIDADE" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <Entry x:Name="QuantityEntry" FontSize="15" Keyboard="Numeric" BackgroundColor="Transparent"
+                                   TextColor="{StaticResource TextPrimary}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Moeda | Câmbio -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="6">
+                        <Label Text="MOEDA" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <Entry x:Name="CurrencyEntry" FontSize="15" BackgroundColor="Transparent"
+                                   Placeholder="BRL" TextColor="{StaticResource TextPrimary}" PlaceholderColor="{StaticResource TextMuted}" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="CÂMBIO P/ BASE" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <Entry x:Name="RateEntry" FontSize="15" Keyboard="Numeric" BackgroundColor="Transparent"
+                                   TextColor="{StaticResource TextPrimary}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Valor pago -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="VALOR PAGO (NA MOEDA BASE)" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Entry x:Name="PaidEntry" FontSize="15" Keyboard="Numeric" BackgroundColor="Transparent"
+                               TextColor="{StaticResource TextPrimary}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Link -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="LINK DE RESERVA" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Entry x:Name="LinkEntry" FontSize="15" Keyboard="Url" BackgroundColor="Transparent"
+                               TextColor="{StaticResource TextPrimary}" PlaceholderColor="{StaticResource TextMuted}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Observações -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="OBSERVAÇÕES" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Editor x:Name="NotesEntry" FontSize="15" BackgroundColor="Transparent"
+                                AutoSize="TextChanges" MinimumHeightRequest="44"
+                                TextColor="{StaticResource TextPrimary}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Ativo -->
+                <Grid ColumnDefinitions="*,Auto" Padding="2,0">
+                    <VerticalStackLayout Grid.Column="0" Spacing="0" VerticalOptions="Center">
+                        <Label Text="Ativo" FontSize="15" TextColor="{StaticResource TextPrimary}" />
+                        <Label Text="Itens inativos não entram nos totais" FontSize="12" TextColor="{StaticResource TextMuted}" />
+                    </VerticalStackLayout>
+                    <Switch Grid.Column="1" x:Name="ActiveSwitch"
+                            OnColor="{StaticResource Accent}" VerticalOptions="Center" />
+                </Grid>
+
+                <!-- Excluir -->
+                <Button x:Name="DeleteButton" IsVisible="False"
+                        Text="Excluir gasto"
+                        BackgroundColor="Transparent" TextColor="#EF4444"
+                        BorderColor="#EF4444" BorderWidth="1" CornerRadius="8"
+                        FontSize="15" Padding="0,14" Margin="0,8,0,0"
+                        Clicked="OnDeleteClicked" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>
