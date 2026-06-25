@@ -255,6 +255,16 @@ public sealed class TripViewModel : BindableObject
             await _fileService.SaveTripAsync(_currentTripUri, Trip);
     }
 
+    // ── Exportação PDF ───────────────────────────────────────
+
+    public async Task<string> ExportPdfAsync()
+    {
+        var safe = string.IsNullOrWhiteSpace(Trip.Id) ? "viagem" : Trip.Id;
+        var path = Path.Combine(FileSystem.CacheDirectory, $"{safe}.pdf");
+        await Task.Run(() => Services.AndroidPdfExporter.Export(Trip, path));
+        return path;
+    }
+
     // ── Dicas ────────────────────────────────────────────────
 
     public async Task AddLinkAsync(string title, string url)
@@ -438,15 +448,43 @@ public sealed class NumberedDay
     public string Label     { get; }
     public string DateLabel { get; }
     public string Summary   { get; }
-    public List<ItineraryActivity> Activities { get; }
+    public List<ActivityRow> Activities { get; }
+    public bool   HasActivities => Activities.Count > 0;
 
     public NumberedDay(ItineraryDay day, int number, DateOnly? date)
     {
         Label      = $"D{number}";
         DateLabel  = date?.ToString("ddd, dd/MM/yyyy", new CultureInfo("pt-BR")) ?? "";
-        Summary    = day.Summary;
-        Activities = day.Activities;
+        Summary    = string.IsNullOrWhiteSpace(day.Summary) ? $"Dia {number}" : day.Summary;
+        Activities = day.Activities
+            .OrderBy(a => a.StartSlot)
+            .Select(a => new ActivityRow(a))
+            .ToList();
     }
+}
+
+// Atividade do roteiro com estado de expansão (somente leitura)
+public sealed class ActivityRow : BindableObject
+{
+    private readonly ItineraryActivity _a;
+
+    public ActivityRow(ItineraryActivity a) => _a = a;
+
+    public string Title      => _a.Title;
+    public string Color      => string.IsNullOrWhiteSpace(_a.Color) ? "#E5E7EB" : _a.Color;
+    public string TypeLabel  => _a.Type ?? "";
+    public bool   HasType    => !string.IsNullOrWhiteSpace(_a.Type);
+    public bool   HasDetails => !string.IsNullOrWhiteSpace(_a.Details);
+    public string Details    => _a.Details ?? "";
+
+    private bool _isExpanded;
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set { if (_isExpanded != value) { _isExpanded = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShowDetails)); } }
+    }
+
+    public bool ShowDetails => _isExpanded && HasDetails;
 }
 
 public sealed class ObservableTaskItem : BindableObject

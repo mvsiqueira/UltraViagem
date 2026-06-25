@@ -131,4 +131,28 @@ public partial class TripPage : ContentPage
 
     private async void OnCloseClicked(object sender, EventArgs e)
         => await Navigation.PopModalAsync();
+
+    private async void OnExportPdfClicked(object? sender, TappedEventArgs e)
+    {
+        await CloseDrawer();
+        BusyOverlay.IsVisible = true;
+        try
+        {
+            var path = await _vm.ExportPdfAsync();
+            await Share.Default.RequestAsync(new ShareFileRequest
+            {
+                Title = "Exportar PDF",
+                File  = new ShareFile(path)
+            });
+        }
+        catch (Exception ex)
+        {
+            global::Android.Util.Log.Debug("UVDBG", $"ExportPdf erro: {ex}");
+            await DisplayAlert("Erro ao exportar", "Não foi possível gerar o PDF.", "OK");
+        }
+        finally
+        {
+            BusyOverlay.IsVisible = false;
+        }
+    }
 }

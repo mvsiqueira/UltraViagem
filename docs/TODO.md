@@ -21,6 +21,13 @@
 
    - **Visão Geral**: grade 2×3 de blocos coloridos (pastel), um por seção (Roteiro, Tarefas, Mapa, Gastos, Dicas, Arquivos), cada bloco com ícone (Tabler outline embutido como `Path` SVG), título e resumo, clicável para a respectiva seção. O bloco Mapa abre o Google My Maps direto.
 
+   - **Roteiro** (`ItineraryPage`): cada dia é um card (badge Dx + resumo + data) com as atividades em lista vertical ordenada por `StartSlot` (`ActivityRow`). Cada atividade mostra acento colorido (cor da atividade), título e tipo; toque expande os detalhes/notas quando houver (chevron só aparece em atividades com detalhes). Somente leitura por enquanto.
+
+   - **Exportação PDF** (`AndroidPdfExporter` + `CalibriFontResolver`): o QuestPDF usado no desktop **não roda no Android** (recusa runtimes não-suportados, sem binário nativo `QuestPdfSkia` para Android). Por isso o Android reimplementa o mesmo layout com **MigraDoc/PDFsharp** (`PDFsharp-MigraDoc`), que roda no Android, reproduzindo de perto a saída do `TripPdfExporter`: mesmas 6 seções (Roteiro, Roteiro Detalhado por versão em landscape, Dicas, Gastos, Orçamento Detalhado em landscape, Tarefas), cores, tamanhos e o diagrama de slots (tabela com células mescladas).
+     - A fonte **Calibri** fica embutida em `UltraViagem.Core/Fonts` (resource) e é fornecida ao PDFsharp via `IFontResolver` (o Android não tem Calibri no sistema) — sem isso a quebra/paginação divergiria.
+     - Gatilho: item "Exportar PDF" no drawer da `TripPage` → gera em `FileSystem.CacheDirectory` (`TripViewModel.ExportPdfAsync`) e abre a folha de compartilhamento (`Share`).
+     - Observação: por ser outro motor de layout, não é byte-a-byte idêntico ao desktop, mas visualmente equivalente.
+
    - **Arquivos** (`FilesPage`): lista os anexos de `Trip.Attachments` (não varre a pasta). Toque abre o arquivo; toque longo entra em modo de seleção com checkboxes e barra de ação Baixar/Excluir.
      - Abertura/cópia/exclusão funcionam tanto em armazenamento local quanto no Google Drive: `BuildSiblingUri` (manipula docId hierárquico) com fallback para `FindSiblingInFolder` (enumera filhos da pasta pelo nome, para docIds opacos). O `FolderUri` da viagem é capturado no scan e propagado até o `TripViewModel`.
      - Download copia para `Download/UltraViagem/` via `MediaStore`.

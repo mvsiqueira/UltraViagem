@@ -143,7 +143,27 @@
                         </Grid.GestureRecognizers>
                     </Grid>
 
+                    <!-- Exportar PDF -->
+                    <BoxView HeightRequest="1" Color="{StaticResource Border}" Margin="20,8,20,8" />
+                    <Grid ColumnDefinitions="4,*" HeightRequest="52">
+                        <Label Grid.Column="1" Text="Exportar PDF"
+                               VerticalOptions="Center" Margin="20,0,0,0" FontSize="15"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource Accent}" />
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnExportPdfClicked" />
+                        </Grid.GestureRecognizers>
+                    </Grid>
+
                 </VerticalStackLayout>
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- ── OVERLAY "Gerando PDF" ── -->
+        <Grid x:Name="BusyOverlay" BackgroundColor="#80000000" IsVisible="False">
+            <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="12">
+                <ActivityIndicator IsRunning="True" Color="White" />
+                <Label Text="Gerando PDF…" TextColor="White" FontSize="14" />
             </VerticalStackLayout>
         </Grid>
 

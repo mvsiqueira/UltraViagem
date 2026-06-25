@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:core="clr-namespace:UltraViagem.Core;assembly=UltraViagem.Core"
              xmlns:vm="clr-namespace:UltraViagem.Android.ViewModels"
              x:Class="UltraViagem.Android.Pages.ItineraryPage"
              Title="Roteiro">
@@ -11,59 +10,82 @@
 
         <CollectionView.ItemTemplate>
             <DataTemplate x:DataType="vm:NumberedDay">
-                <VerticalStackLayout Spacing="6" Margin="0,0,0,16">
+                <Border Style="{StaticResource CardFrame}">
+                    <VerticalStackLayout Spacing="2">
 
-                    <!-- Cabeçalho do dia -->
-                    <Grid ColumnDefinitions="40,*" ColumnSpacing="10">
-                        <Border Grid.Column="0"
-                               BackgroundColor="{StaticResource AccentLight}"
-                               Stroke="Transparent"
-                               StrokeShape="RoundRectangle 8" Padding="0"
-                               HeightRequest="40" WidthRequest="40">
-                            <Label Text="{Binding Label}"
-                                   TextColor="{StaticResource Accent}"
-                                   FontAttributes="Bold" FontSize="12"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center" />
-                        </Border>
-                        <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
-                            <Label Text="{Binding Summary}"
-                                   FontAttributes="Bold" FontSize="15"
-                                   TextColor="{StaticResource TextPrimary}" />
-                            <Label Text="{Binding DateLabel}"
-                                   Style="{StaticResource MutedLabel}" FontSize="12" />
+                        <!-- Cabeçalho do dia -->
+                        <Grid ColumnDefinitions="40,*" ColumnSpacing="10" Margin="0,0,0,6">
+                            <Border Grid.Column="0"
+                                    BackgroundColor="{StaticResource AccentLight}"
+                                    Stroke="Transparent"
+                                    StrokeShape="RoundRectangle 8" Padding="0"
+                                    HeightRequest="40" WidthRequest="40"
+                                    VerticalOptions="Start">
+                                <Label Text="{Binding Label}"
+                                       TextColor="{StaticResource Accent}"
+                                       FontAttributes="Bold" FontSize="12"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
+                                <Label Text="{Binding Summary}"
+                                       FontAttributes="Bold" FontSize="15"
+                                       TextColor="{StaticResource TextPrimary}" />
+                                <Label Text="{Binding DateLabel}"
+                                       Style="{StaticResource MutedLabel}" FontSize="12" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Atividades (lista vertical ordenada) -->
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Activities}" Spacing="0">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ActivityRow">
+                                    <VerticalStackLayout Spacing="0">
+                                        <Grid ColumnDefinitions="4,*,Auto" ColumnSpacing="10" Padding="0,9">
+                                            <Grid.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnActivityTapped" />
+                                            </Grid.GestureRecognizers>
+
+                                            <BoxView Grid.Column="0"
+                                                     WidthRequest="4" CornerRadius="2"
+                                                     Color="{Binding Color, Converter={StaticResource HexToColor}}"
+                                                     VerticalOptions="Fill" />
+
+                                            <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                                <Label Text="{Binding Title}"
+                                                       FontSize="14"
+                                                       TextColor="{StaticResource TextPrimary}" />
+                                                <Label Text="{Binding TypeLabel}"
+                                                       FontSize="11"
+                                                       TextColor="{StaticResource TextMuted}"
+                                                       IsVisible="{Binding HasType}" />
+                                            </VerticalStackLayout>
+
+                                            <Label Grid.Column="2" Text="›"
+                                                   FontSize="18"
+                                                   TextColor="{StaticResource TextMuted}"
+                                                   VerticalOptions="Center"
+                                                   IsVisible="{Binding HasDetails}" />
+                                        </Grid>
+
+                                        <!-- Detalhes (expandido) -->
+                                        <Label Text="{Binding Details}"
+                                               FontSize="13"
+                                               TextColor="{StaticResource TextMuted}"
+                                               Margin="14,0,0,8"
+                                               IsVisible="{Binding ShowDetails}" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
                         </VerticalStackLayout>
-                    </Grid>
 
-                    <!-- Chips das atividades -->
-                    <FlexLayout BindableLayout.ItemsSource="{Binding Activities}"
-                                Wrap="Wrap" Direction="Row">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="core:ItineraryActivity">
-                                <Border StrokeShape="RoundRectangle 16"
-                                       Padding="10,5"
-                                       Margin="0,0,6,6"
-                                       Stroke="Transparent">
-                                    <Border.BackgroundColor>
-                                        <Binding Path="Color"
-                                                 Converter="{x:StaticResource HexToColor}" />
-                                    </Border.BackgroundColor>
-                                    <Label Text="{Binding Title}"
-                                           FontSize="12"
-                                           LineBreakMode="NoWrap">
-                                        <Label.TextColor>
-                                            <Binding Path="Color"
-                                                     Converter="{x:StaticResource HexToContrastColor}" />
-                                        </Label.TextColor>
-                                    </Label>
-                                </Border>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </FlexLayout>
+                        <!-- Dia sem atividades -->
+                        <Label Text="Sem atividades neste dia"
+                               Style="{StaticResource MutedLabel}" FontSize="12"
+                               Margin="14,4,0,4"
+                               IsVisible="{Binding HasActivities, Converter={StaticResource InvertBool}}" />
 
-                    <BoxView HeightRequest="1" Color="{StaticResource Border}" Margin="0,4,0,0" />
-
-                </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
             </DataTemplate>
         </CollectionView.ItemTemplate>
 
