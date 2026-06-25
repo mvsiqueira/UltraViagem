@@ -18,7 +18,25 @@ public partial class OverviewPage : ContentPage
             return;
         }
 
+        if (e.Parameter is "details")
+        {
+            var editPage = new TripDetailsEditPage(vm.Trip);
+            await GetCurrentPage().Navigation.PushModalAsync(editPage);
+            var result = await editPage.Result;
+            if (result != null)
+                await vm.UpdateTripDetailsAsync(
+                    result.Title, result.Start, result.End,
+                    result.People, result.Currency, result.MapUrl);
+            return;
+        }
+
         if (e.Parameter is string s && int.TryParse(s, out int index))
             vm.RequestSection(index);
+    }
+
+    private static Page GetCurrentPage()
+    {
+        var root = Application.Current!.Windows[0].Page!;
+        return root.Navigation.ModalStack.LastOrDefault() ?? root;
     }
 }

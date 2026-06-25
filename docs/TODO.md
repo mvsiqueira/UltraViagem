@@ -19,7 +19,8 @@
    - **TripPage com drawer lateral (hambúrguer)**: troca de seção sem recriar a página; o conteúdo de cada seção é injetado em `ContentArea.Content`. Evento `TripViewModel.SectionRequested` permite que páginas-filho disparem a troca de seção.
      - Botão voltar (hardware): numa seção interna volta para a Visão Geral; só na Visão Geral fecha a viagem e retorna à lista.
 
-   - **Visão Geral**: grade 2×3 de blocos coloridos (pastel), um por seção (Roteiro, Tarefas, Mapa, Gastos, Dicas, Arquivos), cada bloco com ícone (Tabler outline embutido como `Path` SVG), título e resumo, clicável para a respectiva seção. O bloco Mapa abre o Google My Maps direto.
+   - **Visão Geral**: grade de blocos coloridos (pastel) com ícone (Tabler outline embutido como `Path` SVG), título e resumo. O primeiro bloco é **Detalhes** (slate) — abre o editor de metadados; os demais são as seções (Roteiro, Tarefas, Mapa, Gastos, Dicas, Arquivos). O bloco Mapa abre o Google My Maps direto.
+     - **Editar metadados** (`TripDetailsEditPage`, modal): nome, datas (início/fim via `DatePicker`), nº de pessoas, moeda base e URL do mapa. Salvo via `TripViewModel.UpdateTripDetailsAsync`, que recalcula tudo que depende desses campos (datas do roteiro, totais, resumos) e dispara `TripUpdated` para atualizar o nome no drawer.
 
    - **Roteiro** (`ItineraryPage`): cada dia é um card (badge Dx + resumo + data) com as atividades em lista vertical ordenada por `StartSlot` (`ActivityRow`). Cada atividade mostra acento colorido (cor da atividade), título e tipo; toque expande os detalhes/notas quando houver (chevron só aparece em atividades com detalhes). Somente leitura por enquanto.
 
@@ -42,7 +43,22 @@
      - Cartão-resumo no rodapé: Estimado / Pago / A pagar (este em vermelho) + `ProgressBar` (`PaidFraction`). Totais consideram apenas itens ativos.
      - **Edição** (`ExpenseEditPage`, modal): toque longo no item abre o editor com formulário completo (título, categoria, fornecedor, link, observações, preço unit., taxas, pessoas, quantidade, moeda, câmbio, valor pago e toggle ativo); botão Excluir (com confirmação). FAB "+" cria um gasto novo com defaults da viagem. Persistido via `TripViewModel.AddExpenseAsync` / `UpdateExpenseAsync` / `DeleteExpenseAsync`, que reconstroem grupos e totais e salvam o `trip.json`.
 
-   - Próximos passos: edição das demais seções no Android, separar Core em biblioteca compartilhada, avaliar sincronização multi-dispositivo.
+   - **Pendências do app Android** (o que falta para ficar completo como ferramenta de viagem):
+
+     - **Gestão de viagens** (hoje só abre viagens existentes; editar metadados já feito — ver acima):
+       - Criar viagem nova do zero (equivalente ao fluxo de criação do desktop).
+       - Excluir viagem.
+     - **Edição que ainda falta** (Gastos, Dicas e Tarefas já têm criar/editar/excluir):
+       - Roteiro: criar/editar/reordenar atividades e dias (envolve slots/posição — edição mais complexa). Hoje é só leitura.
+       - Anexar novos arquivos na tela de Arquivos (hoje só lista/abre/baixa/exclui).
+     - **Moedas / Cotações**: não há a aba de cotações do desktop (cadastro de moedas + atualização automática de câmbio via AwesomeAPI). Gastos mostram o câmbio salvo, mas não há gestão/atualização de taxas.
+     - **Versões de roteiro**: a UI usa só a versão ativa; falta poder trocar entre versões (o PDF já exporta todas).
+     - **Mapa**: hoje só abre o link no navegador; opcionalmente exibir o My Maps embutido numa WebView, como o desktop.
+     - **Diversos / qualidade**: favoritos de viagens (`favoriteTrips` do config); filtro/ordenação em Tarefas e Gastos; estados de erro/vazio mais consistentes.
+
+     Prioridade sugerida para "fechar" o app: (1) criar/editar viagem, (2) anexar arquivos, (3) editar roteiro.
+
+   - Próximos passos transversais: separar Core em biblioteca compartilhada, avaliar sincronização multi-dispositivo.
 
 ## Dívidas Técnicas
 

@@ -38,13 +38,18 @@ public partial class TripPage : ContentPage
         base.OnAppearing();
         _vm.SectionRequested -= ShowSection;
         _vm.SectionRequested += ShowSection;
+        _vm.TripUpdated -= OnTripUpdated;
+        _vm.TripUpdated += OnTripUpdated;
     }
 
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
         _vm.SectionRequested -= ShowSection;
+        _vm.TripUpdated -= OnTripUpdated;
     }
+
+    private void OnTripUpdated() => DrawerTripName.Text = _vm.Trip.Title;
 
     protected override bool OnBackButtonPressed()
     {

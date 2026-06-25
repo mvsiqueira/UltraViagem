@@ -27,6 +27,7 @@ public sealed class TripViewModel : BindableObject
     public bool   HasExpenses   => Trip.Expenses.Count > 0;
 
     // ── Resumos dos blocos da Visão Geral ───────────────────
+    public string DetailsInfo   { get; private set; } = "";
     public string ItineraryInfo { get; private set; } = "";
     public string TasksInfo      { get; private set; } = "";
     public string MapInfo        { get; private set; } = "";
@@ -42,6 +43,9 @@ public sealed class TripViewModel : BindableObject
     // Disparado quando o usuário toca num bloco da Visão Geral; TripPage troca de seção.
     public event Action<int>? SectionRequested;
     public void RequestSection(int index) => SectionRequested?.Invoke(index);
+
+    // Disparado quando os metadados da viagem mudam (ex.: para atualizar o nome no drawer).
+    public event Action? TripUpdated;
 
     public List<NumberedDay> DisplayItinerary { get; private set; } = [];
     public ObservableCollection<ObservableTaskItem> ObservableTasks  { get; } = [];
@@ -89,6 +93,7 @@ public sealed class TripViewModel : BindableObject
         OnPropertyChanged(nameof(HasLinks));
         OnPropertyChanged(nameof(HasExpenses));
         OnPropertyChanged(nameof(DisplayItinerary));
+        OnPropertyChanged(nameof(DetailsInfo));
         OnPropertyChanged(nameof(ItineraryInfo));
         OnPropertyChanged(nameof(TasksInfo));
         OnPropertyChanged(nameof(MapInfo));
@@ -188,6 +193,8 @@ public sealed class TripViewModel : BindableObject
 
     private void BuildOverviewInfos(Trip trip)
     {
+        DetailsInfo = $"{trip.People} {(trip.People == 1 ? "pessoa" : "pessoas")} · {trip.BaseCurrency}";
+
         var days       = ActiveVersion?.Itinerary.Count ?? 0;
         var activities = ActiveVersion?.Itinerary.Sum(d => d.Activities.Count) ?? 0;
         ItineraryInfo = days == 0
@@ -253,6 +260,24 @@ public sealed class TripViewModel : BindableObject
     {
         if (_currentTripUri != null)
             await _fileService.SaveTripAsync(_currentTripUri, Trip);
+    }
+
+    // ── Metadados da viagem ──────────────────────────────────
+
+    public async Task UpdateTripDetailsAsync(
+        string title, DateOnly? start, DateOnly? end, int people, string currency, string? mapUrl)
+    {
+        Trip.Title        = title;
+        Trip.StartDate    = start;
+        Trip.EndDate      = end;
+        Trip.People       = people;
+        Trip.BaseCurrency = currency;
+        Trip.MyMapsUrl    = mapUrl;
+
+        // Recalcula tudo que depende desses campos (datas do roteiro, totais, resumos)
+        Load(Trip, _currentTripUri, _currentFolderUri);
+        TripUpdated?.Invoke();
+        await SaveAsync();
     }
 
     // ── Exportação PDF ───────────────────────────────────────

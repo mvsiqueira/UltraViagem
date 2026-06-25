@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltraViagem.Android.Pages.TripDetailsEditPage"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Barra superior -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto"
+              BackgroundColor="{StaticResource Surface}" Padding="4,8">
+            <Button Grid.Column="0" Text="Cancelar"
+                    BackgroundColor="Transparent" TextColor="{StaticResource TextMuted}"
+                    FontSize="15" Padding="12,0" Clicked="OnCancelClicked" />
+            <Label Grid.Column="1" Text="Editar viagem"
+                   FontSize="16" FontAttributes="Bold"
+                   TextColor="{StaticResource TextPrimary}"
+                   HorizontalOptions="Center" VerticalOptions="Center" />
+            <Button Grid.Column="2" Text="Salvar"
+                    BackgroundColor="Transparent" TextColor="{StaticResource Accent}"
+                    FontSize="15" FontAttributes="Bold" Padding="12,0" Clicked="OnSaveClicked" />
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="20,20" Spacing="16">
+
+                <!-- Nome -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="NOME" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Entry x:Name="TitleEntry" FontSize="15" BackgroundColor="Transparent"
+                               TextColor="{StaticResource TextPrimary}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Datas -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="6">
+                        <Label Text="INÍCIO" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <DatePicker x:Name="StartPicker" Format="dd/MM/yyyy" FontSize="15"
+                                        TextColor="{StaticResource TextPrimary}" BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="FIM" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <DatePicker x:Name="EndPicker" Format="dd/MM/yyyy" FontSize="15"
+                                        TextColor="{StaticResource TextPrimary}" BackgroundColor="Transparent" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- Pessoas | Moeda base -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <VerticalStackLayout Grid.Column="0" Spacing="6">
+                        <Label Text="PESSOAS" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <Entry x:Name="PeopleEntry" FontSize="15" Keyboard="Numeric" BackgroundColor="Transparent"
+                                   TextColor="{StaticResource TextPrimary}" />
+                        </Border>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Grid.Column="1" Spacing="6">
+                        <Label Text="MOEDA BASE" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                        <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                            <Entry x:Name="CurrencyEntry" FontSize="15" BackgroundColor="Transparent"
+                                   Placeholder="BRL" TextColor="{StaticResource TextPrimary}" PlaceholderColor="{StaticResource TextMuted}" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- URL do mapa -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="URL DO MAPA (GOOGLE MY MAPS)" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Editor x:Name="MapEntry" FontSize="14" BackgroundColor="Transparent"
+                                Keyboard="Url" AutoSize="TextChanges" MinimumHeightRequest="44"
+                                TextColor="{StaticResource TextPrimary}" />
+                    </Border>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>
