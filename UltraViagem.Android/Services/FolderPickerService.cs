@@ -11,7 +11,12 @@ public sealed class FolderPickerService
     {
         _tcs = new TaskCompletionSource<global::Android.Net.Uri?>();
         var intent = new Intent(Intent.ActionOpenDocumentTree);
-        intent.AddFlags(ActivityFlags.GrantReadUriPermission | ActivityFlags.GrantPersistableUriPermission);
+        // NÃO pedir escrita no intent do seletor: alguns provedores somente-leitura
+        // (ex.: OneDrive) e o DocumentsUI da Samsung deixam de permitir confirmar a
+        // pasta ("USAR ESTA PASTA" desabilitado) quando a escrita é exigida aqui.
+        // A escrita é adquirida depois, de forma oportunista, em TripFileService.SaveRepoUri.
+        intent.AddFlags(ActivityFlags.GrantReadUriPermission
+                      | ActivityFlags.GrantPersistableUriPermission);
         Platform.CurrentActivity!.StartActivityForResult(intent, RequestCode);
         return _tcs.Task;
     }

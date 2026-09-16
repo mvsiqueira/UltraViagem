@@ -4,6 +4,15 @@
 
 - Importação de viagens antigas.
 
+### App Android — melhorias pós-uso real (levantadas em 16/09/2026)
+
+Itens surgidos após usar o app numa viagem de verdade:
+
+- **Resolver armazenamento OneDrive e Google Drive**: no Android 16 (testado no Galaxy S24) o seletor de pasta do sistema (`ACTION_OPEN_DOCUMENT_TREE`) só oferece armazenamento **local** — Google Drive e OneDrive não expõem mais acesso a pasta/árvore via SAF, então a tela de seleção de locais nem abre. Não há conserto no seletor. Avaliar caminhos: (A) contornar com pasta local + app de sync externo (Autosync/FolderSync espelhando a nuvem para uma pasta local); (B) implementar sync na nuvem **dentro do app via API** (Microsoft Graph p/ OneDrive, Google Drive API), sem SAF — auth OAuth + cache offline. Direção alvo: B (começando pelo OneDrive). Ver histórico do problema de permissões SAF na seção do Android abaixo.
+- **Rever gastos (casas decimais e foco nos campos)**: revisar a formatação de casas decimais (valores) e o comportamento de foco/teclado ao editar os campos no `ExpenseEditPage` (ordem de foco, tipo de teclado numérico, seleção do conteúdo ao focar).
+- **Abrir na última viagem**: ao abrir o app, ir direto para a última viagem aberta (pular a lista), com um caminho claro de voltar para a lista de viagens. Hoje já existe `GetLastTrip`/`LastTrip`; falta a navegação automática na inicialização.
+- **Sincronizar My Maps**: hoje o bloco Mapa só abre o link do My Maps no navegador. Avaliar sincronizar/refletir o mapa (ex.: exibir embutido numa WebView como no desktop e/ou manter a URL/versão em dia).
+
 ## Prioridade Baixa
 
 - App Android (`UltraViagem.Android` — MAUI, fase 1 viewer)
@@ -22,7 +31,11 @@
    - **Visão Geral**: grade de blocos coloridos (pastel) com ícone (Tabler outline embutido como `Path` SVG), título e resumo. O primeiro bloco é **Detalhes** (slate) — abre o editor de metadados; os demais são as seções (Roteiro, Tarefas, Mapa, Gastos, Dicas, Arquivos). O bloco Mapa abre o Google My Maps direto.
      - **Editar metadados** (`TripDetailsEditPage`, modal): nome, datas (início/fim via `DatePicker`), nº de pessoas, moeda base e URL do mapa. Salvo via `TripViewModel.UpdateTripDetailsAsync`, que recalcula tudo que depende desses campos (datas do roteiro, totais, resumos) e dispara `TripUpdated` para atualizar o nome no drawer.
 
-   - **Roteiro** (`ItineraryPage`): cada dia é um card (badge Dx + resumo + data) com as atividades em lista vertical ordenada por `StartSlot` (`ActivityRow`). Cada atividade mostra acento colorido (cor da atividade), título e tipo; toque expande os detalhes/notas quando houver (chevron só aparece em atividades com detalhes). Somente leitura por enquanto.
+   - **Roteiro** (`ItineraryPage`): cada dia é um card (badge Dx + resumo + data) com as atividades em lista vertical ordenada por `StartSlot` (`ActivityRow`). Cada atividade mostra acento colorido (cor da atividade), título e tipo; toque expande os detalhes/notas quando houver (chevron só aparece em atividades com detalhes).
+     - **Editar atividade** (`ActivityEditPage`, modal): toque longo abre o editor com título, tipo, **cor** (paleta) e detalhes. Salvo via `TripViewModel.UpdateActivityAsync`; preserva `StartSlot`/`DurationSlots` (não bagunça a linha do tempo do desktop). Ainda não há adicionar/excluir/reordenar atividades nem editar o resumo do dia.
+
+   - **Permissão de escrita SAF** (corrigido): as edições (Gastos, Detalhes, Roteiro) precisam de permissão de **escrita** persistida na pasta — antes só se pegava leitura, então salvar no `trip.json` falhava silenciosamente. O `SaveRepoUri` agora faz `TakePersistableUriPermission` com **leitura + escrita** e, se o provedor recusar a escrita (ex.: OneDrive é somente-leitura via SAF), **cai para somente leitura** (a pasta ainda funciona como visualizador). O intent do `FolderPickerService` pede **apenas leitura** de propósito: exigir escrita no seletor faz o DocumentsUI da Samsung **desabilitar o "USAR ESTA PASTA"** em provedores somente-leitura. **Usuários existentes precisam usar "Trocar pasta" uma vez** para reautorizar com escrita.
+     - **Limite descoberto no Android 16 (Galaxy S24)**: o seletor SAF (`ACTION_OPEN_DOCUMENT_TREE`) passou a oferecer **só o armazenamento interno** — Google Drive e OneDrive não expõem mais acesso a pasta/árvore, e a lista de locais nem abre. Por isso o acesso a pastas na nuvem migrará para **APIs nativas** (Google Drive API / Microsoft Graph) num backend de armazenamento plugável — ver "Resolver armazenamento OneDrive e Google Drive" em Prioridade Alta.
 
    - **Exportação PDF** (`AndroidPdfExporter` + `CalibriFontResolver`): o QuestPDF usado no desktop **não roda no Android** (recusa runtimes não-suportados, sem binário nativo `QuestPdfSkia` para Android). Por isso o Android reimplementa o mesmo layout com **MigraDoc/PDFsharp** (`PDFsharp-MigraDoc`), que roda no Android, reproduzindo de perto a saída do `TripPdfExporter`: mesmas 6 seções (Roteiro, Roteiro Detalhado por versão em landscape, Dicas, Gastos, Orçamento Detalhado em landscape, Tarefas), cores, tamanhos e o diagrama de slots (tabela com células mescladas).
      - A fonte **Calibri** fica embutida em `UltraViagem.Core/Fonts` (resource) e é fornecida ao PDFsharp via `IFontResolver` (o Android não tem Calibri no sistema) — sem isso a quebra/paginação divergiria.
@@ -48,8 +61,8 @@
      - **Gestão de viagens** (hoje só abre viagens existentes; editar metadados já feito — ver acima):
        - Criar viagem nova do zero (equivalente ao fluxo de criação do desktop).
        - Excluir viagem.
-     - **Edição que ainda falta** (Gastos, Dicas e Tarefas já têm criar/editar/excluir):
-       - Roteiro: criar/editar/reordenar atividades e dias (envolve slots/posição — edição mais complexa). Hoje é só leitura.
+     - **Edição que ainda falta** (Gastos, Dicas e Tarefas já têm criar/editar/excluir; Roteiro já tem editar atividade):
+       - Roteiro: adicionar/excluir/reordenar atividades, editar resumo do dia e adicionar/excluir dias (envolve slots/posição — mais complexo).
        - Anexar novos arquivos na tela de Arquivos (hoje só lista/abre/baixa/exclui).
      - **Moedas / Cotações**: não há a aba de cotações do desktop (cadastro de moedas + atualização automática de câmbio via AwesomeAPI). Gastos mostram o câmbio salvo, mas não há gestão/atualização de taxas.
      - **Versões de roteiro**: a UI usa só a versão ativa; falta poder trocar entre versões (o PDF já exporta todas).

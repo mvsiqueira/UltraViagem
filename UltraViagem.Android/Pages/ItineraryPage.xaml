@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:UltraViagem.Android.ViewModels"
+             xmlns:controls="clr-namespace:UltraViagem.Android.Controls"
              x:Class="UltraViagem.Android.Pages.ItineraryPage"
              Title="Roteiro">
 
@@ -40,10 +41,11 @@
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="vm:ActivityRow">
                                     <VerticalStackLayout Spacing="0">
+                                      <controls:LongPressBorder Stroke="Transparent" StrokeThickness="0"
+                                                                BackgroundColor="Transparent" Padding="0"
+                                                                Tapped="OnActivityTapped"
+                                                                LongPressed="OnActivityLongPressed">
                                         <Grid ColumnDefinitions="4,*,Auto" ColumnSpacing="10" Padding="0,9">
-                                            <Grid.GestureRecognizers>
-                                                <TapGestureRecognizer Tapped="OnActivityTapped" />
-                                            </Grid.GestureRecognizers>
 
                                             <BoxView Grid.Column="0"
                                                      WidthRequest="4" CornerRadius="2"
@@ -66,6 +68,7 @@
                                                    VerticalOptions="Center"
                                                    IsVisible="{Binding HasDetails}" />
                                         </Grid>
+                                      </controls:LongPressBorder>
 
                                         <!-- Detalhes (expandido) -->
                                         <Label Text="{Binding Details}"

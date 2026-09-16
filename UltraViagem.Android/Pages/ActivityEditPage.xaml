@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UltraViagem.Android.Pages.ActivityEditPage"
+             NavigationPage.HasNavigationBar="False">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Barra superior -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto"
+              BackgroundColor="{StaticResource Surface}" Padding="4,8">
+            <Button Grid.Column="0" Text="Cancelar"
+                    BackgroundColor="Transparent" TextColor="{StaticResource TextMuted}"
+                    FontSize="15" Padding="12,0" Clicked="OnCancelClicked" />
+            <Label Grid.Column="1" Text="Editar atividade"
+                   FontSize="16" FontAttributes="Bold"
+                   TextColor="{StaticResource TextPrimary}"
+                   HorizontalOptions="Center" VerticalOptions="Center" />
+            <Button Grid.Column="2" Text="Salvar"
+                    BackgroundColor="Transparent" TextColor="{StaticResource Accent}"
+                    FontSize="15" FontAttributes="Bold" Padding="12,0" Clicked="OnSaveClicked" />
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="20,20" Spacing="16">
+
+                <!-- Título -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="TÍTULO" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Entry x:Name="TitleEntry" FontSize="15" BackgroundColor="Transparent"
+                               TextColor="{StaticResource TextPrimary}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Tipo -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="TIPO" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Entry x:Name="TypeEntry" FontSize="15" BackgroundColor="Transparent"
+                               Placeholder="Passeio, Transporte, Refeição…"
+                               TextColor="{StaticResource TextPrimary}" PlaceholderColor="{StaticResource TextMuted}" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Cor -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="COR" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <FlexLayout x:Name="ColorPalette" Wrap="Wrap" Direction="Row" />
+                </VerticalStackLayout>
+
+                <!-- Detalhes -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="DETALHES" Style="{StaticResource MutedLabel}" FontAttributes="Bold" FontSize="11" CharacterSpacing="0.8" />
+                    <Border BackgroundColor="{StaticResource Surface}" Stroke="{StaticResource Border}" StrokeShape="RoundRectangle 8" Padding="12,0">
+                        <Editor x:Name="DetailsEntry" FontSize="15" BackgroundColor="Transparent"
+                                AutoSize="TextChanges" MinimumHeightRequest="44"
+                                TextColor="{StaticResource TextPrimary}" />
+                    </Border>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

@@ -262,6 +262,17 @@ public sealed class TripViewModel : BindableObject
             await _fileService.SaveTripAsync(_currentTripUri, Trip);
     }
 
+    // ── Roteiro ──────────────────────────────────────────────
+
+    public async Task UpdateActivityAsync(ItineraryActivity act, string title, string type, string color, string? details)
+    {
+        act.Title   = title;
+        act.Type    = type;
+        act.Color   = color;
+        act.Details = details;
+        await SaveAsync();
+    }
+
     // ── Metadados da viagem ──────────────────────────────────
 
     public async Task UpdateTripDetailsAsync(
@@ -495,12 +506,26 @@ public sealed class ActivityRow : BindableObject
 
     public ActivityRow(ItineraryActivity a) => _a = a;
 
+    public ItineraryActivity Source => _a;
+
     public string Title      => _a.Title;
     public string Color      => string.IsNullOrWhiteSpace(_a.Color) ? "#E5E7EB" : _a.Color;
     public string TypeLabel  => _a.Type ?? "";
     public bool   HasType    => !string.IsNullOrWhiteSpace(_a.Type);
     public bool   HasDetails => !string.IsNullOrWhiteSpace(_a.Details);
     public string Details    => _a.Details ?? "";
+
+    /// <summary>Notifica a UI após o ItineraryActivity ser editado.</summary>
+    public void Refresh()
+    {
+        OnPropertyChanged(nameof(Title));
+        OnPropertyChanged(nameof(Color));
+        OnPropertyChanged(nameof(TypeLabel));
+        OnPropertyChanged(nameof(HasType));
+        OnPropertyChanged(nameof(HasDetails));
+        OnPropertyChanged(nameof(Details));
+        OnPropertyChanged(nameof(ShowDetails));
+    }
 
     private bool _isExpanded;
     public bool IsExpanded

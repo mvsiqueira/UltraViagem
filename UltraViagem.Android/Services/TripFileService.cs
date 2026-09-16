@@ -24,12 +24,25 @@ public sealed class TripFileService
 
     public void SaveRepoUri(global::Android.Net.Uri uri)
     {
+        var resolver = Platform.AppContext.ContentResolver!;
         try
         {
-            Platform.AppContext.ContentResolver!.TakePersistableUriPermission(
-                uri, global::Android.Content.ActivityFlags.GrantReadUriPermission);
+            // Tenta persistir leitura + escrita (local, Google Drive): permite salvar edições no disco.
+            resolver.TakePersistableUriPermission(
+                uri, global::Android.Content.ActivityFlags.GrantReadUriPermission
+                   | global::Android.Content.ActivityFlags.GrantWriteUriPermission);
         }
-        catch { }
+        catch
+        {
+            // Provedores somente-leitura (ex.: OneDrive) não concedem escrita persistível.
+            // Cai para leitura para que a pasta ainda funcione como visualizador (como antes).
+            try
+            {
+                resolver.TakePersistableUriPermission(
+                    uri, global::Android.Content.ActivityFlags.GrantReadUriPermission);
+            }
+            catch { }
+        }
         Preferences.Default.Set(RepoUriKey, uri.ToString());
     }
 
