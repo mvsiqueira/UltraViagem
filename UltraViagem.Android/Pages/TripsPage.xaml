@@ -53,7 +53,7 @@
                                 FontSize="13"
                                 Padding="0"
                                 HeightRequest="36"
-                                Command="{Binding SelectFolderCommand}" />
+                                Clicked="OnSelectRepoClicked" />
                     </Grid>
 
                     <!-- Carregando -->
@@ -153,7 +153,7 @@
         <Button Grid.Row="2"
                 Text="Selecionar pasta de viagens"
                 Style="{StaticResource AccentButton}"
-                Command="{Binding SelectFolderCommand}"
+                Clicked="OnSelectRepoClicked"
                 IsVisible="{Binding HasRepo, Converter={StaticResource InvertBool}}"
                 Margin="0,16,0,32" />
 

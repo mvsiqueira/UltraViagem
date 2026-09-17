@@ -5,11 +5,14 @@ using UltraViagem.Core;
 
 namespace UltraViagem.Android.Services;
 
-public sealed class TripFileService
+public sealed partial class TripFileService : ITripStorage
 {
     private const string RepoUriKey      = "repo_uri";
+    private const string RepoKindKey     = "repo_kind";
+    private const string RepoLabelKey    = "repo_label";
     private const string LastTripUriKey  = "last_trip_uri";
     private const string LastTripTitleKey = "last_trip_title";
+    private const string LastTripRepoKey  = "last_trip_repo";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -20,7 +23,17 @@ public sealed class TripFileService
 
     // ── Repositório ─────────────────────────────────────────
 
-    public string? GetSavedRepoUri() => Preferences.Default.Get<string?>(RepoUriKey, null);
+    public string? GetSavedRepoUri()   => Preferences.Default.Get<string?>(RepoUriKey, null);
+    public string  GetSavedRepoKind()  => Preferences.Default.Get<string?>(RepoKindKey, "saf") ?? "saf";
+    public string? GetSavedRepoLabel() => Preferences.Default.Get<string?>(RepoLabelKey, null);
+
+    /// <summary>Persiste o repositório ativo (provedor + ref opaca + rótulo). Não pega permissão.</summary>
+    public void SaveRepoRef(string kind, string repoRef, string? label)
+    {
+        Preferences.Default.Set(RepoKindKey, kind);
+        Preferences.Default.Set(RepoUriKey, repoRef);
+        if (label != null) Preferences.Default.Set(RepoLabelKey, label);
+    }
 
     public void SaveRepoUri(global::Android.Net.Uri uri)
     {
@@ -43,22 +56,28 @@ public sealed class TripFileService
             }
             catch { }
         }
-        Preferences.Default.Set(RepoUriKey, uri.ToString());
+        SaveRepoRef("saf", uri.ToString(), null);
     }
 
     // ── Última viagem ────────────────────────────────────────
 
-    public TripEntry? GetLastTrip()
+    /// <summary>Última viagem aberta — só é retornada se pertencer ao repositório atual (evita atalho com ref de outro provedor).</summary>
+    public TripEntry? GetLastTrip(string? currentRepoRef)
     {
         var uri   = Preferences.Default.Get<string?>(LastTripUriKey, null);
         var title = Preferences.Default.Get<string?>(LastTripTitleKey, null);
-        return (uri != null && title != null) ? new TripEntry(title, null, uri) : null;
+        var repo  = Preferences.Default.Get<string?>(LastTripRepoKey, null);
+        if (uri == null || title == null) return null;
+        // Só mostra a última viagem se ela é do repositório atualmente selecionado.
+        if (currentRepoRef == null || repo != currentRepoRef) return null;
+        return new TripEntry(title, null, uri);
     }
 
-    public void SaveLastTrip(TripEntry entry)
+    public void SaveLastTrip(TripEntry entry, string? repoRef)
     {
         Preferences.Default.Set(LastTripUriKey, entry.UriString);
         Preferences.Default.Set(LastTripTitleKey, entry.Title);
+        if (repoRef != null) Preferences.Default.Set(LastTripRepoKey, repoRef);
     }
 
     // ── Scan ─────────────────────────────────────────────────
@@ -246,6 +265,48 @@ public sealed class TripFileService
             await File.WriteAllTextAsync(CacheFilePath, json);
         }
         catch { }
+    }
+}
+
+// ── ITripStorage (SAF) ───────────────────────────────────────
+public sealed partial class TripFileService
+{
+    public string Kind => "saf";
+    public bool   AccessDenied => ScanPermissionDenied;
+
+    public Task<List<TripEntry>> ScanTripsAsync(string repoRef) => ScanRepositoryAsync(repoRef);
+    public Task<Trip?>           LoadTripAsync(string tripRef)  => LoadTripFromUriAsync(tripRef);
+    // SaveTripAsync(string, Trip) já satisfaz a interface.
+
+    private global::Android.Net.Uri? ResolveSibling(string tripRef, string? folderRef, string filename)
+    {
+        var uri = BuildSiblingUri(tripRef, filename);
+        if (uri != null) return uri;
+        return folderRef != null ? FindSiblingInFolder(folderRef, filename) : null;
+    }
+
+    public Task<Stream?> OpenAttachmentAsync(string tripRef, string? folderRef, string filename)
+    {
+        try
+        {
+            var uri = ResolveSibling(tripRef, folderRef, filename);
+            if (uri == null) return Task.FromResult<Stream?>(null);
+            return Task.FromResult(Platform.AppContext.ContentResolver!.OpenInputStream(uri));
+        }
+        catch { return Task.FromResult<Stream?>(null); }
+    }
+
+    public Task<bool> DeleteAttachmentAsync(string tripRef, string? folderRef, string filename)
+    {
+        try
+        {
+            var uri = ResolveSibling(tripRef, folderRef, filename);
+            if (uri == null) return Task.FromResult(false);
+            global::Android.Provider.DocumentsContract.DeleteDocument(
+                Platform.AppContext.ContentResolver!, uri);
+            return Task.FromResult(true);
+        }
+        catch { return Task.FromResult(false); }
     }
 }
 

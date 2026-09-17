@@ -12,6 +12,7 @@ public sealed class TripViewModel : BindableObject
     private static readonly CultureInfo PtBr = new("pt-BR");
 
     private readonly TripFileService _fileService;
+    private ITripStorage? _storage;          // backend ativo (SAF ou Google Drive)
     private string? _currentTripUri;
     private string? _currentFolderUri;
 
@@ -56,11 +57,12 @@ public sealed class TripViewModel : BindableObject
         _fileService = fileService;
     }
 
-    public void Load(Trip trip, string? tripUri = null, string? folderUri = null)
+    public void Load(Trip trip, string? tripUri = null, string? folderUri = null, ITripStorage? storage = null)
     {
         Trip = trip;
         _currentTripUri   = tripUri;
         _currentFolderUri = folderUri;
+        if (storage != null) _storage = storage;   // recarga interna (UpdateTripDetails) preserva o backend
 
         ActiveVersion = trip.ItineraryVersions.FirstOrDefault(v => v.Id == trip.ActiveVersionId)
                      ?? trip.ItineraryVersions.FirstOrDefault();
@@ -259,7 +261,7 @@ public sealed class TripViewModel : BindableObject
     public async Task SaveAsync()
     {
         if (_currentTripUri != null)
-            await _fileService.SaveTripAsync(_currentTripUri, Trip);
+            await (_storage ?? (ITripStorage)_fileService).SaveTripAsync(_currentTripUri, Trip);
     }
 
     // ── Roteiro ──────────────────────────────────────────────
