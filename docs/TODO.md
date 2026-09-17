@@ -13,7 +13,7 @@ Itens surgidos após usar o app numa viagem de verdade:
   - ⬜ **OneDrive** — replicar o mesmo padrão com Microsoft Graph (`ITripStorage` já pronto; falta o backend + auth MSAL).
   - Futuro opcional: cache offline (baixar `trip.json` + anexos) para uso sem internet na viagem; anexos no Drive (abrir/baixar/excluir) — ainda usam o caminho SAF, faltam no backend do Drive.
 - **Rever gastos (casas decimais e foco nos campos)**: revisar a formatação de casas decimais (valores) e o comportamento de foco/teclado ao editar os campos no `ExpenseEditPage` (ordem de foco, tipo de teclado numérico, seleção do conteúdo ao focar).
-- **Abrir na última viagem**: ao abrir o app, ir direto para a última viagem aberta (pular a lista), com um caminho claro de voltar para a lista de viagens. Hoje já existe `GetLastTrip`/`LastTrip`; falta a navegação automática na inicialização.
+- ✅ **Abrir na última viagem** (feito): ao abrir, o app vai direto para a última viagem do repositório atual (pula a lista); o voltar na Visão Geral retorna à lista. A abertura não espera a varredura da nuvem — `TripsViewModel.PrepareRepo()` resolve o repositório e a última viagem pelo cache/prefs (rápido), abre na hora, e a lista é varrida em segundo plano (`RescanAsync`). Guardado por `_initialized` (abre só uma vez por processo, sem loop ao voltar).
 - **Sincronizar My Maps**: hoje o bloco Mapa só abre o link do My Maps no navegador. Avaliar sincronizar/refletir o mapa (ex.: exibir embutido numa WebView como no desktop e/ou manter a URL/versão em dia).
 
 ## Prioridade Baixa

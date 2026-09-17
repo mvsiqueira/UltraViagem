@@ -27,7 +27,18 @@ public partial class TripsPage : ContentPage
         if (!_initialized)
         {
             _initialized = true;
-            await _vm.InitializeAsync();
+
+            // Preparo rápido (cache + última viagem), sem esperar a varredura da nuvem.
+            _vm.PrepareRepo();
+
+            // Abre direto na última viagem (do repositório atual), pulando a lista.
+            // Só na primeira vez (guardado por _initialized): ao voltar da viagem,
+            // a lista fica visível e não reabre em loop.
+            if (_vm.LastTrip is TripEntry last)
+                _vm.OpenTripCommand.Execute(last);
+
+            // Varre a lista em segundo plano (não bloqueia a abertura da viagem).
+            _ = _vm.RescanAsync();
         }
     }
 

@@ -15,9 +15,11 @@ public sealed class TripsViewModel : BindableObject
 
     private ITripStorage? _storage;      // backend ativo
     private bool   _isBusy;
+    private bool   _scanning;            // guarda de scan concorrente (separada de IsBusy)
     private string _repoKind = "saf";
     private string? _repoRef;
     private string? _repoLabel;
+    private TripEntry? _pendingLast;     // última viagem salva, re-resolvida após o scan
 
     public ObservableCollection<TripEntry> Trips { get; } = [];
     public Trip?     LoadedTrip          { get; private set; }
@@ -54,34 +56,35 @@ public sealed class TripsViewModel : BindableObject
 
     private ITripStorage ResolveStorage(string kind) => kind == "gdrive" ? _gdrive : _saf;
 
-    public async Task InitializeAsync()
+    /// <summary>
+    /// Prepara o repositório de forma rápida (sem varrer a nuvem): resolve o backend,
+    /// exibe o cache e a última viagem. Assim a abertura direta na última viagem não
+    /// precisa esperar a varredura completa (que roda depois em <see cref="RescanAsync"/>).
+    /// </summary>
+    public void PrepareRepo()
     {
         _repoKind  = _saf.GetSavedRepoKind();
         _repoRef   = _saf.GetSavedRepoUri();
         _repoLabel = _saf.GetSavedRepoLabel();
         _storage   = ResolveStorage(_repoKind);
-
-        var last = _saf.GetLastTrip(_repoRef);
+        _pendingLast = _saf.GetLastTrip(_repoRef);
 
         if (_repoRef != null)
         {
             OnPropertyChanged(nameof(HasRepo));
             OnPropertyChanged(nameof(RepoLabel));
-
-            // 1) Exibe o cache imediatamente (se houver)
-            var cached  = _saf.LoadTripsCache(_repoRef);
-            bool hasCache = cached is { Count: > 0 };
-            if (hasCache)
-            {
-                ReplaceTrips(cached!);
-                ResolveLastTrip(last);
-            }
-
-            // 2) Rescan (silencioso quando já há cache exibido)
-            await ScanAsync(silent: hasCache);
+            var cached = _saf.LoadTripsCache(_repoRef);
+            if (cached is { Count: > 0 }) ReplaceTrips(cached);
         }
+        ResolveLastTrip(_pendingLast);
+    }
 
-        ResolveLastTrip(last);
+    /// <summary>Varre o repositório e atualiza a lista. Pode rodar em segundo plano.</summary>
+    public async Task RescanAsync()
+    {
+        if (_repoRef == null) return;
+        await ScanAsync(silent: Trips.Count > 0);   // silencioso se o cache já preenche a lista
+        ResolveLastTrip(_pendingLast);
     }
 
     // ── Seleção de provedor ──────────────────────────────────
@@ -130,12 +133,9 @@ public sealed class TripsViewModel : BindableObject
 
     private async Task ScanAsync(bool silent = false)
     {
-        if (_repoRef == null || _storage == null) return;
-        if (!silent)
-        {
-            if (IsBusy) return;
-            IsBusy = true;
-        }
+        if (_repoRef == null || _storage == null || _scanning) return;
+        _scanning = true;
+        if (!silent) IsBusy = true;
         try
         {
             var entries = await _storage.ScanTripsAsync(_repoRef);
@@ -152,7 +152,7 @@ public sealed class TripsViewModel : BindableObject
 
             await _saf.SaveTripsCacheAsync(_repoRef, entries);
         }
-        finally { if (!silent) IsBusy = false; }
+        finally { _scanning = false; if (!silent) IsBusy = false; }
     }
 
     private async Task OpenTripAsync(TripEntry? entry)
