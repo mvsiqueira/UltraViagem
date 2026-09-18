@@ -486,12 +486,14 @@ public sealed class NumberedDay
     public string Label     { get; }
     public string DateLabel { get; }
     public string Summary   { get; }
+    public DateOnly? Date   { get; }
     public List<ActivityRow> Activities { get; }
     public bool   HasActivities => Activities.Count > 0;
 
     public NumberedDay(ItineraryDay day, int number, DateOnly? date)
     {
         Label      = $"D{number}";
+        Date       = date;
         DateLabel  = date?.ToString("ddd, dd/MM/yyyy", new CultureInfo("pt-BR")) ?? "";
         Summary    = string.IsNullOrWhiteSpace(day.Summary) ? $"Dia {number}" : day.Summary;
         Activities = day.Activities

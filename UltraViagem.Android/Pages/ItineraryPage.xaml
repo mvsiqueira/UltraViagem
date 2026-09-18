@@ -6,7 +6,9 @@
              x:Class="UltraViagem.Android.Pages.ItineraryPage"
              Title="Roteiro">
 
-    <CollectionView ItemsSource="{Binding DisplayItinerary}"
+    <CollectionView x:Name="ItineraryList"
+                    ItemsSource="{Binding DisplayItinerary}"
+                    Loaded="OnListLoaded"
                     Margin="16,8">
 
         <CollectionView.ItemTemplate>
