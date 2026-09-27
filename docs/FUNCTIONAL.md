@@ -1,5 +1,10 @@
 # Funcionalidades
 
+Este documento cobre os dois aplicativos, que trabalham sobre as mesmas pastas e o mesmo `trip.json`:
+
+- **App Windows** (`UltraViagem.App`): todas as seções abaixo, até "Orçamento".
+- **App Android** (`UltraViagem.Android`): seção [App Android](#app-android), no final.
+
 ## Menu Lateral (Sidebar)
 
 A sidebar é colapsável: clicar no logo + nome do app alterna entre o modo expandido (220 px) e o modo colapsado (68 px) com animação suave.
@@ -417,3 +422,114 @@ A tela de gastos permite:
 **Cotação automática ou fixa por gasto:** o campo Cotação do card de edição possui um checkbox "Automática". Quando marcado (padrão), a cotação segue a taxa cadastrada na aba Moedas e é atualizada automaticamente; o campo é exibido em cinza e bloqueado para edição. Quando desmarcado, a cotação fica fixa no valor informado manualmente e não é afetada por atualizações da aba Moedas. Ao marcar novamente como automática, o campo sincroniza imediatamente com a taxa atual.
 
 Itens com valor pago ou com cotação fixa não têm a taxa sobrescrita pela atualização automática de cotações gerais, preservando a taxa efetivamente usada.
+
+---
+
+# App Android
+
+O app Android é a versão de bolso do UltraViagem: abre as mesmas viagens do app Windows (mesmas pastas, mesmo `trip.json`) e permite editar parte dos dados durante a viagem. Ele não tem todas as funções do desktop; o que ainda falta está em `docs/TODO.md`.
+
+## Onde ficam as viagens
+
+Na lista de viagens, o botão **Selecionar pasta de viagens** (ou **Trocar pasta**, quando já há uma pasta) pergunta onde estão as viagens:
+
+- **Google Drive**: entra na conta Google e navega pelas pastas do Drive até a pasta de viagens, confirmando com **Usar esta pasta**.
+- **OneDrive**: o mesmo fluxo, com a conta Microsoft.
+- **Armazenamento interno**: abre o seletor de pastas do Android, para pastas no próprio celular (o Google Drive também costuma aparecer nesse seletor).
+
+Regras:
+
+- A pasta escolhida deve ter uma subpasta por viagem, cada uma com seu `trip.json`, a mesma estrutura usada pelo app Windows.
+- O login de cada provedor fica salvo: alternar entre Google Drive e OneDrive não pede login de novo, a menos que a sessão tenha expirado ou sido revogada.
+- As edições feitas no celular são gravadas direto no provedor. Elas aparecem no app Windows depois que a nuvem sincroniza a pasta no PC, e vice-versa.
+
+## Lista de viagens
+
+- Cabeçalho "UltraViagem — Suas viagens no bolso".
+- Nome da pasta atual e botão **Trocar pasta**.
+- **Última viagem**: atalho para a última viagem aberta nesta pasta.
+- **Todas as viagens**: da mais recente para a mais antiga, pela data de início.
+- A lista aparece imediatamente a partir da cópia guardada no celular e é atualizada em segundo plano.
+- Quando o acesso à pasta deixa de valer, aparece o cartão vermelho "Acesso à pasta perdido", que orienta a reautorizar por **Trocar pasta**.
+- Pasta na nuvem e sem internet: aparece o aviso "Sem internet: mostrando a lista salva no celular".
+
+Ao abrir, o app vai direto para a última viagem aberta, sem passar pela lista. Voltar da Visão Geral leva à lista.
+
+## Tela da viagem
+
+- **Barra superior**: **☰** abre o menu lateral; no centro, o nome da seção atual; à direita, **✕** na Visão Geral (fecha a viagem e volta à lista) ou uma **seta de voltar** nas demais seções (volta à Visão Geral).
+- **Botão voltar do Android**: numa seção, volta à Visão Geral; na Visão Geral, fecha a viagem.
+- **Menu lateral**: nome da viagem; as seções (Visão Geral, Roteiro, Gastos, Dicas, Tarefas, Arquivos); **Baixar para uso offline** (só em viagens na nuvem, com o status dos anexos); **Exportar PDF**.
+- **Faixa amarela de somente leitura**: aparece em viagens na nuvem quando não há internet.
+
+## Visão Geral (Android)
+
+Grade de blocos coloridos, cada um com ícone, título e um resumo. Tocar num bloco abre a seção correspondente:
+
+| Bloco | Resumo | Ao tocar |
+|-------|--------|----------|
+| Detalhes | pessoas · moeda base | abre o editor dos dados da viagem |
+| Roteiro | nº de dias · nº de atividades | abre o Roteiro |
+| Tarefas | "X de Y feitas" | abre Tarefas |
+| Mapa | "Ver no Google Maps" ou "Não configurado" | abre o link do My Maps no navegador |
+| Gastos | total estimado · % pago | abre Gastos |
+| Dicas | nº de links úteis | abre Dicas |
+| Arquivos | nº de anexos | abre Arquivos |
+
+**Dados da viagem** (bloco Detalhes): editor com nome, data inicial, data final, número de pessoas, moeda base e URL do My Maps. Ao salvar, as datas do roteiro, os totais e os resumos são recalculados.
+
+## Roteiro (Android)
+
+- Mostra a versão ativa do roteiro; não é possível trocar de versão no celular.
+- Um cartão por dia, com o número do dia (D1, D2…), o resumo e a data.
+- As atividades aparecem em lista na ordem do horário, com uma barra na cor da atividade, título e tipo.
+- Tocar numa atividade com detalhes expande ou recolhe os detalhes; o indicador › só aparece nas atividades que têm detalhes.
+- Tocar e segurar numa atividade abre o editor: título, tipo, cor (paleta) e detalhes. Posição e duração não mudam, para não desarranjar a linha do tempo do desktop.
+- Ao abrir o Roteiro, se hoje for um dos dias da viagem, a tela já rola até esse dia.
+- Não é possível adicionar, excluir ou reordenar atividades, nem editar os dias.
+
+## Gastos (Android)
+
+- Gastos agrupados por categoria; cada grupo tem ícone, cor e subtotal.
+- Cada item mostra título, status (✓ pago ou "pendente" em vermelho) e valor na moeda base; itens inativos aparecem esmaecidos.
+- Tocar num item expande os detalhes: fornecedor, preço unitário na moeda do item, pessoas × quantidade, câmbio (quando a moeda é diferente da base), valor pago, observações e o link **Abrir reserva**.
+- Tocar e segurar abre o editor com todos os campos: título, categoria, fornecedor, link, observações, preço unitário, taxas, pessoas, quantidade, moeda, câmbio, valor pago e ativo. Há também o botão **Excluir**, com confirmação.
+- O botão **+** cria um gasto novo com os padrões da viagem (número de pessoas e moeda base).
+- Rodapé com **Estimado**, **Pago** e **A pagar** (em vermelho), e uma barra do quanto já foi pago. Só itens ativos entram nos totais.
+- Não existe a aba Moedas/cotações do desktop: o câmbio de cada gasto é informado manualmente.
+
+## Dicas (Android)
+
+- Lista de dicas, com título e link ou texto.
+- Tocar numa dica com endereço válido abre o link no navegador.
+- Tocar e segurar edita título e URL, com opção de excluir.
+- O botão **+** cria uma dica nova.
+
+## Tarefas (Android)
+
+- Lista com caixa de conclusão, título e notas (as notas só aparecem quando preenchidas).
+- Tocar na caixa alterna entre pendente e concluída; tarefas concluídas aparecem riscadas.
+- Tocar e segurar edita título e notas, com opção de excluir.
+- O botão **+** cria uma tarefa nova.
+
+## Arquivos (Android)
+
+- Lista dos anexos da viagem, com um selo colorido da extensão e o nome do arquivo.
+- Tocar abre o arquivo no app padrão do celular. Em viagens na nuvem, o arquivo é baixado antes de abrir, com o aviso "Abrindo…".
+- Tocar e segurar entra no modo de seleção, com caixas de marcação e a barra **Cancelar / Baixar / Excluir**:
+  - **Baixar** salva uma cópia em `Downloads/UltraViagem`.
+  - **Excluir** apaga o arquivo da pasta da viagem, depois de confirmação. No Google Drive e no OneDrive, o arquivo vai para a lixeira do provedor.
+- Não é possível anexar arquivos novos pelo celular.
+
+## Uso sem internet
+
+Vale para viagens no Google Drive e no OneDrive. Viagens no armazenamento interno não dependem de internet.
+
+- O celular guarda uma cópia de cada viagem, atualizada sempre que a lista é atualizada, a viagem é aberta ou algo é salvo. Sem internet, a viagem abre por essa cópia.
+- **Anexos offline**: com internet, use **Baixar para uso offline** no menu lateral. O app baixa todos os anexos da viagem, mostra o progresso e depois o status ("Tudo disponível offline", "3 de 7 anexos offline"…). Sem internet, só abrem os anexos já baixados.
+- **Somente leitura**: sem internet, a viagem não pode ser editada. A faixa amarela no topo indica isso, e qualquer tentativa de edição mostra um aviso. As edições voltam quando a conexão volta; uma viagem aberta pela cópia offline precisa ser reaberta com internet para ser editada.
+- Se um salvamento falhar (por exemplo, a conexão cai no meio), o app avisa.
+
+## Exportação PDF (Android)
+
+**Exportar PDF**, no menu lateral, gera as mesmas seções do PDF do desktop (Roteiro, Roteiro Detalhado, Dicas, Gastos, Orçamento Detalhado e Tarefas) e abre o compartilhamento do Android, para salvar ou enviar. O layout é equivalente ao do desktop, mas gerado por outro motor de PDF, então não é idêntico byte a byte.
