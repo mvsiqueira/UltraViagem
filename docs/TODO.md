@@ -12,7 +12,7 @@ Itens surgidos após usar o app numa viagem de verdade:
   - ✅ **Google Drive — feito e validado no aparelho** (listar, abrir, editar e salvar no Drive). Ver "Armazenamento na nuvem via API" na seção do Android abaixo.
   - ✅ **OneDrive — feito e validado no aparelho** (Microsoft Graph; listar, abrir, editar e salvar).
   - ✅ **Sessões mantidas**: trocar de provedor reaproveita o login salvo de cada um (sem logar de novo).
-  - ⬜ **Anexos na nuvem**: os backends de Drive/OneDrive já têm abrir/excluir anexo, mas a tela de Arquivos (`TripViewModel`) ainda usa o caminho SAF — falta ligar (e baixar para cache + abrir via FileProvider).
+  - ✅ **Anexos na nuvem**: abrir, baixar e excluir anexos funcionam em viagens do Drive e do OneDrive (validado no aparelho).
   - Futuro opcional: cache offline (baixar `trip.json` + anexos) para uso sem internet na viagem.
 - **Rever gastos (casas decimais e foco nos campos)**: revisar a formatação de casas decimais (valores) e o comportamento de foco/teclado ao editar os campos no `ExpenseEditPage` (ordem de foco, tipo de teclado numérico, seleção do conteúdo ao focar).
 - ✅ **Abrir na última viagem** (feito): ao abrir, o app vai direto para a última viagem do repositório atual (pula a lista); o voltar na Visão Geral retorna à lista. A abertura não espera a varredura da nuvem — `TripsViewModel.PrepareRepo()` resolve o repositório e a última viagem pelo cache/prefs (rápido), abre na hora, e a lista é varrida em segundo plano (`RescanAsync`). Guardado por `_initialized` (abre só uma vez por processo, sem loop ao voltar).
@@ -47,7 +47,7 @@ Itens surgidos após usar o app numa viagem de verdade:
      - `TripFileService` — SAF/armazenamento interno (o de sempre).
      - `GoogleDriveStorage` — **Google Drive API v3**: varre a pasta de viagens (paralelizado, até 6 simultâneas, com token pré-aquecido), carrega/salva o `trip.json`.
      - `OneDriveStorage` — **Microsoft Graph** (`/me/drive`): mesmo padrão de varredura paralela; localiza o `trip.json` por endereçamento de caminho (`items/{pasta}:/trip.json`) e baixa pelo link pré-autenticado `@microsoft.graph.downloadUrl` (evita o redirecionamento de `/content` para outro host); salva com `PUT .../content`.
-     - Os dois backends também implementam abrir/excluir anexo, mas a tela de Arquivos ainda não usa esses métodos (ver pendência em Prioridade Alta).
+     - Os dois backends também implementam abrir/excluir anexo (`OpenAttachmentAsync`/`DeleteAttachmentAsync`), usados pela tela de Arquivos.
      - Auth: base comum `OAuthPkceService` — OAuth 2.0 + PKCE via `WebAuthenticator`, refresh token no `SecureStorage` (a Microsoft rotaciona o refresh token a cada renovação; o novo é salvo). `EnsureSignedInAsync` reaproveita a sessão salva e só abre o login interativo se não houver sessão válida — trocar de provedor não pede login de novo.
        - `GoogleAuthService`: cliente OAuth do tipo **iOS** no Google Cloud (esquema de redirect reverso `com.googleusercontent.apps.<id>`, interceptado no Android; clientes Android não suportam mais esquema personalizado). Em modo **"Testando"** a conta precisa estar na lista de usuários de teste e o Google **expira o acesso em 7 dias** — publicar o app ("Em produção") remove esse prazo, sem exigir verificação (limite de 100 usuários + aviso de app não verificado).
        - `OneDriveAuthService`: app registrado no **Azure (Entra ID)** como cliente público "Aplicativos móveis e da área de trabalho", tipo de conta "qualquer diretório + contas pessoais" (endpoint `common`), redirect `msal<clientId>://auth`, permissões delegadas `Files.ReadWrite` + `offline_access`. Contas pessoais não registram mais apps fora de um diretório: foi preciso criar a conta gratuita do Azure (que cria o diretório).
@@ -55,7 +55,7 @@ Itens surgidos após usar o app numa viagem de verdade:
      - Seleção de provedor na `TripsPage` (action sheet **Google Drive / OneDrive / Armazenamento interno**). O repositório ativo (provedor + ref + rótulo) é persistido; `TripsViewModel`/`TripViewModel` roteiam scan/load/**save** pelo backend ativo.
      - A **"última viagem"** é vinculada ao repositório atual (`last_trip_repo`): não mostra o atalho se pertence a outro provedor/pasta (evitava tentar abrir uma ref SAF pelo Drive → "acesso perdido").
      - Manifesto: `WebAuthenticationCallbackActivity` com um intent-filter por esquema de redirect (Google e Microsoft) + permissão `INTERNET`.
-     - Pendente: anexos na nuvem; cache offline opcional.
+     - Pendente: cache offline opcional.
 
    - **Exportação PDF** (`AndroidPdfExporter` + `CalibriFontResolver`): o QuestPDF usado no desktop **não roda no Android** (recusa runtimes não-suportados, sem binário nativo `QuestPdfSkia` para Android). Por isso o Android reimplementa o mesmo layout com **MigraDoc/PDFsharp** (`PDFsharp-MigraDoc`), que roda no Android, reproduzindo de perto a saída do `TripPdfExporter`: mesmas 6 seções (Roteiro, Roteiro Detalhado por versão em landscape, Dicas, Gastos, Orçamento Detalhado em landscape, Tarefas), cores, tamanhos e o diagrama de slots (tabela com células mescladas).
      - A fonte **Calibri** fica embutida em `UltraViagem.Core/Fonts` (resource) e é fornecida ao PDFsharp via `IFontResolver` (o Android não tem Calibri no sistema) — sem isso a quebra/paginação divergiria.
@@ -63,8 +63,10 @@ Itens surgidos após usar o app numa viagem de verdade:
      - Observação: por ser outro motor de layout, não é byte-a-byte idêntico ao desktop, mas visualmente equivalente.
 
    - **Arquivos** (`FilesPage`): lista os anexos de `Trip.Attachments` (não varre a pasta). Toque abre o arquivo; toque longo entra em modo de seleção com checkboxes e barra de ação Baixar/Excluir.
-     - Abertura/cópia/exclusão funcionam tanto em armazenamento local quanto no Google Drive: `BuildSiblingUri` (manipula docId hierárquico) com fallback para `FindSiblingInFolder` (enumera filhos da pasta pelo nome, para docIds opacos). O `FolderUri` da viagem é capturado no scan e propagado até o `TripViewModel`.
-     - Download copia para `Download/UltraViagem/` via `MediaStore`.
+     - Abrir/baixar/excluir passam pelo backend ativo (`ITripStorage`), então funcionam no armazenamento local, no Google Drive e no OneDrive. O `FolderUri` da viagem (id da pasta) é capturado no scan e propagado até o `TripViewModel`.
+     - Abrir: no SAF abre a URI direto (`BuildSiblingUri`, com fallback `FindSiblingInFolder` para docIds opacos); na nuvem baixa o anexo para `CacheDirectory/attachments/<hash da pasta>/` e abre com `Launcher.OpenAsync(OpenFileRequest)` (o MAUI cuida do FileProvider).
+     - Baixar: lê o anexo pelo backend e grava em `Download/UltraViagem/` via `MediaStore`. Excluir apaga o arquivo no provedor (no Drive/OneDrive vai para a lixeira).
+     - Sobreposição de progresso ("Abrindo…/Baixando…/Excluindo…") durante as operações, bloqueando toques repetidos.
 
    - **Cache da lista de viagens**: o resultado do scan é persistido em `trips_cache.json` (arquivo privado em `FileSystem.AppDataDirectory`, contendo `repoUri` + entries). Na abertura, a lista do cache é exibida imediatamente e o scan roda em segundo plano (`ScanAsync(silent: true)`), atualizando a lista só se mudou — evita a espera do scan do Drive, que é lento com muitas viagens.
      - O cache só é usado se o `repoUri` salvo bate com a pasta selecionada; trocar de pasta o ignora e sobrescreve.

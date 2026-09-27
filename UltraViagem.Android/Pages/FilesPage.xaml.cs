@@ -46,8 +46,9 @@ public partial class FilesPage : ContentPage
 
     // ── Gestos ────────────────────────────────────────────────────────────────
 
-    private void OnFileTapped(object? sender, EventArgs e)
+    private async void OnFileTapped(object? sender, EventArgs e)
     {
+        if (BusyOverlay.IsVisible) return;
         if (sender is not BindableObject bo || bo.BindingContext is not SelectableFile sf) return;
         if (_isSelectionMode)
         {
@@ -58,7 +59,7 @@ public partial class FilesPage : ContentPage
         }
         else
         {
-            _ = TripViewModel.Current!.OpenAttachmentAsync(sf.Attachment);
+            await RunBusyAsync("Abrindo…", () => TripViewModel.Current!.OpenAttachmentAsync(sf.Attachment));
         }
     }
 
@@ -108,11 +109,14 @@ public partial class FilesPage : ContentPage
             "Excluir", "Cancelar");
         if (!confirm) return;
 
-        foreach (var sf in selected)
+        await RunBusyAsync("Excluindo…", async () =>
         {
-            await TripViewModel.Current!.DeleteAttachmentAsync(sf.Attachment);
-            Files.Remove(sf);
-        }
+            foreach (var sf in selected)
+            {
+                await TripViewModel.Current!.DeleteAttachmentAsync(sf.Attachment);
+                Files.Remove(sf);
+            }
+        });
         ExitSelectionMode();
     }
 
@@ -122,8 +126,11 @@ public partial class FilesPage : ContentPage
         if (selected.Count == 0) return;
 
         int ok = 0;
-        foreach (var sf in selected)
-            if (await TripViewModel.Current!.DownloadAttachmentAsync(sf.Attachment)) ok++;
+        await RunBusyAsync("Baixando…", async () =>
+        {
+            foreach (var sf in selected)
+                if (await TripViewModel.Current!.DownloadAttachmentAsync(sf.Attachment)) ok++;
+        });
 
         ExitSelectionMode();
         var page = GetModalPage();
@@ -133,6 +140,15 @@ public partial class FilesPage : ContentPage
                 "OK");
         else
             await page.DisplayAlert("Erro", "Não foi possível baixar os arquivos.", "OK");
+    }
+
+    /// <summary>Mostra a sobreposição de progresso durante a operação.</summary>
+    private async Task RunBusyAsync(string message, Func<Task> action)
+    {
+        BusyLabel.Text = message;
+        BusyOverlay.IsVisible = true;
+        try { await action(); }
+        finally { BusyOverlay.IsVisible = false; }
     }
 
     private static Page GetModalPage()

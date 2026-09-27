@@ -12,7 +12,7 @@ public sealed class TripViewModel : BindableObject
     private static readonly CultureInfo PtBr = new("pt-BR");
 
     private readonly TripFileService _fileService;
-    private ITripStorage? _storage;          // backend ativo (SAF ou Google Drive)
+    private ITripStorage? _storage;          // backend ativo (SAF, Google Drive ou OneDrive)
     private string? _currentTripUri;
     private string? _currentFolderUri;
 
@@ -332,59 +332,59 @@ public sealed class TripViewModel : BindableObject
     }
 
     // ── Arquivos ─────────────────────────────────────────────
+    // Anexos são arquivos irmãos do trip.json na pasta da viagem. Excluir/baixar passam
+    // pelo backend ativo (SAF, Google Drive ou OneDrive). Abrir: no SAF usa a URI direto;
+    // na nuvem baixa para o cache do app e abre pelo Launcher (FileProvider do MAUI).
 
-    private global::Android.Net.Uri? GetAttachmentUri(string filename)
+    private ITripStorage Storage => _storage ?? _fileService;
+
+    private static string MimeFor(string filename, string fallback)
     {
-        if (_currentTripUri != null)
+        var ext = Path.GetExtension(filename).TrimStart('.').ToLowerInvariant();
+        return ext switch
         {
-            var uri = _fileService.BuildSiblingUri(_currentTripUri, filename);
-            if (uri != null) return uri;
-        }
-        if (_currentFolderUri != null)
-            return _fileService.FindSiblingInFolder(_currentFolderUri, filename);
-        return null;
+            "pdf"  => "application/pdf",
+            "jpg" or "jpeg" => "image/jpeg",
+            "png"  => "image/png",
+            "gif"  => "image/gif",
+            "webp" => "image/webp",
+            "heic" => "image/heic",
+            "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "doc"  => "application/msword",
+            "xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "xls"  => "application/vnd.ms-excel",
+            "pptx" => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "txt"  => "text/plain",
+            "html" or "htm" => "text/html",
+            "mp4"  => "video/mp4",
+            "mov"  => "video/quicktime",
+            _      => fallback
+        };
     }
 
     public async Task DeleteAttachmentAsync(AttachmentItem attachment)
     {
-        var sibUri = GetAttachmentUri(attachment.File);
-        if (sibUri != null)
-            try { global::Android.Provider.DocumentsContract.DeleteDocument(Platform.AppContext.ContentResolver!, sibUri); }
-            catch { }
+        if (_currentTripUri != null)
+            await Storage.DeleteAttachmentAsync(_currentTripUri, _currentFolderUri, attachment.File);
         Trip.Attachments.Remove(attachment);
         await SaveAsync();
     }
 
     public async Task<bool> DownloadAttachmentAsync(AttachmentItem attachment)
     {
-        var srcUri = GetAttachmentUri(attachment.File);
-        if (srcUri == null) return false;
+        if (_currentTripUri == null) return false;
         try
         {
-            var ext  = Path.GetExtension(attachment.File).TrimStart('.').ToLowerInvariant();
-            var mime = ext switch
-            {
-                "pdf"  => "application/pdf",
-                "jpg" or "jpeg" => "image/jpeg",
-                "png"  => "image/png",
-                "gif"  => "image/gif",
-                "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "doc"  => "application/msword",
-                "xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "xls"  => "application/vnd.ms-excel",
-                "txt"  => "text/plain",
-                "mp4"  => "video/mp4",
-                "mov"  => "video/quicktime",
-                _      => "application/octet-stream"
-            };
+            using var src = await Storage.OpenAttachmentAsync(_currentTripUri, _currentFolderUri, attachment.File);
+            if (src == null) return false;
+
             var ctx = Platform.AppContext;
             var values = new global::Android.Content.ContentValues();
             values.Put("_display_name", attachment.File);
-            values.Put("mime_type", mime);
+            values.Put("mime_type", MimeFor(attachment.File, "application/octet-stream"));
             values.Put("relative_path", "Download/UltraViagem/");
             var destUri = ctx.ContentResolver!.Insert(
                 global::Android.Provider.MediaStore.Downloads.GetContentUri("external")!, values)!;
-            using var src = ctx.ContentResolver!.OpenInputStream(srcUri)!;
             using var dst = ctx.ContentResolver!.OpenOutputStream(destUri)!;
             await src.CopyToAsync(dst);
             return true;
@@ -394,40 +394,59 @@ public sealed class TripViewModel : BindableObject
 
     public async Task OpenAttachmentAsync(AttachmentItem attachment)
     {
-        var siblingUri = GetAttachmentUri(attachment.File);
-        if (siblingUri == null) return;
+        if (_currentTripUri == null) return;
         try
         {
-            var ext  = Path.GetExtension(attachment.File).TrimStart('.').ToLowerInvariant();
-            var mime = ext switch
+            if (Storage.Kind == "saf")
             {
-                "pdf"  => "application/pdf",
-                "jpg" or "jpeg" => "image/jpeg",
-                "png"  => "image/png",
-                "gif"  => "image/gif",
-                "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "doc"  => "application/msword",
-                "xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "xls"  => "application/vnd.ms-excel",
-                "txt"  => "text/plain",
-                "mp4"  => "video/mp4",
-                "mov"  => "video/quicktime",
-                _      => "*/*"
-            };
-            var intent = new global::Android.Content.Intent(global::Android.Content.Intent.ActionView);
-            intent.SetDataAndType(siblingUri, mime);
-            intent.AddFlags(global::Android.Content.ActivityFlags.GrantReadUriPermission);
-            Platform.CurrentActivity!.StartActivity(intent);
+                // Armazenamento local: abre a URI SAF direto (sem cópia).
+                var uri = _fileService.BuildSiblingUri(_currentTripUri, attachment.File)
+                       ?? (_currentFolderUri != null
+                           ? _fileService.FindSiblingInFolder(_currentFolderUri, attachment.File)
+                           : null);
+                if (uri == null) { await AlertAsync("Não foi possível abrir", $"Arquivo '{attachment.File}' não encontrado."); return; }
+
+                var intent = new global::Android.Content.Intent(global::Android.Content.Intent.ActionView);
+                intent.SetDataAndType(uri, MimeFor(attachment.File, "*/*"));
+                intent.AddFlags(global::Android.Content.ActivityFlags.GrantReadUriPermission);
+                Platform.CurrentActivity!.StartActivity(intent);
+                return;
+            }
+
+            // Nuvem: baixa para o cache e abre com o app padrão do tipo de arquivo.
+            var path = await DownloadToCacheAsync(attachment.File);
+            if (path == null) { await AlertAsync("Não foi possível abrir", $"Não foi possível baixar '{attachment.File}'."); return; }
+
+            await Launcher.Default.OpenAsync(new OpenFileRequest(
+                attachment.File, new ReadOnlyFile(path, MimeFor(attachment.File, "application/octet-stream"))));
         }
         catch
         {
-            MainThread.BeginInvokeOnMainThread(async () =>
-                await Application.Current!.Windows[0].Page!.DisplayAlert(
-                    "Não foi possível abrir",
-                    $"Nenhum aplicativo encontrado para '{attachment.File}'.",
-                    "OK"));
+            await AlertAsync("Não foi possível abrir", $"Nenhum aplicativo encontrado para '{attachment.File}'.");
         }
     }
+
+    /// <summary>Baixa um anexo da nuvem para o cache do app (uma subpasta por viagem). Null em caso de erro.</summary>
+    private async Task<string?> DownloadToCacheAsync(string filename)
+    {
+        using var src = await Storage.OpenAttachmentAsync(_currentTripUri!, _currentFolderUri, filename);
+        if (src == null) return null;
+
+        var tripKey = Convert.ToHexString(
+            System.Security.Cryptography.SHA1.HashData(
+                System.Text.Encoding.UTF8.GetBytes(_currentFolderUri ?? _currentTripUri!)))[..12];
+        var dir = Path.Combine(FileSystem.CacheDirectory, "attachments", tripKey);
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, filename);
+
+        await using var dst = File.Create(path);
+        await src.CopyToAsync(dst);
+        return path;
+    }
+
+    private static Task AlertAsync(string title, string message)
+        => MainThread.InvokeOnMainThreadAsync(() =>
+            Application.Current!.Windows[0].Page!.DisplayAlert(title, message, "OK"));
 
     public async Task DeleteLinkAsync(LinkItem link)
     {

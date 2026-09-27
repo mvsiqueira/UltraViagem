@@ -52,7 +52,6 @@
                             </Border>
 
                             <!-- Nome do arquivo -->
-                            <!-- Nome do arquivo -->
                             <Label Grid.Column="2"
                                    Text="{Binding File}"
                                    Style="{StaticResource TitleLabel}"
@@ -108,6 +107,22 @@
                     TextColor="#EF4444"
                     FontSize="14" Padding="8,0"
                     Clicked="OnDeleteClicked" />
+        </Grid>
+
+        <!-- Sobreposição de progresso (abrir/baixar/excluir; anexos na nuvem podem demorar) -->
+        <Grid x:Name="BusyOverlay" Grid.RowSpan="2" IsVisible="False"
+              BackgroundColor="#80000000" InputTransparent="False">
+            <Border BackgroundColor="{StaticResource Surface}"
+                    StrokeShape="RoundRectangle 12" Stroke="Transparent"
+                    Padding="24,20"
+                    HorizontalOptions="Center" VerticalOptions="Center">
+                <HorizontalStackLayout Spacing="14">
+                    <ActivityIndicator IsRunning="True" Color="{StaticResource Accent}"
+                                       WidthRequest="24" HeightRequest="24" />
+                    <Label x:Name="BusyLabel" Text="Abrindo…" FontSize="15"
+                           TextColor="{StaticResource TextPrimary}" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </Border>
         </Grid>
 
     </Grid>
