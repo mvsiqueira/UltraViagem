@@ -24,13 +24,18 @@ public sealed class GoogleDriveStorage : ITripStorage, ICloudFolderBrowser
     };
 
     private readonly GoogleAuthService _auth;
+    private readonly OfflineStore _offline;
     private readonly HttpClient _http = new();
 
     public string Kind => "gdrive";
     public string RootName => "Meu Drive";
     public bool   AccessDenied { get; private set; }
 
-    public GoogleDriveStorage(GoogleAuthService auth) => _auth = auth;
+    public GoogleDriveStorage(GoogleAuthService auth, OfflineStore offline)
+    {
+        _auth    = auth;
+        _offline = offline;
+    }
 
     // ── Navegação de pastas (para o usuário escolher a pasta de viagens) ──
 
@@ -48,7 +53,7 @@ public sealed class GoogleDriveStorage : ITripStorage, ICloudFolderBrowser
         AccessDenied = false;
 
         // Pré-aquece o token (evita várias renovações concorrentes na rajada abaixo).
-        if (await _auth.GetAccessTokenAsync() == null) { AccessDenied = true; return []; }
+        if (await _auth.GetAccessTokenAsync() == null) { AccessDenied = OfflineStore.IsOnline; return []; }
 
         var folders = await ListChildrenAsync(repoRef, "mimeType='application/vnd.google-apps.folder'");
         if (folders == null) return [];
@@ -64,6 +69,7 @@ public sealed class GoogleDriveStorage : ITripStorage, ICloudFolderBrowser
                 if (tripFile == null) return null;
                 var trip = await LoadTripAsync(tripFile.Id);
                 if (trip == null) return null;
+                _offline.SaveTrip(tripFile.Id, trip);   // cópia para uso sem internet
                 return new TripEntry(
                     trip.Title, trip.StartDate?.ToString("yyyy-MM-dd"), tripFile.Id)
                 { FolderUri = folder.Id };
@@ -149,7 +155,7 @@ public sealed class GoogleDriveStorage : ITripStorage, ICloudFolderBrowser
     private async Task<HttpResponseMessage?> SendAsync(HttpMethod method, string url, HttpContent? content = null)
     {
         var token = await _auth.GetAccessTokenAsync();
-        if (token == null) { AccessDenied = true; return null; }
+        if (token == null) { AccessDenied = OfflineStore.IsOnline; return null; }
         try
         {
             using var req = new HttpRequestMessage(method, url) { Content = content };

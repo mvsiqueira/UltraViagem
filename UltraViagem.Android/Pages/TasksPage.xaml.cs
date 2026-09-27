@@ -9,6 +9,7 @@ public partial class TasksPage : ContentPage
     // Tap no checkbox: alterna done/pending
     private async void OnToggleTapped(object? sender, TappedEventArgs e)
     {
+        if (!await TripViewModel.Current!.CanEditAsync()) return;
         if (sender is BindableObject bo && bo.BindingContext is ObservableTaskItem item)
             await TripViewModel.Current!.ToggleTaskAsync(item);
     }
@@ -18,6 +19,7 @@ public partial class TasksPage : ContentPage
     {
         if (sender is not BindableObject bo || bo.BindingContext is not ObservableTaskItem item)
             return;
+        if (!await TripViewModel.Current!.CanEditAsync()) return;
 
         var editPage = new ItemEditPage(
             pageTitle: "Editar tarefa",
@@ -43,6 +45,7 @@ public partial class TasksPage : ContentPage
     // FAB: cria nova tarefa
     private async void OnAddTapped(object? sender, EventArgs e)
     {
+        if (!await TripViewModel.Current!.CanEditAsync()) return;
         var editPage = new ItemEditPage(
             pageTitle: "Nova tarefa",
             f1Label: "Título", f1Value: "",

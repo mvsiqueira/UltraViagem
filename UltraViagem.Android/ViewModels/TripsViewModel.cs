@@ -14,6 +14,7 @@ public sealed class TripsViewModel : BindableObject
     private readonly OneDriveStorage     _onedrive;
     private readonly OneDriveAuthService _msAuth;
     private readonly FolderPickerService _folderPicker;
+    private readonly OfflineStore        _offline;
 
     private ITripStorage? _storage;      // backend ativo
     private bool   _isBusy;
@@ -28,6 +29,7 @@ public sealed class TripsViewModel : BindableObject
     public string?   LoadedTripUri       { get; private set; }
     public string?   LoadedTripFolderUri { get; private set; }
     public ITripStorage? LoadedTripStorage { get; private set; }
+    public bool      LoadedTripIsOfflineCopy { get; private set; }   // aberta pela cópia local, sem internet
     public TripEntry? LastTrip           { get; private set; }
 
     /// <summary>Navegador de pastas do provedor de nuvem ("gdrive" ou "onedrive"), para a tela de escolha de pasta.</summary>
@@ -45,12 +47,17 @@ public sealed class TripsViewModel : BindableObject
     public bool   HasPermissionError => _storage?.AccessDenied ?? false;
     public string RepoLabel          => _repoLabel ?? "Repositório";
 
+    private bool IsCloud => _repoKind is "gdrive" or "onedrive";
+
+    /// <summary>Repositório na nuvem sem internet: a lista exibida é a salva no celular.</summary>
+    public bool ShowOfflineNotice { get; private set; }
+
     public ICommand OpenTripCommand { get; }
 
     public TripsViewModel(TripFileService saf,
                           GoogleDriveStorage gdrive, GoogleAuthService googleAuth,
                           OneDriveStorage onedrive, OneDriveAuthService msAuth,
-                          FolderPickerService folderPicker)
+                          FolderPickerService folderPicker, OfflineStore offline)
     {
         _saf          = saf;
         _gdrive       = gdrive;
@@ -58,6 +65,7 @@ public sealed class TripsViewModel : BindableObject
         _onedrive     = onedrive;
         _msAuth       = msAuth;
         _folderPicker = folderPicker;
+        _offline      = offline;
         OpenTripCommand = new Command<TripEntry>(async e => await OpenTripAsync(e));
     }
 
@@ -150,6 +158,12 @@ public sealed class TripsViewModel : BindableObject
     private async Task ScanAsync(bool silent = false)
     {
         if (_repoRef == null || _storage == null || _scanning) return;
+
+        // Nuvem sem internet: não varre (manteria a lista vazia ou marcaria "acesso perdido").
+        ShowOfflineNotice = IsCloud && !OfflineStore.IsOnline;
+        OnPropertyChanged(nameof(ShowOfflineNotice));
+        if (ShowOfflineNotice) return;
+
         _scanning = true;
         if (!silent) IsBusy = true;
         try
@@ -177,14 +191,29 @@ public sealed class TripsViewModel : BindableObject
         IsBusy = true;
         try
         {
-            var trip = await _storage.LoadTripAsync(entry.UriString);
+            // Nuvem: com internet carrega do provedor (e atualiza a cópia offline);
+            // sem internet (ou se falhar), abre pela cópia offline, somente leitura.
+            Trip? trip = null;
+            bool offlineCopy = false;
+            if (!IsCloud || OfflineStore.IsOnline)
+                trip = await _storage.LoadTripAsync(entry.UriString);
+
+            if (trip != null && IsCloud)
+                _offline.SaveTrip(entry.UriString, trip);
+            else if (trip == null && IsCloud)
+            {
+                trip = _offline.LoadTrip(entry.UriString);
+                offlineCopy = trip != null;
+            }
+
             if (trip == null)
             {
+                var msg = IsCloud && !OfflineStore.IsOnline
+                    ? "Sem internet, e esta viagem ainda não tem cópia no celular. Abra-a uma vez com conexão para poder consultá-la offline."
+                    : "Não foi possível carregar a viagem. Se o acesso foi perdido, use 'Trocar pasta' para reautorizar.";
                 MainThread.BeginInvokeOnMainThread(async () =>
                     await Application.Current!.Windows[0].Page!.DisplayAlert(
-                        "Não foi possível abrir",
-                        "Não foi possível carregar a viagem. Se o acesso foi perdido, use 'Trocar pasta' para reautorizar.",
-                        "OK"));
+                        "Não foi possível abrir", msg, "OK"));
                 return;
             }
 
@@ -194,6 +223,7 @@ public sealed class TripsViewModel : BindableObject
             LoadedTripUri       = entry.UriString;
             LoadedTripFolderUri = entry.FolderUri;
             LoadedTripStorage   = _storage;
+            LoadedTripIsOfflineCopy = offlineCopy;
             OnPropertyChanged(nameof(LastTrip));
             OnPropertyChanged(nameof(HasLastTrip));
             OnPropertyChanged(nameof(LoadedTrip));

@@ -20,6 +20,7 @@ public partial class LinksPage : ContentPage
     {
         if (sender is not BindableObject bo || bo.BindingContext is not LinkItem link)
             return;
+        if (!await TripViewModel.Current!.CanEditAsync()) return;
 
         var editPage = new ItemEditPage(
             pageTitle: "Editar dica",
@@ -45,6 +46,7 @@ public partial class LinksPage : ContentPage
     // FAB: cria nova dica
     private async void OnAddTapped(object? sender, EventArgs e)
     {
+        if (!await TripViewModel.Current!.CanEditAsync()) return;
         var editPage = new ItemEditPage(
             pageTitle: "Nova dica",
             f1Label: "Título", f1Value: "",

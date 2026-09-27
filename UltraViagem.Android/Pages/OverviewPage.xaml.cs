@@ -20,6 +20,7 @@ public partial class OverviewPage : ContentPage
 
         if (e.Parameter is "details")
         {
+            if (!await vm.CanEditAsync()) return;
             var editPage = new TripDetailsEditPage(vm.Trip);
             await GetCurrentPage().Navigation.PushModalAsync(editPage);
             var result = await editPage.Result;

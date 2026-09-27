@@ -13,7 +13,7 @@ Itens surgidos após usar o app numa viagem de verdade:
   - ✅ **OneDrive — feito e validado no aparelho** (Microsoft Graph; listar, abrir, editar e salvar).
   - ✅ **Sessões mantidas**: trocar de provedor reaproveita o login salvo de cada um (sem logar de novo).
   - ✅ **Anexos na nuvem**: abrir, baixar e excluir anexos funcionam em viagens do Drive e do OneDrive (validado no aparelho).
-  - Futuro opcional: cache offline (baixar `trip.json` + anexos) para uso sem internet na viagem.
+  - ✅ **Uso offline (somente leitura)**: viagens da nuvem abrem sem internet pela cópia no celular; anexos baixados pelo botão "Baixar para uso offline" abrem sem conexão; edições ficam bloqueadas com aviso (validado no aparelho). Edição offline com sincronização posterior ficou fora de escopo por decisão.
 - **Rever gastos (casas decimais e foco nos campos)**: revisar a formatação de casas decimais (valores) e o comportamento de foco/teclado ao editar os campos no `ExpenseEditPage` (ordem de foco, tipo de teclado numérico, seleção do conteúdo ao focar).
 - ✅ **Abrir na última viagem** (feito): ao abrir, o app vai direto para a última viagem do repositório atual (pula a lista); o voltar na Visão Geral retorna à lista. A abertura não espera a varredura da nuvem — `TripsViewModel.PrepareRepo()` resolve o repositório e a última viagem pelo cache/prefs (rápido), abre na hora, e a lista é varrida em segundo plano (`RescanAsync`). Guardado por `_initialized` (abre só uma vez por processo, sem loop ao voltar).
 - **Sincronizar My Maps**: hoje o bloco Mapa só abre o link do My Maps no navegador. Avaliar sincronizar/refletir o mapa (ex.: exibir embutido numa WebView como no desktop e/ou manter a URL/versão em dia).
@@ -56,7 +56,13 @@ Itens surgidos após usar o app numa viagem de verdade:
      - Seleção de provedor na `TripsPage` (action sheet **Google Drive / OneDrive / Armazenamento interno**). O repositório ativo (provedor + ref + rótulo) é persistido; `TripsViewModel`/`TripViewModel` roteiam scan/load/**save** pelo backend ativo.
      - A **"última viagem"** é vinculada ao repositório atual (`last_trip_repo`): não mostra o atalho se pertence a outro provedor/pasta (evitava tentar abrir uma ref SAF pelo Drive → "acesso perdido").
      - Manifesto: `WebAuthenticationCallbackActivity` com um intent-filter por esquema de redirect (Google e Microsoft) + permissão `INTERNET`.
-     - Pendente: cache offline opcional.
+     - **Uso offline** (`OfflineStore`, em `AppDataDirectory/offline`, que o Android não limpa):
+       - Cópia do `trip.json` de cada viagem da nuvem, atualizada na varredura (sem tráfego extra), ao abrir e a cada salvamento. Sem internet, `TripsViewModel.OpenTripAsync` abre pela cópia e marca a viagem como `IsOfflineCopy` (somente leitura).
+       - Varredura: nuvem sem internet não varre; mantém a lista salva e mostra "Sem internet: mostrando a lista salva". Falha de token por falta de rede não marca mais "acesso perdido" (`AccessDenied` só com internet).
+       - Anexos: item **"Baixar para uso offline"** no menu lateral da viagem (só nuvem) baixa todos os anexos com progresso e mostra o status (ex.: "3 de 7 anexos offline"). Abrir e baixar usam a cópia local quando existe.
+       - Edição: `TripViewModel.CanEditAsync()` bloqueia com aviso as edições em viagem da nuvem sem internet ou aberta pela cópia (tarefas, dicas, gastos, detalhes, atividades, excluir anexo). Faixa amarela de "somente leitura" na `TripPage`, atualizada quando a conectividade muda.
+       - `SaveAsync` agora avisa quando o salvamento falha (antes era silencioso).
+       - Permissão `ACCESS_NETWORK_STATE` para checar a conectividade.
 
    - **Exportação PDF** (`AndroidPdfExporter` + `CalibriFontResolver`): o QuestPDF usado no desktop **não roda no Android** (recusa runtimes não-suportados, sem binário nativo `QuestPdfSkia` para Android). Por isso o Android reimplementa o mesmo layout com **MigraDoc/PDFsharp** (`PDFsharp-MigraDoc`), que roda no Android, reproduzindo de perto a saída do `TripPdfExporter`: mesmas 6 seções (Roteiro, Roteiro Detalhado por versão em landscape, Dicas, Gastos, Orçamento Detalhado em landscape, Tarefas), cores, tamanhos e o diagrama de slots (tabela com células mescladas).
      - A fonte **Calibri** fica embutida em `UltraViagem.Core/Fonts` (resource) e é fornecida ao PDFsharp via `IFontResolver` (o Android não tem Calibri no sistema) — sem isso a quebra/paginação divergiria.

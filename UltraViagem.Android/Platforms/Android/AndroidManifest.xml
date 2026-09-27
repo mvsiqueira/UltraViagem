@@ -8,6 +8,7 @@
         android:label="UltraViagem">
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
 </manifest>

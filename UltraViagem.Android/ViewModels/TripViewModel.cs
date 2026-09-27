@@ -12,6 +12,7 @@ public sealed class TripViewModel : BindableObject
     private static readonly CultureInfo PtBr = new("pt-BR");
 
     private readonly TripFileService _fileService;
+    private readonly OfflineStore    _offline;
     private ITripStorage? _storage;          // backend ativo (SAF, Google Drive ou OneDrive)
     private string? _currentTripUri;
     private string? _currentFolderUri;
@@ -52,17 +53,59 @@ public sealed class TripViewModel : BindableObject
     public ObservableCollection<ObservableTaskItem> ObservableTasks  { get; } = [];
     public ObservableCollection<LinkItem>           ObservableLinks  { get; } = [];
 
-    public TripViewModel(TripFileService fileService)
+    public TripViewModel(TripFileService fileService, OfflineStore offline)
     {
         _fileService = fileService;
+        _offline     = offline;
     }
 
-    public void Load(Trip trip, string? tripUri = null, string? folderUri = null, ITripStorage? storage = null)
+    // ── Offline ──────────────────────────────────────────────
+
+    /// <summary>Viagem aberta pela cópia local (sem internet): somente leitura.</summary>
+    public bool IsOfflineCopy { get; private set; }
+
+    /// <summary>Viagem da nuvem (Drive/OneDrive); as do armazenamento local não dependem de internet.</summary>
+    public bool IsCloud => Storage.Kind != "saf";
+
+    /// <summary>Texto do aviso de somente leitura, ou null se a edição está liberada.</summary>
+    public string? ReadOnlyNotice =>
+        !IsCloud               ? null :
+        IsOfflineCopy          ? "Sem internet: viagem aberta pela cópia do celular (somente leitura)" :
+        !OfflineStore.IsOnline ? "Sem internet: somente leitura até a conexão voltar" :
+        null;
+
+    /// <summary>
+    /// Verifica se dá para editar agora (viagem da nuvem exige internet e não pode ser a cópia
+    /// offline). Se não der, avisa o usuário e retorna false: nada é perdido sem aviso.
+    /// </summary>
+    public async Task<bool> CanEditAsync()
+    {
+        if (!IsCloud) return true;
+        if (IsOfflineCopy)
+        {
+            await AlertAsync("Somente leitura",
+                "Esta viagem foi aberta sem internet, pela cópia do celular. Para editar, volte à lista e abra a viagem de novo com conexão.");
+            return false;
+        }
+        if (!OfflineStore.IsOnline)
+        {
+            await AlertAsync("Sem internet",
+                "Sem conexão a viagem fica só para consulta. As edições voltam a funcionar quando a internet voltar.");
+            return false;
+        }
+        return true;
+    }
+
+    public void Load(Trip trip, string? tripUri = null, string? folderUri = null,
+                     ITripStorage? storage = null, bool offlineCopy = false)
     {
         Trip = trip;
         _currentTripUri   = tripUri;
         _currentFolderUri = folderUri;
         if (storage != null) _storage = storage;   // recarga interna (UpdateTripDetails) preserva o backend
+        IsOfflineCopy = offlineCopy;
+        OnPropertyChanged(nameof(IsOfflineCopy));
+        OnPropertyChanged(nameof(ReadOnlyNotice));
 
         ActiveVersion = trip.ItineraryVersions.FirstOrDefault(v => v.Id == trip.ActiveVersionId)
                      ?? trip.ItineraryVersions.FirstOrDefault();
@@ -260,8 +303,17 @@ public sealed class TripViewModel : BindableObject
 
     public async Task SaveAsync()
     {
-        if (_currentTripUri != null)
-            await (_storage ?? (ITripStorage)_fileService).SaveTripAsync(_currentTripUri, Trip);
+        if (_currentTripUri == null) return;
+        if (await Storage.SaveTripAsync(_currentTripUri, Trip))
+        {
+            if (IsCloud) _offline.SaveTrip(_currentTripUri, Trip);   // mantém a cópia offline em dia
+        }
+        else
+        {
+            await AlertAsync("Não foi possível salvar",
+                IsCloud ? "A alteração não foi salva na nuvem. Verifique a conexão e tente de novo."
+                        : "A alteração não foi salva no arquivo da viagem.");
+        }
     }
 
     // ── Roteiro ──────────────────────────────────────────────
@@ -365,7 +417,10 @@ public sealed class TripViewModel : BindableObject
     public async Task DeleteAttachmentAsync(AttachmentItem attachment)
     {
         if (_currentTripUri != null)
+        {
             await Storage.DeleteAttachmentAsync(_currentTripUri, _currentFolderUri, attachment.File);
+            _offline.DeleteAttachment(_currentTripUri, attachment.File);
+        }
         Trip.Attachments.Remove(attachment);
         await SaveAsync();
     }
@@ -375,7 +430,11 @@ public sealed class TripViewModel : BindableObject
         if (_currentTripUri == null) return false;
         try
         {
-            using var src = await Storage.OpenAttachmentAsync(_currentTripUri, _currentFolderUri, attachment.File);
+            // Usa a cópia offline se houver (funciona sem internet); senão, baixa do provedor.
+            var local = _offline.GetAttachment(_currentTripUri, attachment.File);
+            using var src = local != null
+                ? File.OpenRead(local)
+                : await Storage.OpenAttachmentAsync(_currentTripUri, _currentFolderUri, attachment.File);
             if (src == null) return false;
 
             var ctx = Platform.AppContext;
@@ -413,8 +472,18 @@ public sealed class TripViewModel : BindableObject
                 return;
             }
 
-            // Nuvem: baixa para o cache e abre com o app padrão do tipo de arquivo.
-            var path = await DownloadToCacheAsync(attachment.File);
+            // Nuvem: usa a cópia offline se houver; senão baixa para o cache (exige internet).
+            var path = _offline.GetAttachment(_currentTripUri, attachment.File);
+            if (path == null)
+            {
+                if (!OfflineStore.IsOnline)
+                {
+                    await AlertAsync("Sem internet",
+                        $"'{attachment.File}' não foi baixado para uso offline. Com conexão, use \"Baixar para uso offline\" no menu da viagem.");
+                    return;
+                }
+                path = await DownloadToCacheAsync(attachment.File);
+            }
             if (path == null) { await AlertAsync("Não foi possível abrir", $"Não foi possível baixar '{attachment.File}'."); return; }
 
             await Launcher.Default.OpenAsync(new OpenFileRequest(
@@ -442,6 +511,46 @@ public sealed class TripViewModel : BindableObject
         await using var dst = File.Create(path);
         await src.CopyToAsync(dst);
         return path;
+    }
+
+    /// <summary>Resumo da disponibilidade offline dos anexos (menu da viagem).</summary>
+    public string OfflineStatus
+    {
+        get
+        {
+            if (_currentTripUri == null) return "";
+            var total = Trip.Attachments.Count;
+            if (total == 0) return "Viagem salva no celular (sem anexos)";
+            var ok = _offline.CountAttachments(_currentTripUri, Trip.Attachments.Select(a => a.File));
+            return ok == total ? $"Tudo disponível offline ({total} anexos)"
+                 : ok == 0     ? $"Anexos não baixados ({total})"
+                               : $"{ok} de {total} anexos offline";
+        }
+    }
+
+    /// <summary>
+    /// Baixa a viagem e todos os anexos para uso sem internet. Retorna (baixados, total).
+    /// <paramref name="progress"/> recebe (atual, total) a cada anexo.
+    /// </summary>
+    public async Task<(int Ok, int Total)> DownloadForOfflineAsync(IProgress<(int Done, int Total)>? progress = null)
+    {
+        if (_currentTripUri == null || !IsCloud) return (0, 0);
+        _offline.SaveTrip(_currentTripUri, Trip);
+
+        var files = Trip.Attachments.Select(a => a.File).ToList();
+        int ok = 0;
+        for (int i = 0; i < files.Count; i++)
+        {
+            progress?.Report((i + 1, files.Count));
+            try
+            {
+                using var src = await Storage.OpenAttachmentAsync(_currentTripUri, _currentFolderUri, files[i]);
+                if (src != null && await _offline.SaveAttachmentAsync(_currentTripUri, files[i], src)) ok++;
+            }
+            catch { }
+        }
+        OnPropertyChanged(nameof(OfflineStatus));
+        return (ok, files.Count);
     }
 
     private static Task AlertAsync(string title, string message)

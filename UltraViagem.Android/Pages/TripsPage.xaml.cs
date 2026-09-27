@@ -99,7 +99,8 @@ public partial class TripsPage : ContentPage
         {
             MainThread.BeginInvokeOnMainThread(async () =>
             {
-                _tripVm!.Load(_vm.LoadedTrip, _vm.LoadedTripUri, _vm.LoadedTripFolderUri, _vm.LoadedTripStorage);
+                _tripVm!.Load(_vm.LoadedTrip, _vm.LoadedTripUri, _vm.LoadedTripFolderUri,
+                              _vm.LoadedTripStorage, _vm.LoadedTripIsOfflineCopy);
                 TripViewModel.Current = _tripVm;
                 await Navigation.PushModalAsync(new TripPage());
             });

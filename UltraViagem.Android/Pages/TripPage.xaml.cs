@@ -40,6 +40,9 @@ public partial class TripPage : ContentPage
         _vm.SectionRequested += ShowSection;
         _vm.TripUpdated -= OnTripUpdated;
         _vm.TripUpdated += OnTripUpdated;
+        Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
+        Connectivity.Current.ConnectivityChanged += OnConnectivityChanged;
+        RefreshOfflineUi();
     }
 
     protected override void OnDisappearing()
@@ -47,9 +50,53 @@ public partial class TripPage : ContentPage
         base.OnDisappearing();
         _vm.SectionRequested -= ShowSection;
         _vm.TripUpdated -= OnTripUpdated;
+        Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
     }
 
     private void OnTripUpdated() => DrawerTripName.Text = _vm.Trip.Title;
+
+    private void OnConnectivityChanged(object? sender, ConnectivityChangedEventArgs e)
+        => MainThread.BeginInvokeOnMainThread(RefreshOfflineUi);
+
+    /// <summary>Atualiza a faixa de somente leitura e o item "Baixar para uso offline".</summary>
+    private void RefreshOfflineUi()
+    {
+        var notice = _vm.ReadOnlyNotice;
+        ReadOnlyBanner.Text      = notice ?? "";
+        ReadOnlyBanner.IsVisible = notice != null;
+
+        OfflineItem.IsVisible   = _vm.IsCloud;
+        OfflineStatusLabel.Text = _vm.OfflineStatus;
+    }
+
+    private async void OnDownloadOfflineClicked(object? sender, TappedEventArgs e)
+    {
+        await CloseDrawer();
+        if (!Services.OfflineStore.IsOnline)
+        {
+            await DisplayAlert("Sem internet", "Conecte-se à internet para baixar os anexos.", "OK");
+            return;
+        }
+
+        BusyLabel.Text = "Baixando para uso offline…";
+        BusyOverlay.IsVisible = true;
+        try
+        {
+            var progress = new Progress<(int Done, int Total)>(p =>
+                BusyLabel.Text = $"Baixando anexos {p.Done} de {p.Total}…");
+            var (ok, total) = await _vm.DownloadForOfflineAsync(progress);
+
+            var msg = total == 0     ? "A viagem foi salva no celular (não há anexos)."
+                    : ok == total    ? $"Pronto: a viagem e os {total} anexos estão disponíveis offline."
+                                     : $"{ok} de {total} anexos foram baixados. Tente de novo para completar.";
+            await DisplayAlert("Uso offline", msg, "OK");
+        }
+        finally
+        {
+            BusyOverlay.IsVisible = false;
+            RefreshOfflineUi();
+        }
+    }
 
     protected override bool OnBackButtonPressed()
     {
@@ -149,6 +196,7 @@ public partial class TripPage : ContentPage
     private async void OnExportPdfClicked(object? sender, TappedEventArgs e)
     {
         await CloseDrawer();
+        BusyLabel.Text = "Gerando PDF…";
         BusyOverlay.IsVisible = true;
         try
         {

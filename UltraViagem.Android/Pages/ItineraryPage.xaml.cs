@@ -35,6 +35,7 @@ public partial class ItineraryPage : ContentPage
     private async void OnActivityLongPressed(object? sender, EventArgs e)
     {
         if ((sender as BindableObject)?.BindingContext is not ActivityRow row) return;
+        if (!await TripViewModel.Current!.CanEditAsync()) return;
 
         var editPage = new ActivityEditPage(row.Source);
         await GetCurrentPage().Navigation.PushModalAsync(editPage);

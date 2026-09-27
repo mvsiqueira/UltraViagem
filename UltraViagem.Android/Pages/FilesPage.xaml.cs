@@ -101,6 +101,7 @@ public partial class FilesPage : ContentPage
     {
         var selected = Files.Where(f => f.IsSelected).ToList();
         if (selected.Count == 0) return;
+        if (!await TripViewModel.Current!.CanEditAsync()) return;
 
         var page = GetModalPage();
         var confirm = await page.DisplayAlert(

@@ -12,6 +12,7 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder.UseMauiApp<App>();
 
+        builder.Services.AddSingleton<OfflineStore>();
         builder.Services.AddSingleton<TripFileService>();
         builder.Services.AddSingleton<ITripStorage>(sp => sp.GetRequiredService<TripFileService>());
         builder.Services.AddSingleton<GoogleAuthService>();

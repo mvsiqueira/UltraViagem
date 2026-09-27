@@ -17,6 +17,7 @@ public partial class ExpensesPage : ContentPage
     private async void OnExpenseLongPressed(object? sender, EventArgs e)
     {
         if ((sender as BindableObject)?.BindingContext is not ExpenseRow row) return;
+        if (!await TripViewModel.Current!.CanEditAsync()) return;
 
         var editPage = new ExpenseEditPage(row.Source, isEdit: true);
         await GetCurrentPage().Navigation.PushModalAsync(editPage);
@@ -32,6 +33,7 @@ public partial class ExpensesPage : ContentPage
     // FAB: cria um novo gasto
     private async void OnAddTapped(object? sender, EventArgs e)
     {
+        if (!await TripViewModel.Current!.CanEditAsync()) return;
         var vm = TripViewModel.Current!;
         var template = new ExpenseItem
         {
