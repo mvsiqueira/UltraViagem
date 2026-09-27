@@ -11,7 +11,7 @@ namespace UltraViagem.Android.Services;
 /// As "refs" são ids de arquivo/pasta do Drive: repoRef = pasta raiz das viagens,
 /// tripRef = id do <c>trip.json</c>, folderRef = id da pasta da viagem.
 /// </summary>
-public sealed class GoogleDriveStorage : ITripStorage
+public sealed class GoogleDriveStorage : ITripStorage, ICloudFolderBrowser
 {
     private const string FilesEndpoint  = "https://www.googleapis.com/drive/v3/files";
     private const string UploadEndpoint = "https://www.googleapis.com/upload/drive/v3/files";
@@ -27,6 +27,7 @@ public sealed class GoogleDriveStorage : ITripStorage
     private readonly HttpClient _http = new();
 
     public string Kind => "gdrive";
+    public string RootName => "Meu Drive";
     public bool   AccessDenied { get; private set; }
 
     public GoogleDriveStorage(GoogleAuthService auth) => _auth = auth;
@@ -166,4 +167,3 @@ public sealed class GoogleDriveStorage : ITripStorage
     private sealed record DriveItem(string Id, string Name, string? MimeType);
 }
 
-public sealed record DriveFolder(string Id, string Name);

@@ -16,6 +16,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<ITripStorage>(sp => sp.GetRequiredService<TripFileService>());
         builder.Services.AddSingleton<GoogleAuthService>();
         builder.Services.AddSingleton<GoogleDriveStorage>();
+        builder.Services.AddSingleton<OneDriveAuthService>();
+        builder.Services.AddSingleton<OneDriveStorage>();
         builder.Services.AddSingleton<FolderPickerService>();
         builder.Services.AddSingleton<TripsViewModel>();
         builder.Services.AddTransient<TripViewModel>();

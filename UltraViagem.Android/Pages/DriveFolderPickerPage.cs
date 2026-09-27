@@ -4,12 +4,12 @@ using UltraViagem.Android.Services;
 namespace UltraViagem.Android.Pages;
 
 /// <summary>
-/// Navegador simples de pastas do Google Drive (modal). O usuário entra nas
+/// Navegador simples de pastas de um provedor de nuvem (Google Drive, OneDrive), modal. O usuário entra nas
 /// subpastas e toca em "Usar esta pasta" para escolher a pasta raiz das viagens.
 /// </summary>
 public sealed class DriveFolderPickerPage : ContentPage
 {
-    private readonly GoogleDriveStorage _drive;
+    private readonly ICloudFolderBrowser _drive;
     private readonly TaskCompletionSource<(string Id, string Name)?> _tcs = new();
     private readonly Stack<(string Id, string Name)> _path = new();
     private readonly ObservableCollection<DriveFolder> _folders = [];
@@ -20,11 +20,11 @@ public sealed class DriveFolderPickerPage : ContentPage
 
     public Task<(string Id, string Name)?> Result => _tcs.Task;
 
-    public DriveFolderPickerPage(GoogleDriveStorage drive)
+    public DriveFolderPickerPage(ICloudFolderBrowser drive)
     {
         _drive = drive;
         Title = "Escolher pasta de viagens";
-        _path.Push(("root", "Meu Drive"));
+        _path.Push(("root", drive.RootName));
 
         var list = new CollectionView
         {

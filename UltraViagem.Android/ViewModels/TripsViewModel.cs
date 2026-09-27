@@ -8,9 +8,11 @@ namespace UltraViagem.Android.ViewModels;
 
 public sealed class TripsViewModel : BindableObject
 {
-    private readonly TripFileService    _saf;
-    private readonly GoogleDriveStorage _gdrive;
-    private readonly GoogleAuthService  _auth;
+    private readonly TripFileService     _saf;
+    private readonly GoogleDriveStorage  _gdrive;
+    private readonly GoogleAuthService   _googleAuth;
+    private readonly OneDriveStorage     _onedrive;
+    private readonly OneDriveAuthService _msAuth;
     private readonly FolderPickerService _folderPicker;
 
     private ITripStorage? _storage;      // backend ativo
@@ -28,7 +30,8 @@ public sealed class TripsViewModel : BindableObject
     public ITripStorage? LoadedTripStorage { get; private set; }
     public TripEntry? LastTrip           { get; private set; }
 
-    public GoogleDriveStorage Drive => _gdrive;   // usado pela tela de escolha de pasta do Drive
+    /// <summary>Navegador de pastas do provedor de nuvem ("gdrive" ou "onedrive"), para a tela de escolha de pasta.</summary>
+    public ICloudFolderBrowser GetFolderBrowser(string kind) => kind == "onedrive" ? _onedrive : _gdrive;
 
     public bool IsBusy
     {
@@ -44,17 +47,26 @@ public sealed class TripsViewModel : BindableObject
 
     public ICommand OpenTripCommand { get; }
 
-    public TripsViewModel(TripFileService saf, GoogleDriveStorage gdrive,
-                          GoogleAuthService auth, FolderPickerService folderPicker)
+    public TripsViewModel(TripFileService saf,
+                          GoogleDriveStorage gdrive, GoogleAuthService googleAuth,
+                          OneDriveStorage onedrive, OneDriveAuthService msAuth,
+                          FolderPickerService folderPicker)
     {
         _saf          = saf;
         _gdrive       = gdrive;
-        _auth         = auth;
+        _googleAuth   = googleAuth;
+        _onedrive     = onedrive;
+        _msAuth       = msAuth;
         _folderPicker = folderPicker;
         OpenTripCommand = new Command<TripEntry>(async e => await OpenTripAsync(e));
     }
 
-    private ITripStorage ResolveStorage(string kind) => kind == "gdrive" ? _gdrive : _saf;
+    private ITripStorage ResolveStorage(string kind) => kind switch
+    {
+        "gdrive"   => _gdrive,
+        "onedrive" => _onedrive,
+        _          => _saf,
+    };
 
     /// <summary>
     /// Prepara o repositório de forma rápida (sem varrer a nuvem): resolve o backend,
@@ -110,17 +122,21 @@ public sealed class TripsViewModel : BindableObject
         RefreshLastTripTitle();
     }
 
-    /// <summary>Faz login na conta Google (necessário antes de escolher a pasta do Drive).</summary>
-    public Task<bool> SignInGoogleAsync() => _auth.SignInAsync();
+    /// <summary>
+    /// Garante a sessão no provedor ("gdrive" ou "onedrive") antes de escolher a pasta:
+    /// reaproveita o login salvo e só pede login de novo se não houver sessão válida.
+    /// </summary>
+    public Task<bool> EnsureCloudSignInAsync(string kind)
+        => kind == "onedrive" ? _msAuth.EnsureSignedInAsync() : _googleAuth.EnsureSignedInAsync();
 
-    /// <summary>Conecta o repositório ao Google Drive, apontando para a pasta escolhida.</summary>
-    public async Task ConnectGoogleAsync(string folderId, string folderName)
+    /// <summary>Conecta o repositório a um provedor de nuvem, apontando para a pasta escolhida.</summary>
+    public async Task ConnectCloudAsync(string kind, string folderId, string folderName)
     {
-        _repoKind  = "gdrive";
+        _repoKind  = kind;
         _repoRef   = folderId;
         _repoLabel = folderName;
-        _storage   = _gdrive;
-        _saf.SaveRepoRef("gdrive", folderId, folderName);
+        _storage   = ResolveStorage(kind);
+        _saf.SaveRepoRef(kind, folderId, folderName);
         ClearLastTrip();
 
         OnPropertyChanged(nameof(HasRepo));

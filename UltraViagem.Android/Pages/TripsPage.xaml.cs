@@ -46,33 +46,36 @@ public partial class TripsPage : ContentPage
     {
         var choice = await DisplayActionSheet(
             "Onde estão suas viagens?", "Cancelar", null,
-            "Google Drive", "Armazenamento interno");
+            "Google Drive", "OneDrive", "Armazenamento interno");
 
-        if (choice == "Armazenamento interno")
-            await _vm!.SelectSafFolderAsync();
-        else if (choice == "Google Drive")
-            await ConnectGoogleAsync();
+        switch (choice)
+        {
+            case "Armazenamento interno": await _vm!.SelectSafFolderAsync(); break;
+            case "Google Drive":          await ConnectCloudAsync("gdrive", "Google Drive", "Google"); break;
+            case "OneDrive":              await ConnectCloudAsync("onedrive", "OneDrive", "Microsoft"); break;
+        }
     }
 
-    private async Task ConnectGoogleAsync()
+    /// <summary>Login no provedor + escolha da pasta de viagens + conexão do repositório.</summary>
+    private async Task ConnectCloudAsync(string kind, string providerName, string accountName)
     {
         bool ok;
-        try { ok = await _vm!.SignInGoogleAsync(); }
+        try { ok = await _vm!.EnsureCloudSignInAsync(kind); }
         catch { ok = false; }
 
         if (!ok)
         {
-            await DisplayAlert("Google Drive",
-                "Não foi possível entrar na sua conta Google.", "OK");
+            await DisplayAlert(providerName,
+                $"Não foi possível entrar na sua conta {accountName}.", "OK");
             return;
         }
 
-        var picker = new DriveFolderPickerPage(_vm!.Drive);
+        var picker = new DriveFolderPickerPage(_vm!.GetFolderBrowser(kind));
         await Navigation.PushModalAsync(picker);
         var picked = await picker.Result;
         if (picked == null) return;
 
-        await _vm.ConnectGoogleAsync(picked.Value.Id, picked.Value.Name);
+        await _vm.ConnectCloudAsync(kind, picked.Value.Id, picked.Value.Name);
     }
 
     private void OnLastTripTapped(object? sender, TappedEventArgs e)
