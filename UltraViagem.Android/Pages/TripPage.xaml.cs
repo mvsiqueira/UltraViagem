@@ -43,6 +43,7 @@ public partial class TripPage : ContentPage
         Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
         Connectivity.Current.ConnectivityChanged += OnConnectivityChanged;
         RefreshOfflineUi();
+        SetStatusBarLightIcons(true);   // ícones brancos sobre o teal
     }
 
     protected override void OnDisappearing()
@@ -51,6 +52,16 @@ public partial class TripPage : ContentPage
         _vm.SectionRequested -= ShowSection;
         _vm.TripUpdated -= OnTripUpdated;
         Connectivity.Current.ConnectivityChanged -= OnConnectivityChanged;
+        SetStatusBarLightIcons(false);  // volta aos ícones escuros (lista de viagens)
+    }
+
+    /// <summary>Ícones da barra de status do Android: brancos (fundo escuro) ou escuros (fundo claro).</summary>
+    private static void SetStatusBarLightIcons(bool light)
+    {
+        var window = Platform.CurrentActivity?.Window;
+        if (window == null) return;
+        var ctrl = AndroidX.Core.View.WindowCompat.GetInsetsController(window, window.DecorView);
+        ctrl.AppearanceLightStatusBars = !light;
     }
 
     private void OnTripUpdated() => DrawerTripName.Text = _vm.Trip.Title;
@@ -130,7 +141,8 @@ public partial class TripPage : ContentPage
             _navItems[i].label.TextColor = active ? accent : primary;
         }
 
-        ToolbarTitle.Text = SectionTitles[index];
+        // Visão Geral: a faixa teal logo abaixo já mostra o nome da viagem.
+        ToolbarTitle.Text = index == 0 ? "" : SectionTitles[index];
 
         // Visão Geral: ✕ fecha a viagem. Telas internas: seta volta para a Visão Geral.
         CloseGlyph.IsVisible = index == 0;

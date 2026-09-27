@@ -4,7 +4,7 @@
 
     <Color x:Key="Accent">#0F766E</Color>
     <Color x:Key="AccentLight">#CCFBF1</Color>
-    <Color x:Key="AppBackground">#F9FAFB</Color>
+    <Color x:Key="AppBackground">#EEF2F1</Color>   <!-- cinza-esverdeado: fundo geral -->
     <Color x:Key="Surface">#FFFFFF</Color>
     <Color x:Key="TextPrimary">#111827</Color>
     <Color x:Key="TextMuted">#6B7280</Color>

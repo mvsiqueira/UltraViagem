@@ -4,26 +4,28 @@
              x:Class="UltraViagem.Android.Pages.OverviewPage"
              Title="Visão Geral">
 
-    <ScrollView Padding="16">
+    <ScrollView>
         <VerticalStackLayout Spacing="0">
 
-            <!-- Título da viagem -->
-            <Label Text="{Binding Trip.Title}"
-                   FontSize="22" FontAttributes="Bold"
-                   TextColor="{StaticResource Accent}"
-                   Margin="0,8,0,4" />
-            <Label Text="{Binding DurationLabel}"
-                   Style="{StaticResource MutedLabel}"
-                   Margin="0,0,0,18" />
+            <!-- Faixa teal: nome e datas da viagem (continua a barra superior) -->
+            <VerticalStackLayout BackgroundColor="{StaticResource Accent}"
+                                 Padding="20,4,20,18" Spacing="2">
+                <Label Text="{Binding Trip.Title}"
+                       FontSize="22" FontAttributes="Bold"
+                       TextColor="White" />
+                <Label Text="{Binding DurationLabel}"
+                       FontSize="13" TextColor="#CCFFFFFF" />
+            </VerticalStackLayout>
 
-            <!-- Grade 2x3 de blocos de seção -->
+            <!-- Grade de blocos de seção -->
             <Grid ColumnDefinitions="*,*"
                   RowDefinitions="112,112,112,112"
-                  ColumnSpacing="12" RowSpacing="12">
+                  ColumnSpacing="12" RowSpacing="12"
+                  Margin="16">
 
-                <!-- Detalhes (slate) -->
+                <!-- Detalhes (rosa) -->
                 <Border Grid.Row="0" Grid.Column="0"
-                        BackgroundColor="#F1F5F9" Stroke="Transparent"
+                        BackgroundColor="#F8D9E4" Stroke="Transparent"
                         StrokeShape="RoundRectangle 14" Padding="14">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBlockTapped" CommandParameter="details" />
@@ -31,19 +33,19 @@
                     <Grid RowDefinitions="Auto,*,Auto">
                         <Path Grid.Row="0" WidthRequest="26" HeightRequest="26" Aspect="Uniform"
                               HorizontalOptions="Start" VerticalOptions="Start"
-                              Stroke="#475569" StrokeThickness="2"
+                              Stroke="#993556" StrokeThickness="2"
                               StrokeLineCap="Round" StrokeLineJoin="Round"
                               Data="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065 M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
                         <VerticalStackLayout Grid.Row="2" Spacing="1">
-                            <Label Text="Detalhes" FontSize="16" FontAttributes="Bold" TextColor="#0F172A" />
-                            <Label Text="{Binding DetailsInfo}" FontSize="12" TextColor="#475569" />
+                            <Label Text="Detalhes" FontSize="16" FontAttributes="Bold" TextColor="#4B1528" />
+                            <Label Text="{Binding DetailsInfo}" FontSize="12" TextColor="#993556" />
                         </VerticalStackLayout>
                     </Grid>
                 </Border>
 
                 <!-- Roteiro (teal) -->
                 <Border Grid.Row="0" Grid.Column="1"
-                        BackgroundColor="#E1F5EE" Stroke="Transparent"
+                        BackgroundColor="#C7EDE0" Stroke="Transparent"
                         StrokeShape="RoundRectangle 14" Padding="14">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBlockTapped" CommandParameter="1" />
@@ -63,7 +65,7 @@
 
                 <!-- Tarefas (âmbar) -->
                 <Border Grid.Row="1" Grid.Column="0"
-                        BackgroundColor="#FAEEDA" Stroke="Transparent"
+                        BackgroundColor="#FADEB2" Stroke="Transparent"
                         StrokeShape="RoundRectangle 14" Padding="14">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBlockTapped" CommandParameter="4" />
@@ -83,7 +85,7 @@
 
                 <!-- Mapa (azul) -->
                 <Border Grid.Row="1" Grid.Column="1"
-                        BackgroundColor="#E6F1FB" Stroke="Transparent"
+                        BackgroundColor="#D2E5F8" Stroke="Transparent"
                         StrokeShape="RoundRectangle 14" Padding="14">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBlockTapped" CommandParameter="map" />
@@ -103,7 +105,7 @@
 
                 <!-- Gastos (verde) -->
                 <Border Grid.Row="2" Grid.Column="0"
-                        BackgroundColor="#EAF3DE" Stroke="Transparent"
+                        BackgroundColor="#D9EAC2" Stroke="Transparent"
                         StrokeShape="RoundRectangle 14" Padding="14">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBlockTapped" CommandParameter="2" />
@@ -123,7 +125,7 @@
 
                 <!-- Dicas (roxo) -->
                 <Border Grid.Row="2" Grid.Column="1"
-                        BackgroundColor="#EEEDFE" Stroke="Transparent"
+                        BackgroundColor="#E1DFFB" Stroke="Transparent"
                         StrokeShape="RoundRectangle 14" Padding="14">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBlockTapped" CommandParameter="3" />
@@ -143,7 +145,7 @@
 
                 <!-- Arquivos (coral) -->
                 <Border Grid.Row="3" Grid.Column="0"
-                        BackgroundColor="#FAECE7" Stroke="Transparent"
+                        BackgroundColor="#F8DCD2" Stroke="Transparent"
                         StrokeShape="RoundRectangle 14" Padding="14">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnBlockTapped" CommandParameter="5" />

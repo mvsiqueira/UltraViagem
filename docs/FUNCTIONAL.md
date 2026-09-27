@@ -457,14 +457,14 @@ Ao abrir, o app vai direto para a última viagem aberta, sem passar pela lista. 
 
 ## Tela da viagem
 
-- **Barra superior**: **☰** abre o menu lateral; no centro, o nome da seção atual; à direita, **✕** na Visão Geral (fecha a viagem e volta à lista) ou uma **seta de voltar** nas demais seções (volta à Visão Geral).
+- **Barra superior** (teal, com a área da barra de status do celular na mesma cor): **☰** abre o menu lateral; no centro, o nome da seção atual (vazio na Visão Geral); à direita, **✕** na Visão Geral (fecha a viagem e volta à lista) ou uma **seta de voltar** nas demais seções (volta à Visão Geral).
 - **Botão voltar do Android**: numa seção, volta à Visão Geral; na Visão Geral, fecha a viagem.
 - **Menu lateral**: nome da viagem; as seções (Visão Geral, Roteiro, Gastos, Dicas, Tarefas, Arquivos); **Baixar para uso offline** (só em viagens na nuvem, com o status dos anexos); **Exportar PDF**.
 - **Faixa amarela de somente leitura**: aparece em viagens na nuvem quando não há internet.
 
 ## Visão Geral (Android)
 
-Grade de blocos coloridos, cada um com ícone, título e um resumo. Tocar num bloco abre a seção correspondente:
+No topo, uma faixa teal com o nome e as datas da viagem. Abaixo, uma grade de blocos coloridos, cada um com ícone, título e um resumo. Tocar num bloco abre a seção correspondente:
 
 | Bloco | Resumo | Ao tocar |
 |-------|--------|----------|

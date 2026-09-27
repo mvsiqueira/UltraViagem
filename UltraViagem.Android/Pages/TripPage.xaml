@@ -2,7 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="UltraViagem.Android.Pages.TripPage"
-             NavigationPage.HasNavigationBar="False">
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="{StaticResource Accent}">
 
     <Grid>
 
@@ -11,18 +12,16 @@
 
             <!-- Barra superior -->
             <Grid Grid.Row="0" ColumnDefinitions="56,*,56"
-                  BackgroundColor="{StaticResource Surface}">
-                <BoxView Grid.ColumnSpan="3" VerticalOptions="End"
-                         HeightRequest="1" Color="{StaticResource Border}" />
+                  BackgroundColor="{StaticResource Accent}">
                 <Button Grid.Column="0"
                         Text="☰" FontSize="20" Padding="0"
                         BackgroundColor="Transparent"
-                        TextColor="{StaticResource TextPrimary}"
+                        TextColor="White"
                         Clicked="OnHamburgerClicked" />
                 <Label Grid.Column="1" x:Name="ToolbarTitle"
                        VerticalOptions="Center" HorizontalOptions="Center"
                        FontSize="15" FontAttributes="Bold"
-                       TextColor="{StaticResource TextPrimary}"
+                       TextColor="White"
                        LineBreakMode="TailTruncation" />
                 <!-- Visão Geral: ✕ fecha a viagem. Telas internas: seta (Tabler arrow-left) volta para a Visão Geral. -->
                 <Grid Grid.Column="2" BackgroundColor="Transparent">
@@ -31,12 +30,12 @@
                     </Grid.GestureRecognizers>
                     <Label x:Name="CloseGlyph"
                            Text="✕" FontSize="16"
-                           TextColor="{StaticResource TextMuted}"
+                           TextColor="White"
                            HorizontalOptions="Center" VerticalOptions="Center" />
                     <Path x:Name="BackIcon" IsVisible="False"
                           WidthRequest="22" HeightRequest="22" Aspect="Uniform"
                           HorizontalOptions="Center" VerticalOptions="Center"
-                          Stroke="#111827" StrokeThickness="2.2"
+                          Stroke="White" StrokeThickness="2.2"
                           StrokeLineCap="Round" StrokeLineJoin="Round"
                           Data="M5 12h14 M5 12l6 6 M5 12l6 -6" />
                 </Grid>
@@ -49,7 +48,8 @@
                    HorizontalTextAlignment="Center" />
 
             <!-- Área de conteúdo da seção atual -->
-            <ContentView Grid.Row="2" x:Name="ContentArea" />
+            <ContentView Grid.Row="2" x:Name="ContentArea"
+                         BackgroundColor="{StaticResource AppBackground}" />
 
         </Grid>
 
