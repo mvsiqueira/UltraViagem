@@ -32,6 +32,7 @@ Itens surgidos após usar o app numa viagem de verdade:
 
    - **TripPage com drawer lateral (hambúrguer)**: troca de seção sem recriar a página; o conteúdo de cada seção é injetado em `ContentArea.Content`. Evento `TripViewModel.SectionRequested` permite que páginas-filho disparem a troca de seção.
      - Botão voltar (hardware): numa seção interna volta para a Visão Geral; só na Visão Geral fecha a viagem e retorna à lista.
+     - Botão da barra superior (direita): na Visão Geral é **✕** (fecha a viagem → lista); nas seções internas vira uma **seta de voltar** (ícone Tabler `arrow-left` como `Path`) que retorna à Visão Geral.
 
    - **Visão Geral**: grade de blocos coloridos (pastel) com ícone (Tabler outline embutido como `Path` SVG), título e resumo. O primeiro bloco é **Detalhes** (slate) — abre o editor de metadados; os demais são as seções (Roteiro, Tarefas, Mapa, Gastos, Dicas, Arquivos). O bloco Mapa abre o Google My Maps direto.
      - **Editar metadados** (`TripDetailsEditPage`, modal): nome, datas (início/fim via `DatePicker`), nº de pessoas, moeda base e URL do mapa. Salvo via `TripViewModel.UpdateTripDetailsAsync`, que recalcula tudo que depende desses campos (datas do roteiro, totais, resumos) e dispara `TripUpdated` para atualizar o nome no drawer.

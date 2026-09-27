@@ -85,6 +85,10 @@ public partial class TripPage : ContentPage
 
         ToolbarTitle.Text = SectionTitles[index];
 
+        // Visão Geral: ✕ fecha a viagem. Telas internas: seta volta para a Visão Geral.
+        CloseGlyph.IsVisible = index == 0;
+        BackIcon.IsVisible   = index != 0;
+
         ContentPage page = index switch
         {
             1 => new ItineraryPage(),
@@ -134,8 +138,13 @@ public partial class TripPage : ContentPage
         }
     }
 
-    private async void OnCloseClicked(object sender, EventArgs e)
-        => await Navigation.PopModalAsync();
+    private async void OnCloseOrBackTapped(object? sender, TappedEventArgs e)
+    {
+        if (_currentSection != 0)
+            ShowSection(0);                         // tela interna → Visão Geral
+        else
+            await Navigation.PopModalAsync();       // Visão Geral → fecha a viagem
+    }
 
     private async void OnExportPdfClicked(object? sender, TappedEventArgs e)
     {

@@ -24,11 +24,22 @@
                        FontSize="15" FontAttributes="Bold"
                        TextColor="{StaticResource TextPrimary}"
                        LineBreakMode="TailTruncation" />
-                <Button Grid.Column="2"
-                        Text="✕" FontSize="16" Padding="0"
-                        BackgroundColor="Transparent"
-                        TextColor="{StaticResource TextMuted}"
-                        Clicked="OnCloseClicked" />
+                <!-- Visão Geral: ✕ fecha a viagem. Telas internas: seta (Tabler arrow-left) volta para a Visão Geral. -->
+                <Grid Grid.Column="2" BackgroundColor="Transparent">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnCloseOrBackTapped" />
+                    </Grid.GestureRecognizers>
+                    <Label x:Name="CloseGlyph"
+                           Text="✕" FontSize="16"
+                           TextColor="{StaticResource TextMuted}"
+                           HorizontalOptions="Center" VerticalOptions="Center" />
+                    <Path x:Name="BackIcon" IsVisible="False"
+                          WidthRequest="22" HeightRequest="22" Aspect="Uniform"
+                          HorizontalOptions="Center" VerticalOptions="Center"
+                          Stroke="#111827" StrokeThickness="2.2"
+                          StrokeLineCap="Round" StrokeLineJoin="Round"
+                          Data="M5 12h14 M5 12l6 6 M5 12l6 -6" />
+                </Grid>
             </Grid>
 
             <!-- Área de conteúdo da seção atual -->
